@@ -35,6 +35,47 @@
         body.mood-drama { background: var(--mood-drama); --current-accent: var(--accent-drama); }
         body.mood-tech { background: var(--mood-tech); --current-accent: var(--accent-tech); }
 
+        /* PARTÍCULAS FLOTANTES */
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            pointer-events: none;
+        }
+
+        @keyframes float-up {
+            0% {
+                opacity: 1;
+                transform: translateY(0) translateX(0) scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(-100vh) translateX(var(--tx)) scale(0.5);
+            }
+        }
+
+        @keyframes float-down {
+            0% {
+                opacity: 0;
+                transform: translateY(-10px) scale(0);
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(100vh) scale(1);
+            }
+        }
+
         body {
             margin: 0;
             background-color: var(--bg-black);
@@ -467,9 +508,37 @@
         }
 
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .weekly-challenge { background: rgba(255,255,255,0.08); backdrop-filter: blur(15px); border-radius: 16px; padding: 15px; margin: 15px 0; border: 1px solid rgba(255,255,255,0.1); }
+        .challenge-title { font-weight: 700; margin-bottom: 10px; font-size: 14px; }
+        .challenge-progress { width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; margin-top: 10px; }
+        .challenge-bar { height: 100%; background: linear-gradient(90deg, #ff4b2b, #ff416c); width: 0%; transition: width 0.3s ease; }
+        .notification-toast { position: fixed; top: 80px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 15px 20px; border-radius: 12px; border-left: 4px solid var(--current-accent); animation: slideIn 0.3s ease; z-index: 2000; max-width: 300px; }
+        @keyframes slideIn { from { transform: translateX(400px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .sort-container { display: flex; gap: 10px; margin: 15px 0; padding: 0 15px; }
+        .sort-btn { padding: 8px 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; color: white; cursor: pointer; font-size: 12px; font-weight: 600; transition: all 0.2s; }
+        .sort-btn.active { background: var(--current-accent); border-color: var(--current-accent); }
+        .sort-btn:hover { background: rgba(255,255,255,0.15); }
+        .reactions-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); }
+        .reaction-btn { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 8px 14px; cursor: pointer; font-size: 14px; transition: all 0.2s; color: white; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+        .reaction-btn:hover { background: rgba(255,255,255,0.2); transform: scale(1.1); }
+        .reaction-btn:active { background: var(--current-accent); border-color: var(--current-accent); }
+        .reaction-count { font-size: 12px; color: rgba(255,255,255,0.7); }
+        /* TEMPORIZADOR */
+        .timer-badge { background: linear-gradient(135deg, #ff4b2b, #ff416c); padding: 6px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; color: white; display: inline-block; margin-bottom: 10px; }
+        /* SKELETON LOADING */
+        .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%); background-size: 200% 100%; animation: loading 1.5s infinite; border-radius: 8px; }
+        @keyframes loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton-text { height: 12px; margin-bottom: 8px; }
+        .skeleton-avatar { width: 40px; height: 40px; border-radius: 50%; }
+        .skeleton-image { height: 200px; margin: 10px 0; }
+        /* SHAKE ANIMATION */
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        .shake-animation { animation: shake 0.5s; }
     </style>
 </head>
 <body>
+    <!-- CONTENEDOR DE PARTÍCULAS FLOTANTES -->
+    <div class="particles-container" id="particles-container"></div>
 
     <header class="header" id="main-header">
         <h1>SnapBookSocial</h1>
@@ -498,6 +567,23 @@
             </div>
         </div>
     </header>
+
+    <!-- DESAFÍO SEMANAL -->
+    <div class="weekly-challenge" id="weekly-challenge" style="margin: 15px;">
+        <div class="challenge-title">⚡ Desafío Semanal</div>
+        <div style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 10px;" id="challenge-desc">Publica 5 posts en Hot</div>
+        <div class="challenge-progress">
+            <div class="challenge-bar" id="challenge-bar"></div>
+        </div>
+        <div style="font-size: 11px; color: rgba(255,255,255,0.6); margin-top: 8px;" id="challenge-count">0/5 completado</div>
+    </div>
+
+    <!-- SELECTOR DE ORDEN -->
+    <div class="sort-container">
+        <button class="sort-btn active" onclick="setSortOrder('recent')">🕐 Recientes</button>
+        <button class="sort-btn" onclick="setSortOrder('popular')">⭐ Populares</button>
+        <button class="sort-btn" onclick="setSortOrder('oldest')">📅 Antiguos</button>
+    </div>
 
     <main id="feed-container">
         <!-- Los posts se cargarán aquí -->
@@ -728,14 +814,29 @@
             });
         };
 
+        let postsUnsubscribe = null;
         const loadPosts = () => {
             console.log("Iniciando carga de posts...");
+            // Desuscribir del listener anterior si existe
+            if (postsUnsubscribe) {
+                postsUnsubscribe();
+            }
             const postsRef = ref(db, "ListPosts");
-            onValue(postsRef, (snapshot) => {
+            postsUnsubscribe = onValue(postsRef, (snapshot) => {
                 container.innerHTML = "";
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    const postIds = Object.keys(data).reverse();
+                    let postIds = Object.keys(data);
+                    
+                    // Ordenar posts según el criterio seleccionado
+                    if (currentSortOrder === 'popular') {
+                        postIds.sort((a, b) => Object.keys(data[b].likes || {}).length - Object.keys(data[a].likes || {}).length);
+                    } else if (currentSortOrder === 'oldest') {
+                        postIds.sort((a, b) => (data[a].time || 0) - (data[b].time || 0));
+                    } else {
+                        postIds.reverse(); // recientes primero
+                    }
+                    
                     let hasVisiblePosts = false;
 
                     postIds.forEach(postId => {
@@ -789,19 +890,36 @@
                             html += `<img src="${post.image}" class="post-published-image">`;
                         }
 
-                        html += `
-                            <div class="post-footer">
-                                <button class="action-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike('${postId}')">
-                                    <img src="${userLiked ? 'https://img.icons8.com/ios-filled/50/FF0000/like.png' : 'https://img.icons8.com/ios/50/65676b/like.png'}">
-                                    <span>${likeCount}</span>
-                                </button>
-                                <button class="action-btn ${userCommented ? 'commented' : ''}" onclick="openComments('${postId}')">
-                                    <img src="${userCommented ? 'https://img.icons8.com/ios-filled/50/007AFF/comments.png' : 'https://img.icons8.com/ios/50/65676b/comments.png'}">
-                                    <span>${commentCount}</span>
-                                </button>
-                            </div>
-                        `;
+                        // Reacciones
+                        const postReactions = JSON.parse(localStorage.getItem('postReactions')) || {};
+                        const postReactionCounts = postReactions[postId] || {};
+                        let reactionsHtml = '';
+                        ['\ud83d\ude02', '\ud83d\ude0d', '\ud83d\ude22', '\ud83d\ude21', '\ud83d\udd25'].forEach(emoji => {
+                            reactionsHtml += '<button class="reaction-btn" onclick="addReaction(\'' + postId + '\', \'' + emoji + '\')">' + emoji + ' <span class="reaction-count">' + (postReactionCounts[emoji] || 0) + '</span></button>';
+                        });
+
+                        // Temporizador
+                        let timerHtml = '';
+                        if (post.countdown && post.countdown.expiresAt) {
+                            const timeLeft = post.countdown.expiresAt - Date.now();
+                            if (timeLeft > 0) {
+                                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                                timerHtml = '<div class="timer-badge" data-timer="' + post.countdown.expiresAt + '">\u23f0 Expira en ' + hours + 'h ' + minutes + 'm</div>';
+                            }
+                        }
+
+                        html += timerHtml;
+                        html += '<div class="post-footer">';
+                        html += '<button class="action-btn ' + (userLiked ? 'liked' : '') + '" onclick="toggleLike(\'' + postId + '\')"><img src="' + (userLiked ? 'https://img.icons8.com/ios-filled/50/FF0000/like.png' : 'https://img.icons8.com/ios/50/65676b/like.png') + '"><span>' + likeCount + '</span></button>';
+                        html += '<button class="action-btn ' + (userCommented ? 'commented' : '') + '" onclick="openComments(\'' + postId + '\')"><img src="' + (userCommented ? 'https://img.icons8.com/ios-filled/50/007AFF/comments.png' : 'https://img.icons8.com/ios/50/65676b/comments.png') + '"><span>' + commentCount + '</span></button>';
+                        html += '</div>';
+                        html += '<div class="reactions-container">' + reactionsHtml + '</div>';
                         card.innerHTML = html;
+                        card.setAttribute('data-mood', postMood);
+                        card.setAttribute('data-time', post.time || 0);
+                        card.setAttribute('data-likes', likeCount);
+                        card.setAttribute('data-post-id', postId);
                         container.appendChild(card);
                     });
 
@@ -809,10 +927,247 @@
                         container.innerHTML = `<p style='text-align:center; color:#888; margin-top: 50px;'>No hay publicaciones con el mood "${currentMood}" aún.</p>`;
                     }
                 } else {
-                    container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones aún.</p>";
+                    container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones a\u00fan.</p>";
+                }
+                // Actualizar desaf\u00edo semanal
+                if (typeof updateWeeklyChallenge === 'function') {
+                    try { updateWeeklyChallenge(); } catch(e) {}
                 }
             });
         };
+
+        // ===== PARTÍCULAS FLOTANTES =====
+        const particlesConfig = {
+            hot: { emoji: '🔥', color: '#ff4b2b', count: 15 },
+            relax: { emoji: '🌊', color: '#2193b0', count: 12 },
+            drama: { emoji: '🎭', color: '#8e2de2', count: 10 },
+            tech: { emoji: '💻', color: '#00f2fe', count: 14 }
+        };
+
+        let currentParticles = [];
+
+        const createParticle = (mood) => {
+            const config = particlesConfig[mood] || particlesConfig.hot;
+            const container = document.getElementById('particles-container');
+            
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.textContent = config.emoji;
+            particle.style.fontSize = Math.random() * 20 + 15 + 'px';
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.opacity = Math.random() * 0.5 + 0.3;
+            
+            const duration = Math.random() * 8 + 6;
+            const tx = (Math.random() - 0.5) * 200;
+            particle.style.setProperty('--tx', tx + 'px');
+            particle.style.animation = `float-up ${duration}s linear infinite`;
+            
+            container.appendChild(particle);
+            currentParticles.push(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+                currentParticles = currentParticles.filter(p => p !== particle);
+            }, duration * 1000);
+        };
+
+        const startParticles = (mood) => {
+            // Limpiar partículas anteriores
+            currentParticles.forEach(p => p.remove());
+            currentParticles = [];
+            
+            const config = particlesConfig[mood];
+            if (!config) return;
+            
+            // Crear partículas iniciales
+            for (let i = 0; i < config.count; i++) {
+                setTimeout(() => createParticle(mood), i * 200);
+            }
+            
+            // Crear nuevas partículas cada 2 segundos
+            const particleInterval = setInterval(() => {
+                if (currentMood !== mood) {
+                    clearInterval(particleInterval);
+                    return;
+                }
+                createParticle(mood);
+            }, 2000);
+        };
+
+        // Iniciar partículas cuando cambia el mood
+        const originalMoodItems = document.querySelectorAll('.mood-item');
+        originalMoodItems.forEach(item => {
+            item.addEventListener('click', () => {
+                setTimeout(() => {
+                    const mood = item.getAttribute('data-mood');
+                    if (mood !== 'all') {
+                        startParticles(mood);
+                    } else {
+                        currentParticles.forEach(p => p.remove());
+                        currentParticles = [];
+                    }
+                }, 100);
+            });
+        });
+
+        // Iniciar con el primer mood
+        startParticles('hot');
+
+        // DESAFIO SEMANAL Y ORDENAMIENTO
+        let currentSortOrder = 'recent';
+        window.setSortOrder = (order) => {
+            currentSortOrder = order;
+            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            loadPosts();
+        };
+
+        const updateWeeklyChallenge = () => {
+            const stats = JSON.parse(localStorage.getItem('moodStats')) || {};
+            const hotPosts = stats.hot || 0;
+            const progress = Math.min((hotPosts / 5) * 100, 100);
+            document.getElementById('challenge-bar').style.width = progress + '%';
+            document.getElementById('challenge-count').textContent = hotPosts + '/5 completado';
+        };
+
+        // NOTIFICACIONES PUSH
+        window.showNotification = (message) => {
+            const toast = document.createElement('div');
+            toast.className = 'notification-toast';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        };
+
+        // REACCIONES (toggle: 1 al presionar, 0 al volver a presionar)
+        const reactionEmojis = ['😂', '😍', '😢', '😡', '🔥'];
+        window.addReaction = (postId, emoji) => {
+            const reactions = JSON.parse(localStorage.getItem('postReactions')) || {};
+            if (!reactions[postId]) reactions[postId] = {};
+            
+            // Toggle: si ya tiene 1, poner 0. Si tiene 0, poner 1.
+            if (reactions[postId][emoji] && reactions[postId][emoji] > 0) {
+                reactions[postId][emoji] = 0;
+            } else {
+                reactions[postId][emoji] = 1;
+            }
+            localStorage.setItem('postReactions', JSON.stringify(reactions));
+            
+            // Actualizar solo el contador y estilo sin recargar
+            const buttons = document.querySelectorAll('[data-post-id="' + postId + '"] .reaction-btn');
+            buttons.forEach(btn => {
+                if (btn.textContent.includes(emoji)) {
+                    const countSpan = btn.querySelector('.reaction-count');
+                    if (countSpan) {
+                        countSpan.textContent = reactions[postId][emoji];
+                    }
+                    if (reactions[postId][emoji] > 0) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                }
+            });
+            
+            if (reactions[postId][emoji] > 0) {
+                showNotification('Reaccion anadida!');
+            } else {
+                showNotification('Reaccion eliminada');
+            }
+        };
+
+        // loadFeed eliminado - se usa loadPosts directamente
+
+        // ===== SKELETON LOADING =====
+        const showSkeletonLoading = () => {
+            const container = document.getElementById('feed-container');
+            container.innerHTML = '';
+            for (let i = 0; i < 3; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'post-card';
+                skeleton.innerHTML = `
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <div class="skeleton skeleton-avatar"></div>
+                        <div style="flex: 1;">
+                            <div class="skeleton skeleton-text" style="width: 60%;"></div>
+                            <div class="skeleton skeleton-text" style="width: 40%;"></div>
+                        </div>
+                    </div>
+                    <div class="skeleton skeleton-image"></div>
+                    <div class="skeleton skeleton-text" style="width: 100%;"></div>
+                    <div class="skeleton skeleton-text" style="width: 80%;"></div>
+                `;
+                container.appendChild(skeleton);
+            }
+        };
+
+        // ===== TEMPORIZADOR EN POSTS =====
+        const updateTimers = () => {
+            const postCards = document.querySelectorAll('.post-card');
+            postCards.forEach(card => {
+                const timerElement = card.querySelector('[data-timer]');
+                if (timerElement) {
+                    const expiresAt = parseInt(timerElement.getAttribute('data-timer'));
+                    const now = Date.now();
+                    const timeLeft = expiresAt - now;
+                    
+                    if (timeLeft <= 0) {
+                        timerElement.style.display = 'none';
+                    } else {
+                        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                        timerElement.textContent = '⏰ Expira en ' + hours + 'h ' + minutes + 'm';
+                    }
+                }
+            });
+        };
+        setInterval(updateTimers, 60000);
+
+        // ===== SHAKE PARA SORPRESA =====
+        let lastShakeTime = 0;
+        window.addEventListener('devicemotion', (event) => {
+            const acceleration = event.accelerationIncludingGravity;
+            const x = acceleration.x || 0;
+            const y = acceleration.y || 0;
+            const z = acceleration.z || 0;
+            
+            const shakeStrength = Math.sqrt(x * x + y * y + z * z);
+            
+            if (shakeStrength > 30) {
+                const now = Date.now();
+                if (now - lastShakeTime > 1000) {
+                    lastShakeTime = now;
+                    showRandomPost();
+                }
+            }
+        });
+
+        window.showRandomPost = () => {
+            const container = document.getElementById('feed-container');
+            const posts = container.querySelectorAll('.post-card');
+            
+            if (posts.length === 0) {
+                showNotification('No hay posts para mostrar');
+                return;
+            }
+            
+            posts.forEach(post => post.classList.remove('shake-animation'));
+            
+            const randomPost = posts[Math.floor(Math.random() * posts.length)];
+            randomPost.classList.add('shake-animation');
+            randomPost.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            showNotification('Sorpresa encontrada!');
+            
+            setTimeout(() => randomPost.classList.remove('shake-animation'), 500);
+        };
+
+        // Mostrar boton de shake en pantalla
+        const shakeBtn = document.createElement('button');
+        shakeBtn.textContent = '🎲 Sorpresa';
+        shakeBtn.style.cssText = 'position: fixed; bottom: 120px; right: 20px; padding: 12px 16px; background: linear-gradient(135deg, #ff4b2b, #ff416c); border: none; border-radius: 20px; color: white; font-weight: 700; cursor: pointer; z-index: 999; box-shadow: 0 4px 12px rgba(255,75,43,0.4);';
+        shakeBtn.onclick = () => showRandomPost();
+        document.body.appendChild(shakeBtn);
     </script>
 </body>
 </html>

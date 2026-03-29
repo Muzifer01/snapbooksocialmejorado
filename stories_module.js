@@ -613,11 +613,23 @@ export function initStories() {
         
         loadReactionsAndComments(currentStoryId);
         startStoryTimer();
+
+        // Cargar voto de confianza
+        window.currentStoryId = currentStoryId;
+        if (window.loadTrustScoreForStory) {
+            window.loadTrustScoreForStory(currentStoryId);
+        }
+        // Cerrar panel de trust score si estaba abierto
+        const trustContainer = document.getElementById('trust-score-container');
+        if (trustContainer) trustContainer.classList.remove('active');
     }
 
     function closeStoryViewer() {
         if (storyTimer) clearInterval(storyTimer);
         viewerModal.style.display = "none";
+        const trustContainer = document.getElementById('trust-score-container');
+        if (trustContainer) trustContainer.classList.remove('active');
+        window.currentStoryId = null;
         const viewsPanel = document.getElementById('views-panel');
         const viewsOverlay = document.getElementById('views-overlay');
         if (viewsPanel) viewsPanel.classList.remove('open');
@@ -1172,3 +1184,126 @@ if (document.querySelectorAll('.emoji-btn')) {
         };
     });
 }
+
+
+// ===== SISTEMA DE VOTO DE CONFIANZA =====
+window.voteTrustScore = async (isPositive) => {
+    if (!window.currentStoryId) return;
+    
+    const storyId = window.currentStoryId;
+    const trustContainer = document.getElementById('trust-score-container');
+    const trustFill = document.getElementById('trust-score-fill');
+    const trustValue = document.getElementById('trust-score-value');
+    const trustStatus = document.getElementById('trust-score-status');
+    const btnUp = document.getElementById('btn-trust-up');
+    const btnDown = document.getElementById('btn-trust-down');
+    
+    // Obtener votos del localStorage
+    const trustVotes = JSON.parse(localStorage.getItem('storyTrustVotes') || '{}');
+    if (!trustVotes[storyId]) {
+        trustVotes[storyId] = { up: 0, down: 0, userVoted: null };
+    }
+    
+    // Toggle: si ya votó, quita el voto
+    if (trustVotes[storyId].userVoted === (isPositive ? 'up' : 'down')) {
+        if (isPositive) {
+            trustVotes[storyId].up--;
+            btnUp.classList.remove('voted-up');
+        } else {
+            trustVotes[storyId].down--;
+            btnDown.classList.remove('voted-down');
+        }
+        trustVotes[storyId].userVoted = null;
+    } else {
+        // Quitar voto anterior si existe
+        if (trustVotes[storyId].userVoted === 'up') {
+            trustVotes[storyId].up--;
+            btnUp.classList.remove('voted-up');
+        } else if (trustVotes[storyId].userVoted === 'down') {
+            trustVotes[storyId].down--;
+            btnDown.classList.remove('voted-down');
+        }
+        
+        // Añadir nuevo voto
+        if (isPositive) {
+            trustVotes[storyId].up++;
+            btnUp.classList.add('voted-up');
+        } else {
+            trustVotes[storyId].down++;
+            btnDown.classList.add('voted-down');
+        }
+        trustVotes[storyId].userVoted = isPositive ? 'up' : 'down';
+    }
+    
+    // Guardar en localStorage
+    localStorage.setItem('storyTrustVotes', JSON.stringify(trustVotes));
+    
+    // Actualizar visualización
+    updateTrustScoreDisplay(storyId, trustVotes[storyId]);
+    
+    // Guardar en Firebase si existe usuario
+    if (window.auth && window.auth.currentUser) {
+        try {
+            const db = window.db;
+            const trustRef = window.ref(db, `storyTrust/${storyId}`);
+            await window.update(trustRef, {
+                upVotes: trustVotes[storyId].up,
+                downVotes: trustVotes[storyId].down,
+                lastUpdated: Date.now()
+            });
+        } catch (err) {
+            console.error('Error guardando voto de confianza:', err);
+        }
+    }
+};
+
+// Función para actualizar la visualización del trust score
+window.updateTrustScoreDisplay = (storyId, votes) => {
+    const total = votes.up + votes.down;
+    const percentage = total === 0 ? 50 : Math.round((votes.up / total) * 100);
+    
+    const trustFill = document.getElementById('trust-score-fill');
+    const trustValue = document.getElementById('trust-score-value');
+    const trustStatus = document.getElementById('trust-score-status');
+    
+    if (trustFill) trustFill.style.width = percentage + '%';
+    if (trustValue) trustValue.textContent = percentage + '%';
+    
+    if (trustStatus) {
+        trustStatus.classList.remove('neutral', 'low');
+        if (percentage >= 70) {
+            trustStatus.textContent = '✅ Muy Confiable';
+            trustStatus.style.background = 'rgba(52, 211, 153, 0.2)';
+            trustStatus.style.color = '#34d399';
+        } else if (percentage >= 40) {
+            trustStatus.textContent = '⚠️ Neutral';
+            trustStatus.classList.add('neutral');
+        } else {
+            trustStatus.textContent = '❌ Poco Confiable';
+            trustStatus.classList.add('low');
+        }
+    }
+};
+
+// Cargar votos de confianza al abrir una historia
+window.loadTrustScoreForStory = (storyId) => {
+    const trustVotes = JSON.parse(localStorage.getItem('storyTrustVotes') || '{}');
+    const votes = trustVotes[storyId] || { up: 0, down: 0, userVoted: null };
+    
+    const btnUp = document.getElementById('btn-trust-up');
+    const btnDown = document.getElementById('btn-trust-down');
+    
+    // Limpiar clases previas
+    if (btnUp) btnUp.classList.remove('voted-up');
+    if (btnDown) btnDown.classList.remove('voted-down');
+    
+    // Aplicar estado del usuario
+    if (votes.userVoted === 'up' && btnUp) {
+        btnUp.classList.add('voted-up');
+    } else if (votes.userVoted === 'down' && btnDown) {
+        btnDown.classList.add('voted-down');
+    }
+    
+    // Actualizar visualización
+    updateTrustScoreDisplay(storyId, votes);
+};
