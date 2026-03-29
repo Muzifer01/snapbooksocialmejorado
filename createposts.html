@@ -288,6 +288,52 @@
             cursor: not-allowed;
         }
 
+        /* MOOD SELECTOR STYLES */
+        .mood-selector-container {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .mood-selector-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-left: 5px;
+        }
+        .mood-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        .mood-option-btn {
+            background: #f0f2f5;
+            border: 2px solid transparent;
+            border-radius: 12px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .mood-option-btn:hover {
+            background: #e4e6eb;
+        }
+        .mood-option-btn.active {
+            background: white;
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0, 122, 255, 0.15);
+        }
+        .mood-option-btn .mood-emoji {
+            font-size: 18px;
+        }
+
         /* NAV BAR - IDÉNTICA A HOME.HTML */
         .nav-bar {
             position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
@@ -387,10 +433,33 @@
                     <button type="button" class="btn-add-option" onclick="addPollOption()">+ Añadir Opción</button>
                 </div>
 
-                <!-- BOTÓN PUBLICAR -->
-                <button type="button" class="btn-publish" onclick="publishPost()" id="btn-publish">Publicar</button>
-                <div class="loading" id="loading">Publicando...</div>
-            </form>
+                     <!-- SELECTOR DE MOOD -->
+            <div class="mood-selector-container">
+                <label class="mood-selector-label">¿Cómo te sientes hoy? (Mood)</label>
+                <div class="mood-options" id="mood-options">
+                    <button type="button" class="mood-option-btn active" data-mood="all">
+                        <span class="mood-emoji">🏠</span> Todo
+                    </button>
+                    <button type="button" class="mood-option-btn" data-mood="hot">
+                        <span class="mood-emoji">🔥</span> Hot
+                    </button>
+                    <button type="button" class="mood-option-btn" data-mood="relax">
+                        <span class="mood-emoji">✨</span> Relax
+                    </button>
+                    <button type="button" class="mood-option-btn" data-mood="drama">
+                        <span class="mood-emoji">🎭</span> Drama
+                    </button>
+                    <button type="button" class="mood-option-btn" data-mood="tech">
+                        <span class="mood-emoji">🚀</span> Tech
+                    </button>
+                </div>
+            </div>
+
+            <!-- BOTÓN PUBLICAR -->
+            <button class="btn-publish" id="btn-publish" onclick="publishPost()">Publicar</button>
+            <div id="loading" class="loading">Publicando...</div>
+        </div>
+    </main>   </form>
         </div>
     </main>
 
@@ -433,6 +502,7 @@
 
         let currentUser = null;
         let currentPostType = 'text';
+        let selectedMood = 'all';
         let userProfileData = { nick: 'Usuario', perfil: 'https://www.w3schools.com/howto/img_avatar.png' };
 
         onAuthStateChanged(auth, (user) => {
@@ -522,6 +592,16 @@
             btn.parentElement.remove();
         };
 
+        // LÓGICA DE SELECCIÓN DE MOOD
+        const moodBtns = document.querySelectorAll('.mood-option-btn');
+        moodBtns.forEach(btn => {
+            btn.onclick = () => {
+                moodBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                selectedMood = btn.getAttribute('data-mood');
+            };
+        });
+
         window.publishPost = async () => {
             if (!currentUser) {
                 alert('Debes estar autenticado');
@@ -574,6 +654,7 @@
                     text: postText,
                     time: Date.now(),
                     multi: platform,
+                    mood: selectedMood, // AÑADIMOS EL MOOD SELECCIONADO
                     post_id: postId,
                     likes: {},
                     comments: {},

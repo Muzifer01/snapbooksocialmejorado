@@ -13,6 +13,13 @@
             --accent: #007AFF;
             --poll-bg: #f0f2f5;
             --poll-bar: rgba(0, 122, 255, 0.2);
+            
+            /* Mood Colors */
+            --mood-hot: linear-gradient(135deg, #ff4b2b 0%, #ff416c 100%);
+            --mood-relax: linear-gradient(135deg, #2193b0 0%, #6dd5ed 100%);
+            --mood-drama: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+            --mood-tech: linear-gradient(135deg, #000428 0%, #004e92 100%);
+            --mood-default: #000000;
         }
 
         body {
@@ -20,15 +27,26 @@
             background-color: var(--bg-black);
             font-family: -apple-system, system-ui, sans-serif;
             color: white;
+            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 100vh;
+        }
+        
+        body.mood-active {
+            background-attachment: fixed;
         }
 
         /* HEADER */
         .header {
-            padding: 50px 20px 15px;
-            background: var(--bg-black);
+            padding: 50px 20px 10px;
+            background: transparent;
             position: sticky; 
             top: 0; 
             z-index: 100;
+            transition: background 0.3s;
+        }
+        .header.scrolled {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
         }
         .header h1 { 
             font-size: 32px; 
@@ -205,12 +223,84 @@
             display: flex; justify-content: center; align-items: center;
             text-decoration: none; position: relative; top: -5px;
         }
+
+        /* MOOD BAR STYLES */
+        .mood-bar-container {
+            margin-top: 15px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            scrollbar-width: none; /* Firefox */
+        }
+        .mood-bar-container::-webkit-scrollbar { display: none; } /* Chrome/Safari */
+
+        .mood-bar {
+            display: flex;
+            gap: 12px;
+            padding: 5px 0;
+        }
+
+        .mood-item {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            white-space: nowrap;
+            color: white;
+        }
+
+        .mood-item.active {
+            background: white;
+            color: black;
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(255,255,255,0.3);
+        }
+
+        .mood-emoji { font-size: 18px; }
+        .mood-label { font-size: 13px; font-weight: 700; }
+
+        /* MOOD BACKGROUNDS */
+        body.mood-hot { background: var(--mood-hot); }
+        body.mood-relax { background: var(--mood-relax); }
+        body.mood-drama { background: var(--mood-drama); }
+        body.mood-tech { background: var(--mood-tech); }
+        body.mood-all { background: var(--mood-default); }
     </style>
 </head>
 <body>
 
-    <header class="header">
+    <header class="header" id="main-header">
         <h1>SnapBook</h1>
+        
+        <!-- MOOD FEED BAR -->
+        <div class="mood-bar-container">
+            <div class="mood-bar" id="mood-bar">
+                <button class="mood-item active" data-mood="all">
+                    <span class="mood-emoji">🏠</span>
+                    <span class="mood-label">Todo</span>
+                </button>
+                <button class="mood-item" data-mood="hot">
+                    <span class="mood-emoji">🔥</span>
+                    <span class="mood-label">Hot</span>
+                </button>
+                <button class="mood-item" data-mood="relax">
+                    <span class="mood-emoji">✨</span>
+                    <span class="mood-label">Relax</span>
+                </button>
+                <button class="mood-item" data-mood="drama">
+                    <span class="mood-emoji">🎭</span>
+                    <span class="mood-label">Drama</span>
+                </button>
+                <button class="mood-item" data-mood="tech">
+                    <span class="mood-emoji">🚀</span>
+                    <span class="mood-label">Tech</span>
+                </button>
+            </div>
+        </div>
     </header>
 
     <main id="feed-container">
@@ -291,12 +381,44 @@
 
         let currentUser = null;
         let activePostId = null;
+        let currentMood = 'all';
 
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
             } else {
                 window.location.href = "login.html";
+            }
+        });
+
+        // LÓGICA DE MOOD FEED
+        const moodItems = document.querySelectorAll('.mood-item');
+        const body = document.body;
+        const header = document.getElementById('main-header');
+
+        moodItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const mood = item.getAttribute('data-mood');
+                
+                // Actualizar UI de botones
+                moodItems.forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                
+                // Cambiar fondo del body
+                body.className = mood === 'all' ? '' : `mood-active mood-${mood}`;
+                currentMood = mood;
+                
+                // Recargar posts con el filtro
+                loadPosts();
+            });
+        });
+
+        // Efecto de scroll en el header
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 20) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
             }
         });
 
@@ -400,91 +522,114 @@
             });
         };
 
-        const postsRef = ref(db, "ListPosts");
-        onValue(postsRef, (snapshot) => {
-            container.innerHTML = "";
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                Object.keys(data).reverse().forEach(postId => {
-                    const post = data[postId];
-                    const card = document.createElement('div');
-                    card.className = 'post-card';
+        const loadPosts = () => {
+            const postsRef = ref(db, "ListPosts");
+            onValue(postsRef, (snapshot) => {
+                container.innerHTML = "";
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    const postIds = Object.keys(data).reverse();
                     
-                    const likeCount = post.likes ? Object.keys(post.likes).length : 0;
-                    const commentCount = post.commentCount || 0;
-                    const userLiked = currentUser && post.likes && post.likes[currentUser.uid];
-                    const userCommented = currentUser && post.comments && Object.values(post.comments).some(c => c.uid === currentUser.uid);
+                    let hasVisiblePosts = false;
 
-                    let html = `
-                        <div class="post-header">
-                            <div class="post-avatar"><img src="${post.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}"></div>
-                            <div class="post-meta">
-                                <div class="post-nick-container">
-                                    <span class="post-nick">${post.nick || 'Usuario'}</span>
-                                    <span class="platform-tag ${(post.multi || 'web').toLowerCase()}">${post.multi || 'Web'}</span>
+                    postIds.forEach(postId => {
+                        const post = data[postId];
+                        
+                        // FILTRADO POR MOOD
+                        // Si el mood es 'all', mostramos todo. 
+                        // Si no, solo mostramos si el post tiene ese mood (o si no tiene mood, lo clasificamos por palabras clave)
+                        const postMood = (post.mood || "").toLowerCase();
+                        const matchesMood = currentMood === 'all' || postMood === currentMood;
+                        
+                        if (!matchesMood) return;
+                        hasVisiblePosts = true;
+
+                        const card = document.createElement('div');
+                        card.className = 'post-card';
+                        
+                        const likeCount = post.likes ? Object.keys(post.likes).length : 0;
+                        const commentCount = post.commentCount || 0;
+                        const userLiked = currentUser && post.likes && post.likes[currentUser.uid];
+                        const userCommented = currentUser && post.comments && Object.values(post.comments).some(c => c.uid === currentUser.uid);
+
+                        let html = `
+                            <div class="post-header">
+                                <div class="post-avatar"><img src="${post.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}"></div>
+                                <div class="post-meta">
+                                    <div class="post-nick-container">
+                                        <span class="post-nick">${post.nick || 'Usuario'}</span>
+                                        <span class="platform-tag ${(post.multi || 'web').toLowerCase()}">${post.multi || 'Web'}</span>
+                                    </div>
+                                    <span class="post-time">${formatTime(post.time)}</span>
                                 </div>
-                                <span class="post-time">${formatTime(post.time)}</span>
                             </div>
-                        </div>
-                        <div class="post-body">${post.text || ''}</div>
-                    `;
+                            <div class="post-body">${post.text || ''}</div>
+                        `;
 
-                    if (post.poll && post.poll.options) {
-                        const poll = post.poll;
-                        const total = poll.totalVotes || 0;
-                        const hasVoted = poll.userVotes && currentUser && poll.userVotes[currentUser.uid];
-                        html += `<div class="poll-container">`;
-                        Object.keys(poll.options).forEach(optKey => {
-                            const opt = poll.options[optKey];
-                            const votes = opt.votes || 0;
-                            const percent = total > 0 ? Math.round((votes / total) * 100) : 0;
-                            html += `
-                                <div class="poll-option" onclick="votePoll('${postId}', '${optKey}')" style="cursor: pointer;">
-                                    <div class="poll-bar" style="width: ${percent}%"></div>
-                                    <span class="poll-text">${opt.text}</span>
-                                    <span class="poll-percent">${percent}% (${votes})</span>
-                                </div>
-                            `;
-                        });
-                        html += `</div>`;
-                    }
+                        if (post.poll && post.poll.options) {
+                            const poll = post.poll;
+                            const total = poll.totalVotes || 0;
+                            const hasVoted = poll.userVotes && currentUser && poll.userVotes[currentUser.uid];
+                            html += `<div class="poll-container">`;
+                            Object.keys(poll.options).forEach(optKey => {
+                                const opt = poll.options[optKey];
+                                const votes = opt.votes || 0;
+                                const percent = total > 0 ? Math.round((votes / total) * 100) : 0;
+                                html += `
+                                    <div class="poll-option" onclick="votePoll('${postId}', '${optKey}')" style="cursor: pointer;">
+                                        <div class="poll-bar" style="width: ${percent}%"></div>
+                                        <span class="poll-text">${opt.text}</span>
+                                        <span class="poll-percent">${percent}% (${votes})</span>
+                                    </div>
+                                `;
+                            });
+                            html += `</div>`;
+                        }
 
-                    if (post.image) {
-                        html += `<img src="${post.image}" class="post-published-image">`;
-                    }
+                        if (post.image) {
+                            html += `<img src="${post.image}" class="post-published-image">`;
+                        }
 
-                    html += `
-                        <div class="post-footer">
-                            <button class="action-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike('${postId}')">
-                                <img src="${userLiked ? 'https://img.icons8.com/ios-filled/50/FF0000/like.png' : 'https://img.icons8.com/ios/50/65676b/like.png'}">
-                                <span>${likeCount}</span>
-                            </button>
-                            <button class="action-btn ${userCommented ? 'commented' : ''}" onclick="openComments('${postId}')">
-                                <img src="${userCommented ? 'https://img.icons8.com/ios-filled/50/007AFF/comments.png' : 'https://img.icons8.com/ios/50/65676b/comments.png'}">
-                                <span>${commentCount}</span>
-                            </button>
-                        </div>
-                    `;
-                    card.innerHTML = html;
-                    container.appendChild(card);
+                        html += `
+                            <div class="post-footer">
+                                <button class="action-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike('${postId}')">
+                                    <img src="${userLiked ? 'https://img.icons8.com/ios-filled/50/FF0000/like.png' : 'https://img.icons8.com/ios/50/65676b/like.png'}">
+                                    <span>${likeCount}</span>
+                                </button>
+                                <button class="action-btn ${userCommented ? 'commented' : ''}" onclick="openComments('${postId}')">
+                                    <img src="${userCommented ? 'https://img.icons8.com/ios-filled/50/007AFF/comments.png' : 'https://img.icons8.com/ios/50/65676b/comments.png'}">
+                                    <span>${commentCount}</span>
+                                </button>
+                            </div>
+                        `;
+                        card.innerHTML = html;
+                        container.appendChild(card);
 
-                    // Aplicar protección a las imágenes después de renderizar
-                    const images = card.querySelectorAll('img');
-                    images.forEach(img => {
-                        img.addEventListener('contextmenu', (e) => {
-                            e.preventDefault();
-                            return false;
-                        });
-                        img.addEventListener('dragstart', (e) => {
-                            e.preventDefault();
-                            return false;
+                        // Aplicar protección a las imágenes después de renderizar
+                        const images = card.querySelectorAll('img');
+                        images.forEach(img => {
+                            img.addEventListener('contextmenu', (e) => {
+                                e.preventDefault();
+                                return false;
+                            });
+                            img.addEventListener('dragstart', (e) => {
+                                e.preventDefault();
+                                return false;
+                            });
                         });
                     });
-                });
-            } else {
-                container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones aún.</p>";
-            }
-        });
+
+                    if (!hasVisiblePosts) {
+                        container.innerHTML = `<p style='text-align:center; color:#888; margin-top: 50px;'>No hay publicaciones con el mood "${currentMood}" aún.</p>`;
+                    }
+                } else {
+                    container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones aún.</p>";
+                }
+            });
+        };
+
+        // Carga inicial
+        loadPosts();
     </script>
 </body>
 </html>
