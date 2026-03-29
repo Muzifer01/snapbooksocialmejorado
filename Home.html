@@ -648,13 +648,22 @@
         const container = document.getElementById('feed-container');
 
         let currentUser = null;
+        let currentUserProfile = null;
         let activePostId = null;
         let currentMood = 'all';
+        let lastPostsData = {};
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
             if (user) {
                 currentUser = user;
+                currentUserProfile = null;
+                try {
+                    const profileSnap = await get(ref(db, `Users/${user.uid}`));
+                    currentUserProfile = profileSnap.exists() ? profileSnap.val() : null;
+                } catch (error) {
+                    console.warn('No se pudo cargar el perfil del usuario para los retos semanales', error);
+                }
                 loadPosts();
             } else {
                 window.location.href = "login.html";
@@ -826,6 +835,7 @@
                 container.innerHTML = "";
                 if (snapshot.exists()) {
                     const data = snapshot.val();
+                    lastPostsData = data || {};
                     let postIds = Object.keys(data);
                     
                     // Ordenar posts según el criterio seleccionado
@@ -927,11 +937,12 @@
                         container.innerHTML = `<p style='text-align:center; color:#888; margin-top: 50px;'>No hay publicaciones con el mood "${currentMood}" aún.</p>`;
                     }
                 } else {
+                    lastPostsData = {};
                     container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones a\u00fan.</p>";
                 }
                 // Actualizar desaf\u00edo semanal
                 if (typeof updateWeeklyChallenge === 'function') {
-                    try { updateWeeklyChallenge(); } catch(e) {}
+                    try { updateWeeklyChallenge(lastPostsData); } catch(e) {}
                 }
             });
         };
@@ -1018,17 +1029,111 @@
         let currentSortOrder = 'recent';
         window.setSortOrder = (order) => {
             currentSortOrder = order;
-            document.querySelectorAll('.sort-btn').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+            document.querySelectorAll('.sort-btn').forEach(btn => {
+                const isActive = btn.getAttribute('onclick') === `setSortOrder('${order}')`;
+                btn.classList.toggle('active', isActive);
+            });
             loadPosts();
         };
 
-        const updateWeeklyChallenge = () => {
-            const stats = JSON.parse(localStorage.getItem('moodStats')) || {};
-            const hotPosts = stats.hot || 0;
-            const progress = Math.min((hotPosts / 5) * 100, 100);
-            document.getElementById('challenge-bar').style.width = progress + '%';
-            document.getElementById('challenge-count').textContent = hotPosts + '/5 completado';
+        const WEEKLY_CHALLENGES = [
+            {
+                id: 'hot-posts',
+                description: 'Publica 5 posts en Hot',
+                target: 5,
+                getProgress: (posts) => posts.filter(post => isOwnPost(post) && isThisWeek(post.time) && normalizeMood(post.mood) === 'hot').length
+            },
+            {
+                id: 'relax-posts',
+                description: 'Publica 3 posts en Relax',
+                target: 3,
+                getProgress: (posts) => posts.filter(post => isOwnPost(post) && isThisWeek(post.time) && normalizeMood(post.mood) === 'relax').length
+            },
+            {
+                id: 'tech-posts',
+                description: 'Publica 3 posts en Tech',
+                target: 3,
+                getProgress: (posts) => posts.filter(post => isOwnPost(post) && isThisWeek(post.time) && normalizeMood(post.mood) === 'tech').length
+            },
+            {
+                id: 'comments',
+                description: 'Escribe 8 comentarios esta semana',
+                target: 8,
+                getProgress: (posts) => posts.reduce((total, post) => {
+                    const comments = Object.values(post.comments || {});
+                    return total + comments.filter(comment => comment?.uid === currentUser?.uid && isThisWeek(comment?.time)).length;
+                }, 0)
+            },
+            {
+                id: 'polls',
+                description: 'Crea 2 encuestas esta semana',
+                target: 2,
+                getProgress: (posts) => posts.filter(post => isOwnPost(post) && isThisWeek(post.time) && post.poll && post.poll.options).length
+            }
+        ];
+
+        const getStartOfWeek = (date = new Date()) => {
+            const d = new Date(date);
+            const day = (d.getDay() + 6) % 7;
+            d.setHours(0, 0, 0, 0);
+            d.setDate(d.getDate() - day);
+            return d;
+        };
+
+        const getWeekKey = () => getStartOfWeek().toISOString().slice(0, 10);
+        const getWeekIndex = () => Math.floor(getStartOfWeek().getTime() / (7 * 24 * 60 * 60 * 1000));
+        const normalizeMood = (mood) => String(mood || '').trim().toLowerCase();
+        const isThisWeek = (timestamp) => {
+            if (!timestamp) return false;
+            const start = getStartOfWeek();
+            const end = new Date(start);
+            end.setDate(end.getDate() + 7);
+            const time = Number(timestamp);
+            return !Number.isNaN(time) && time >= start.getTime() && time < end.getTime();
+        };
+        const isOwnPost = (post) => {
+            if (!currentUser || !post) return false;
+            const possibleOwnerIds = [post.uid, post.userId, post.authorId, post.ownerId, post.createdBy].filter(Boolean);
+            if (possibleOwnerIds.includes(currentUser.uid)) return true;
+
+            const profileNick = String(currentUserProfile?.nick || '').trim().toLowerCase();
+            const postNick = String(post.nick || post.username || '').trim().toLowerCase();
+            return profileNick && postNick && profileNick === postNick;
+        };
+        const getActiveWeeklyChallenge = () => {
+            const index = ((getWeekIndex() % WEEKLY_CHALLENGES.length) + WEEKLY_CHALLENGES.length) % WEEKLY_CHALLENGES.length;
+            return WEEKLY_CHALLENGES[index];
+        };
+
+        const updateWeeklyChallenge = (postsData = lastPostsData) => {
+            const descEl = document.getElementById('challenge-desc');
+            const barEl = document.getElementById('challenge-bar');
+            const countEl = document.getElementById('challenge-count');
+            if (!descEl || !barEl || !countEl) return;
+
+            const challenge = getActiveWeeklyChallenge();
+            const posts = Object.values(postsData || {});
+            const rawProgress = currentUser ? challenge.getProgress(posts) : 0;
+            const progress = Math.max(0, rawProgress);
+            const percent = Math.min((progress / challenge.target) * 100, 100);
+            const completed = progress >= challenge.target;
+
+            descEl.textContent = challenge.description;
+            barEl.style.width = percent + '%';
+            barEl.style.background = completed
+                ? 'linear-gradient(90deg, #00c853, #b2ff59)'
+                : 'linear-gradient(90deg, #ff4b2b, #ff416c)';
+            countEl.textContent = completed
+                ? `✅ Completado (${Math.min(progress, challenge.target)}/${challenge.target})`
+                : `${progress}/${challenge.target} completado`;
+
+            const completionKey = `weeklyChallengeCompleted:${getWeekKey()}:${challenge.id}`;
+            if (completed && !localStorage.getItem(completionKey)) {
+                localStorage.setItem(completionKey, 'true');
+                if (typeof showNotification === 'function') {
+                    showNotification('¡Has completado el desafío semanal!');
+                }
+            }
         };
 
         // NOTIFICACIONES PUSH
@@ -1169,5 +1274,6 @@
         shakeBtn.onclick = () => showRandomPost();
         document.body.appendChild(shakeBtn);
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
