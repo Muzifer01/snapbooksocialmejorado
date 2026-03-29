@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SnapBook - Comentarios</title>
+    <style>
+        :root {
+            --snap-blue: #007AFF;
+            --snap-bg: #000000;
+            --snap-card: #1C1C1E;
+            --snap-border: #2C2C2E;
+            --snap-text: #FFFFFF;
+            /* Colores de Plataforma */
+            --color-android: #2ecc71; 
+            --color-iphone: #6F4E37;  /* Color Café */
+            --color-mac: #9b59b6;     
+            --color-pc: #3498db;      
+            --color-web: #3a3a3c;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0;
+            background-color: #000;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            color: var(--snap-text);
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+        }
+
+        /* HEADER iOS */
+        .ios-header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            padding-top: env(safe-area-inset-top);
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 0.5px solid var(--snap-border);
+            z-index: 100;
+        }
+
+        .btn-back {
+            background: none;
+            border: none;
+            color: var(--snap-blue);
+            font-size: 17px;
+            cursor: pointer;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+        }
+
+        .navbar-title {
+            flex: 1;
+            text-align: center;
+            font-weight: 600;
+            font-size: 17px;
+            margin-right: 45px;
+        }
+
+        /* LISTA DE COMENTARIOS */
+        #main-scroll {
+            position: absolute;
+            top: 60px;
+            bottom: 70px;
+            width: 100%;
+            overflow-y: auto;
+            scrollbar-width: none;
+            padding: 10px 0;
+        }
+        #main-scroll::-webkit-scrollbar { display: none; }
+
+        .comment-row {
+            display: flex;
+            padding: 12px 16px;
+            gap: 12px;
+            border-bottom: 0.5px solid var(--snap-border);
+            align-items: flex-start;
+        }
+
+        .avatar-box {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #222;
+            border: 1px solid #333;
+            flex-shrink: 0;
+        }
+
+        .content-box {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .user-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #FFFFFF;
+            margin-left: 5px;
+        }
+
+        .comment-text-bubble {
+            padding: 10px 14px;
+            border-radius: 18px;
+            display: inline-block;
+            align-self: flex-start;
+            max-width: 90%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .comment-text {
+            margin: 0;
+            font-size: 15px;
+            color: #FFFFFF;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        .meta-data {
+            display: flex;
+            justify-content: space-between;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #555;
+            margin-top: 5px;
+            padding: 0 5px;
+        }
+
+        /* BARRA DE ENTRADA */
+        .input-toolbar {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            background: rgba(0,0,0,0.95);
+            border-top: 0.5px solid var(--snap-border);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            z-index: 100;
+        }
+
+        #input-comment {
+            flex: 1;
+            background-color: var(--snap-card);
+            border: none;
+            border-radius: 20px;
+            padding: 10px 16px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+        }
+
+        #btn-send-comment {
+            background-color: var(--snap-blue);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        #btn-send-comment svg { width: 18px; height: 18px; fill: white; }
+    </style>
+</head>
+<body>
+
+    <header class="ios-header">
+        <button class="btn-back" onclick="history.back()">
+            <span style="font-size:24px; margin-right:4px;">‹</span> Atrás
+        </button>
+        <span class="navbar-title">Comentarios</span>
+    </header>
+
+    <main id="main-scroll">
+        <div id="comments-list"></div>
+    </main>
+
+    <div class="input-toolbar">
+        <input type="text" id="input-comment" placeholder="Comentar..." autocomplete="off">
+        <button id="btn-send-comment">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+    </div>
+
+    <script type="module">
+        import { db, auth } from './firebase-config.js?v=14';
+        import { ref, push, set, onValue, query, limitToLast } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const postId = urlParams.get('id');
+        const listContainer = document.getElementById('comments-list');
+        const inputComment = document.getElementById('input-comment');
+        const btnSend = document.getElementById('btn-send-comment');
+        const scrollArea = document.getElementById('main-scroll');
+
+        function getPlatformName() {
+            const ua = navigator.userAgent.toLowerCase();
+            if (ua.includes("iphone") || ua.includes("ipad")) return "IPHONE";
+            if (ua.includes("android")) return "ANDROID"; 
+            if (ua.includes("macintosh")) return "MAC";
+            return "PC";
+        }
+
+        function createCommentElement(data) {
+            const row = document.createElement("div");
+            row.className = "comment-row";
+            
+            const rawPlat = (data.multi || "WEB").toUpperCase();
+            
+            // LÓGICA DE COLORES UNIFICADA CON CHAT GLOBAL
+            let bgColor = "var(--color-web)";
+
+            if (rawPlat.includes("ANDROID")) bgColor = "var(--color-android)";
+            else if (rawPlat.includes("IPHONE")) bgColor = "var(--color-iphone)";
+            else if (rawPlat.includes("PC")) bgColor = "var(--color-pc)";
+            else if (rawPlat.includes("MAC")) bgColor = "var(--color-mac)";
+
+            const time = data.time ? new Date(parseInt(data.time)).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '--:--';
+            const profilePic = data.perfil || 'https://www.w3schools.com/howto/img_avatar.png';
+            const texto = data.text || data.mensaje || "";
+
+            row.innerHTML = `
+                <img src="${profilePic}" class="avatar-box" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+                <div class="content-box">
+                    <span class="user-name">${data.nick || 'Usuario'}</span>
+                    <div class="comment-text-bubble" style="background:${bgColor}">
+                        <p class="comment-text">${texto}</p>
+                    </div>
+                    <div class="meta-data">
+                        <span>${rawPlat}</span>
+                        <span>${time}</span>
+                    </div>
+                </div>
+            `;
+            return row;
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) return;
+
+            if (postId) {
+                const commentsRef = query(ref(db, `Comments/${postId}`), limitToLast(50));
+                onValue(commentsRef, (snapshot) => {
+                    listContainer.innerHTML = "";
+                    if (snapshot.exists()) {
+                        snapshot.forEach((child) => {
+                            listContainer.appendChild(createCommentElement(child.val()));
+                        });
+                        setTimeout(() => { scrollArea.scrollTop = scrollArea.scrollHeight; }, 100);
+                    } else {
+                        listContainer.innerHTML = `<p style="color:#8E8E93; text-align:center; margin-top:40px; font-size:14px;">No hay comentarios todavía.</p>`;
+                    }
+                });
+
+                btnSend.onclick = async () => {
+                    const val = inputComment.value.trim();
+                    if (val === "") return;
+                    
+                    const newCommentRef = push(ref(db, `Comments/${postId}`));
+                    await set(newCommentRef, {
+                        uid: user.uid,
+                        nick: localStorage.getItem('nick') || "Usuario",
+                        perfil: localStorage.getItem('perfil') || "",
+                        text: val,
+                        time: Date.now().toString(),
+                        multi: getPlatformName()
+                    });
+                    inputComment.value = "";
+                };
+            }
+        });
+
+        inputComment.onkeypress = (e) => { if (e.key === "Enter") btnSend.click(); };
+    </script>
+</body>
+</html>

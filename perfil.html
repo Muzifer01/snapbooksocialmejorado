@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Perfil - SnapBook</title>
+    <style>
+        :root {
+            --bg-black: #0d0d0d;
+            --accent-blue: #007AFF;
+            --input-bg: #1c1c1e;
+            --error-red: #ff3b30;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-black);
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        h2 { font-size: 28px; margin-bottom: 30px; font-weight: bold; }
+
+        .avatar-wrapper {
+            position: relative;
+            width: 125px;
+            height: 125px;
+            margin: 0 auto 20px;
+        }
+
+        .profile-pic {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid var(--accent-blue);
+            object-fit: cover;
+            background: #2c2c2e;
+            box-shadow: 0 0 15px rgba(0, 122, 255, 0.3);
+            transition: 0.3s;
+        }
+
+        .profile-pic.missing {
+            border-color: var(--error-red);
+            box-shadow: 0 0 15px rgba(255, 59, 48, 0.4);
+        }
+
+        .cam-icon {
+            position: absolute;
+            bottom: 5px;
+            right: 0;
+            background: var(--accent-blue);
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid var(--bg-black);
+        }
+
+        .info-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .username { font-size: 24px; font-weight: bold; }
+
+        .badge {
+            color: white;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .inputs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        input {
+            background: var(--input-bg);
+            border: 1px solid transparent;
+            border-radius: 15px;
+            padding: 18px;
+            color: white;
+            font-size: 16px;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        input:focus { 
+            background: #252528; 
+            border-color: var(--accent-blue);
+        }
+
+        .btn-update {
+            background: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 30px;
+            font-size: 17px;
+            font-weight: bold;
+            margin-top: 20px;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+
+        .btn-update:disabled {
+            background: #2c2c2e;
+            color: #5c5c5e;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Tu Perfil</h2>
+
+    <label for="file-input" style="cursor: pointer;">
+        <div class="avatar-wrapper">
+            <img id="img-perfil" src="https://img.icons8.com/m_rounded/512/FFFFFF/user-male-circle.png" class="profile-pic">
+            <div class="cam-icon">
+                <img src="https://img.icons8.com/m_sharp/512/FFFFFF/camera.png" style="width: 18px;">
+            </div>
+        </div>
+    </label>
+    <input type="file" id="file-input" style="display: none;" accept="image/*">
+
+    <div class="info-row">
+        <span id="txt-nick" class="username">Cargando...</span>
+        <div id="multi-tag"></div>
+    </div>
+
+    <div class="inputs-container">
+        <input type="text" id="input-nick" placeholder="Nombre (Nick) *">
+        <input type="email" id="input-email" placeholder="Correo electrónico *">
+        <input type="password" id="input-pass" placeholder="Contraseña Requerida *">
+        <button class="btn-update" id="btn-save" disabled>Actualizar Datos</button>
+    </div>
+</div>
+
+<script type="module">
+    import { auth, db, storage } from './firebase-config.js?v=5';
+    import { ref as dbRef, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+    import { updatePassword, updateEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const imgPerfil = document.getElementById('img-perfil');
+    const fileInput = document.getElementById('file-input');
+    const btnSave = document.getElementById('btn-save');
+    const txtNickLabel = document.getElementById('txt-nick');
+    const inputNick = document.getElementById('input-nick');
+    const inputEmail = document.getElementById('input-email');
+    const inputPass = document.getElementById('input-pass');
+    
+    let fileToUpload = null;
+
+    // --- 1. DETECTOR DE PLATAFORMA (COLOR CAFÉ IPHONE) ---
+    function getPlatformData() {
+        const ua = navigator.userAgent.toLowerCase();
+        let platform = "PC", color = "#0078D7"; 
+        
+        if (ua.includes("android")) { platform = "ANDROID"; color = "#A4C639"; } 
+        else if (ua.includes("iphone") || ua.includes("ipad")) { 
+            platform = "IPHONE"; 
+            color = "#6F4E37"; // CAFÉ
+        }
+        else if (ua.includes("mac")) { platform = "MAC"; color = "#8E44AD"; }
+        
+        const multiTag = document.getElementById('multi-tag');
+        if (multiTag) {
+            multiTag.innerHTML = `<div class="badge" style="background:${color}">${platform}</div>`;
+        }
+        return platform;
+    }
+    const currentPlatform = getPlatformData();
+
+    // --- 2. VALIDACIÓN OBLIGATORIA (TODO REQUERIDO) ---
+    function validarFormulario() {
+        const nickValue = inputNick.value.trim();
+        const emailValue = inputEmail.value.trim();
+        const passValue = inputPass.value.trim();
+        const hasPhoto = !imgPerfil.src.includes("user-male-circle");
+
+        // Verificamos si falta CUALQUIER campo
+        if (nickValue === "" || emailValue === "" || passValue === "" || !hasPhoto) {
+            btnSave.disabled = true;
+
+            // Mensaje de guía dinámico
+            if (!hasPhoto) btnSave.innerText = "Sube una foto de perfil";
+            else if (nickValue === "") btnSave.innerText = "Escribe tu Nick";
+            else if (emailValue === "") btnSave.innerText = "Falta el Correo";
+            else if (passValue === "") btnSave.innerText = "Ingresa la Contraseña";
+            
+            if(!hasPhoto) imgPerfil.classList.add('missing');
+            else imgPerfil.classList.remove('missing');
+            
+            return false;
+        } else {
+            btnSave.disabled = false;
+            btnSave.innerText = "Actualizar Datos";
+            imgPerfil.classList.remove('missing');
+            return true;
+        }
+    }
+
+    // --- 3. EVENTOS DE ENTRADA ---
+    fileInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            fileToUpload = file;
+            imgPerfil.src = URL.createObjectURL(file);
+            validarFormulario();
+        }
+    };
+
+    [inputNick, inputEmail, inputPass].forEach(el => {
+        el.addEventListener('input', validarFormulario);
+    });
+
+    // --- 4. CARGA Y GUARDADO ---
+    auth.onAuthStateChanged((user) => {
+        if (!user) { window.location.href = "login.html"; return; }
+
+        const userRef = dbRef(db, `Users/${user.uid}`);
+        
+        onValue(userRef, (snap) => {
+            const d = snap.val() || {};
+            txtNickLabel.innerText = d.nick || "Usuario";
+            inputNick.value = d.nick || "";
+            inputEmail.value = user.email || "";
+            if (d.perfil) imgPerfil.src = d.perfil;
+            validarFormulario(); 
+        }, { onlyOnce: true });
+
+        btnSave.onclick = async () => {
+            if (!validarFormulario()) return;
+
+            btnSave.disabled = true;
+            btnSave.innerText = "Guardando...";
+
+            try {
+                let photoUrl = imgPerfil.src;
+
+                if (fileToUpload) {
+                    const storageRef = sRef(storage, `perfiles/${user.uid}`);
+                    await uploadBytes(storageRef, fileToUpload);
+                    photoUrl = await getDownloadURL(storageRef);
+                }
+
+                // Guardar en Base de Datos
+                await update(userRef, { 
+                    nick: inputNick.value.trim(),
+                    perfil: photoUrl,
+                    correo: inputEmail.value.trim(),
+                    multi: currentPlatform,
+                    type: "unlock"
+                });
+
+                // Actualizar Email y Password en Auth (Re-autenticación podría ser necesaria)
+                if (inputEmail.value.trim() !== user.email) await updateEmail(user, inputEmail.value.trim());
+                await updatePassword(user, inputPass.value.trim());
+
+                alert("¡Perfil actualizado!");
+                window.location.href = "home.html"; 
+
+            } catch (e) {
+                alert("Error: " + e.message);
+                btnSave.disabled = false;
+                validarFormulario();
+            }
+        };
+    });
+</script>
+</body>
+</html>

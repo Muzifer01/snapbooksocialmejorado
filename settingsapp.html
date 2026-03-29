@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Configuración - SnapBook</title>
+    <style>
+        :root {
+            /* Colores base para el Modo Claro */
+            --bg-color: #f2f2f7;
+            --card-color: #ffffff;
+            --text-primary: #000000;
+            --text-secondary: #8e8e93;
+            --accent-blue: #007AFF;
+            --border-color: #d1d1d6;
+        }
+
+        /* Variables para el Modo Oscuro (Como en tus capturas) */
+        body.dark-mode {
+            --bg-color: #000000;
+            --card-color: #1c1c1e;
+            --text-primary: #ffffff;
+            --text-secondary: #8e8e93;
+            --border-color: #262629;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; transition: background 0.3s, color 0.3s; }
+        
+        body { 
+            margin: 0; 
+            background-color: var(--bg-color); 
+            font-family: -apple-system, system-ui, sans-serif; 
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* HEADER */
+        .header {
+            width: 100%; height: 64px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 16px; background: var(--card-color);
+            border-bottom: 0.5px solid var(--border-color);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .header h1 { font-size: 18px; font-weight: 700; margin: 0; }
+        .back-btn { color: var(--accent-blue); background: none; border: none; font-size: 17px; cursor: pointer; font-weight: 500; }
+
+        /* PERFIL */
+        .profile-section { display: flex; flex-direction: column; align-items: center; margin: 30px 0; }
+        .avatar {
+            width: 110px; height: 110px; border-radius: 50%;
+            border: 3px solid var(--accent-blue); object-fit: cover;
+            box-shadow: 0 0 15px rgba(0, 122, 255, 0.2);
+        }
+        .nick { font-size: 26px; font-weight: 800; margin-top: 15px; letter-spacing: -0.5px; }
+
+        /* SECCIONES DE AJUSTES */
+        .settings-container { width: 92%; max-width: 420px; display: flex; flex-direction: column; gap: 25px; }
+        
+        .section-title {
+            font-size: 13px; color: var(--text-secondary);
+            text-transform: uppercase; font-weight: 600;
+            margin-left: 12px; margin-bottom: 8px;
+        }
+
+        .menu-item {
+            background: var(--card-color); padding: 16px 20px;
+            border-radius: 22px; display: flex; align-items: center;
+            justify-content: space-between; border: 1px solid var(--border-color);
+        }
+
+        /* SWITCH IOS */
+        .switch { position: relative; width: 51px; height: 31px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #39393d; border-radius: 34px; transition: .4s;
+        }
+        body:not(.dark-mode) .slider { background-color: #e9e9eb; }
+        .slider:before {
+            position: absolute; content: ""; height: 27px; width: 27px;
+            left: 2px; bottom: 2px; background-color: white;
+            border-radius: 50%; transition: .4s; box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+        input:checked + .slider { background-color: #34c759; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .danger-text { color: #ff3b30; font-weight: 700; font-size: 17px; }
+    </style>
+</head>
+<body class="dark-mode"> <header class="header">
+        <button class="back-btn" id="btn-atras">‹ Atrás</button>
+        <h1>Ajustes</h1>
+        <div style="width: 45px;"></div>
+    </header>
+
+    <div class="profile-section">
+        <img src="" id="user-perfil" class="avatar" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+        <h2 id="user-nick" class="nick">Cargando...</h2>
+    </div>
+
+    <div class="settings-container">
+        
+        <div>
+            <div class="section-title">Personalización</div>
+            <div class="menu-item">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 20px;">🌓</span>
+                    <span style="font-weight: 600;">Modo Oscuro</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div>
+            <div class="section-title">Seguridad</div>
+            <div class="menu-item" id="logout-trigger" style="cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 20px;">🚪</span>
+                    <span class="danger-text">Cerrar Sesión</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { auth } from './firebase-config.js?v=22';
+
+        const toggle = document.getElementById('theme-toggle');
+        const nickDisplay = document.getElementById('user-nick');
+        const perfilDisplay = document.getElementById('user-perfil');
+
+        // 1. CARGAR DATOS DEL USUARIO
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                nickDisplay.innerText = localStorage.getItem('nick') || "Usuario";
+                perfilDisplay.src = localStorage.getItem('perfil') || "";
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        // 2. LÓGICA DE NAVEGACIÓN
+        document.getElementById('btn-atras').onclick = () => {
+            window.location.href = "home.html";
+        };
+
+        // 3. CONTROL DE TEMA (MODO OSCURO/CLARO)
+        // Revisar preferencia guardada
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.remove('dark-mode');
+            toggle.checked = false;
+        }
+
+        toggle.onchange = () => {
+            if (toggle.checked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+            }
+        };
+
+        // 4. CERRAR SESIÓN
+        document.getElementById('logout-trigger').onclick = () => {
+            auth.signOut().then(() => {
+                localStorage.clear();
+                window.location.href = "login.html";
+            });
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapBookSocial - Inicio</title>
+    <style>
+        :root {
+            --bg-black: #000000;
+            --card-white: #ffffff;
+            --text-main: #1c1e21;
+            --text-muted: #65676b;
+            --accent: #007AFF;
+            --poll-bg: #f0f2f5;
+            --poll-bar: rgba(0, 122, 255, 0.2);
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-black);
+            font-family: -apple-system, system-ui, sans-serif;
+            color: white;
+        }
+
+        /* HEADER */
+        .header {
+            padding: 50px 20px 15px;
+            background: var(--bg-black);
+            position: sticky; 
+            top: 0; 
+            z-index: 100;
+        }
+        .header h1 { 
+            font-size: 32px; 
+            margin: 0; 
+            font-weight: 800; 
+            letter-spacing: -1px;
+        }
+
+        /* CONTENEDOR DE POSTS */
+        #feed-container {
+            padding: 10px 15px 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* ESTILOS DE LA TARJETA */
+        .post-card {
+            background: var(--card-white);
+            border-radius: 18px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            color: var(--text-main);
+            animation: slideUp 0.4s ease-out;
+            position: relative;
+        }
+
+        .post-header { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+        .post-avatar { 
+            width: 45px; height: 45px; background: #f0f2f5; 
+            border-radius: 50%; display: flex; align-items: center; 
+            justify-content: center; font-weight: bold; color: var(--accent); 
+            overflow: hidden; 
+        }
+        .post-avatar img { width: 100%; height: 100%; object-fit: cover; user-select: none; -webkit-user-drag: none; }
+        .post-meta { display: flex; flex-direction: column; }
+        .post-nick-container { display: flex; align-items: center; gap: 8px; }
+        .post-nick { font-weight: 800; font-size: 15px; }
+        .platform-tag {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .platform-tag.android { background-color: #4CAF50; color: white; }
+        .platform-tag.iphone { background-color: #8B6F47; color: white; }
+        .platform-tag.pc { background-color: #2196F3; color: white; }
+        .platform-tag.mac { background-color: #9C27B0; color: white; }
+        .platform-tag.web { background-color: #2196F3; color: white; }
+        .post-time { font-size: 11px; color: var(--text-muted); }
+        .post-body { font-size: 15px; line-height: 1.4; margin-bottom: 12px; word-wrap: break-word; }
+        .post-published-image { width: 100%; border-radius: 12px; margin-bottom: 10px; max-height: 400px; object-fit: cover; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+
+        /* ESTILOS DE ENCUESTA */
+        .poll-container {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .poll-option {
+            position: relative;
+            background: var(--poll-bg);
+            border-radius: 10px;
+            padding: 12px 15px;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+        .poll-bar {
+            position: absolute;
+            top: 0; left: 0; bottom: 0;
+            background: var(--poll-bar);
+            z-index: 0;
+            transition: width 0.6s ease;
+        }
+        .poll-text { position: relative; z-index: 1; }
+        .poll-percent { position: relative; z-index: 1; font-size: 12px; color: var(--accent); }
+
+        .post-footer {
+            border-top: 1px solid #eee;
+            padding: 10px 0 0 0;
+            display: flex;
+            gap: 0;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .action-btn { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            color: var(--text-muted); 
+            font-size: 14px; 
+            font-weight: 600; 
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 8px 15px;
+            margin-left: 10px;
+        }
+        .action-btn img { width: 20px; height: 20px; }
+        .action-btn.liked { color: #FF0000; }
+        .action-btn.liked img { filter: none; }
+        .action-btn.commented { color: var(--accent); }
+        .action-btn.commented img { filter: none; }
+
+        /* MODAL DE COMENTARIOS */
+        .comments-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 2000;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .comments-modal.open { display: flex; }
+        .comments-content {
+            background: white;
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px 20px 0 0;
+            padding: 20px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            color: #1c1e21;
+        }
+        .comments-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .comments-list { overflow-y: auto; flex: 1; display: flex; flex-direction: column; gap: 12px; margin-bottom: 15px; }
+        .comment-item { display: flex; gap: 10px; align-items: flex-start; }
+        .comment-avatar { width: 36px; height: 36px; border-radius: 50%; background: #f0f2f5; overflow: hidden; flex-shrink: 0; }
+        .comment-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .comment-bubble { background: #f0f2f5; border-radius: 15px; padding: 8px 12px; font-size: 14px; }
+        .comment-bubble strong { display: block; font-size: 12px; color: var(--accent); }
+        .comment-input-area { display: flex; gap: 10px; border-top: 1px solid #eee; padding-top: 10px; }
+        .comment-input-area input { flex: 1; border: 1px solid #ddd; border-radius: 20px; padding: 10px 15px; outline: none; }
+        .comment-send-btn { background: var(--accent); color: white; border: none; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* NAV BAR */
+        .nav-bar {
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 400px; background: rgba(25, 25, 25, 0.9);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 35px; display: flex; justify-content: space-around;
+            align-items: center; padding: 12px 0; border: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+        }
+
+        .nav-item { 
+            color: #888; font-size: 10px; font-weight: bold; 
+            text-align: center; text-decoration: none; 
+        }
+        .nav-item.active { color: white; }
+        .nav-item img { width: 24px; height: 24px; display: block; margin: 0 auto 4px; }
+
+        .btn-add {
+            width: 55px; height: 55px; background: var(--accent);
+            border-radius: 50%; border: none; color: white; font-size: 30px;
+            cursor: pointer; box-shadow: 0 5px 15px rgba(0,122,255,0.4);
+            display: flex; justify-content: center; align-items: center;
+            text-decoration: none; position: relative; top: -5px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>SnapBook</h1>
+    </header>
+
+    <main id="feed-container">
+        <!-- Los posts se cargarán aquí -->
+    </main>
+
+    <nav class="nav-bar">
+        <a href="home.html" class="nav-item active">
+            <img src="https://img.icons8.com/m_rounded/512/FFFFFF/home.png" alt="Home">
+            <span>INICIO</span>
+        </a>
+
+        <a href="createposts.html" class="btn-add">+</a>
+
+        <a href="menu.html" class="nav-item">
+            <img src="https://img.icons8.com/m_rounded/512/FFFFFF/menu.png" alt="Menu">
+            <span>MENÚ</span>
+        </a>
+    </nav>
+
+    <!-- Modal de Comentarios -->
+    <div id="comments-modal" class="comments-modal">
+        <div class="comments-content">
+            <div class="comments-header">
+                <h3>Comentarios</h3>
+                <button onclick="closeComments()" style="background:none; border:none; font-size:20px; cursor:pointer;">✕</button>
+            </div>
+            <div id="comments-list" class="comments-list"></div>
+            <div class="comment-input-area">
+                <input type="text" id="comment-input" placeholder="Escribe un comentario...">
+                <button class="comment-send-btn" id="send-comment-btn">➤</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, onValue, push, set, runTransaction, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // CONFIGURACIÓN FIREBASE EXTRAÍDA DE GOOGLE-SERVICES.JSON
+        const firebaseConfig = {
+            apiKey: "AIzaSyDN89D9cljm0e8OzrPtloYOUcOY7XSXBqg",
+            authDomain: "socialtest-3d114.firebaseapp.com",
+            databaseURL: "https://socialtest-3d114-default-rtdb.firebaseio.com",
+            projectId: "socialtest-3d114",
+            storageBucket: "socialtest-3d114.firebasestorage.app",
+            messagingSenderId: "779140232754",
+            appId: "1:779140232754:android:8b1d492ce1970d98e26e2b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        const container = document.getElementById('feed-container');
+
+        // PROTECCIÓN CONTRA DESCARGA DE IMÁGENES
+        document.addEventListener('contextmenu', (e) => {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        document.addEventListener('dragstart', (e) => {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        document.addEventListener('copy', (e) => {
+            if (e.target.tagName === 'IMG') {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        let currentUser = null;
+        let activePostId = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+
+
+        const formatTime = (timestamp) => {
+            if (!timestamp) return "";
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+        };
+
+        window.toggleLike = async (postId) => {
+            if (!currentUser) return;
+            const likeRef = ref(db, `ListPosts/${postId}/likes/${currentUser.uid}`);
+            const snapshot = await get(likeRef);
+            if (snapshot.exists()) {
+                await set(likeRef, null);
+            } else {
+                await set(likeRef, true);
+            }
+        };
+
+        window.openComments = (postId) => {
+            activePostId = postId;
+            document.getElementById('comments-modal').classList.add('open');
+            loadComments(postId);
+        };
+
+        window.closeComments = () => {
+            document.getElementById('comments-modal').classList.remove('open');
+            activePostId = null;
+        };
+
+        const loadComments = (postId) => {
+            const commentsRef = ref(db, `ListPosts/${postId}/comments`);
+            const list = document.getElementById('comments-list');
+            onValue(commentsRef, (snap) => {
+                list.innerHTML = "";
+                if (snap.exists()) {
+                    Object.values(snap.val()).forEach(c => {
+                        const div = document.createElement('div');
+                        div.className = 'comment-item';
+                        div.innerHTML = `
+                            <div class="comment-avatar">
+                                <img src="${c.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+                            </div>
+                            <div class="comment-bubble"><strong>${c.nick || 'Usuario'}</strong>${c.text}</div>
+                        `;
+                        list.appendChild(div);
+                    });
+                    list.scrollTop = list.scrollHeight;
+                } else {
+                    list.innerHTML = "<p style='text-align:center; color:#888;'>No hay comentarios aún.</p>";
+                }
+            });
+        };
+
+        document.getElementById('send-comment-btn').onclick = async () => {
+            const input = document.getElementById('comment-input');
+            const text = input.value.trim();
+            if (!text || !activePostId || !currentUser) return;
+
+            const userRef = ref(db, `Users/${currentUser.uid}`);
+            const userSnap = await get(userRef);
+            const userData = userSnap.exists() ? userSnap.val() : { nick: "Usuario" };
+
+            const newCommentRef = push(ref(db, `ListPosts/${activePostId}/comments`));
+            await set(newCommentRef, {
+                uid: currentUser.uid,
+                nick: userData.nick || "Usuario",
+                perfil: userData.perfil || "https://www.w3schools.com/howto/img_avatar.png",
+                text: text,
+                time: Date.now()
+            });
+
+            const postRef = ref(db, `ListPosts/${activePostId}`);
+            runTransaction(postRef, (post) => {
+                if (post) post.commentCount = (post.commentCount || 0) + 1;
+                return post;
+            });
+            input.value = "";
+        };
+
+        window.votePoll = async (postId, optionKey) => {
+            if (!currentUser) return;
+            const pollRef = ref(db, `ListPosts/${postId}/poll`);
+            const voteRef = ref(db, `ListPosts/${postId}/poll/userVotes/${currentUser.uid}`);
+            const voteSnap = await get(voteRef);
+            if (voteSnap.exists()) return;
+
+            await runTransaction(pollRef, (poll) => {
+                if (poll) {
+                    if (!poll.userVotes) poll.userVotes = {};
+                    poll.userVotes[currentUser.uid] = optionKey;
+                    if (poll.options && poll.options[optionKey]) {
+                        poll.options[optionKey].votes = (poll.options[optionKey].votes || 0) + 1;
+                        poll.totalVotes = (poll.totalVotes || 0) + 1;
+                    }
+                }
+                return poll;
+            });
+        };
+
+        const postsRef = ref(db, "ListPosts");
+        onValue(postsRef, (snapshot) => {
+            container.innerHTML = "";
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                Object.keys(data).reverse().forEach(postId => {
+                    const post = data[postId];
+                    const card = document.createElement('div');
+                    card.className = 'post-card';
+                    
+                    const likeCount = post.likes ? Object.keys(post.likes).length : 0;
+                    const commentCount = post.commentCount || 0;
+                    const userLiked = currentUser && post.likes && post.likes[currentUser.uid];
+                    const userCommented = currentUser && post.comments && Object.values(post.comments).some(c => c.uid === currentUser.uid);
+
+                    let html = `
+                        <div class="post-header">
+                            <div class="post-avatar"><img src="${post.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}"></div>
+                            <div class="post-meta">
+                                <div class="post-nick-container">
+                                    <span class="post-nick">${post.nick || 'Usuario'}</span>
+                                    <span class="platform-tag ${(post.multi || 'web').toLowerCase()}">${post.multi || 'Web'}</span>
+                                </div>
+                                <span class="post-time">${formatTime(post.time)}</span>
+                            </div>
+                        </div>
+                        <div class="post-body">${post.text || ''}</div>
+                    `;
+
+                    if (post.poll && post.poll.options) {
+                        const poll = post.poll;
+                        const total = poll.totalVotes || 0;
+                        const hasVoted = poll.userVotes && currentUser && poll.userVotes[currentUser.uid];
+                        html += `<div class="poll-container">`;
+                        Object.keys(poll.options).forEach(optKey => {
+                            const opt = poll.options[optKey];
+                            const votes = opt.votes || 0;
+                            const percent = total > 0 ? Math.round((votes / total) * 100) : 0;
+                            html += `
+                                <div class="poll-option" onclick="votePoll('${postId}', '${optKey}')" style="cursor: pointer;">
+                                    <div class="poll-bar" style="width: ${percent}%"></div>
+                                    <span class="poll-text">${opt.text}</span>
+                                    <span class="poll-percent">${percent}% (${votes})</span>
+                                </div>
+                            `;
+                        });
+                        html += `</div>`;
+                    }
+
+                    if (post.image) {
+                        html += `<img src="${post.image}" class="post-published-image">`;
+                    }
+
+                    html += `
+                        <div class="post-footer">
+                            <button class="action-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike('${postId}')">
+                                <img src="${userLiked ? 'https://img.icons8.com/ios-filled/50/FF0000/like.png' : 'https://img.icons8.com/ios/50/65676b/like.png'}">
+                                <span>${likeCount}</span>
+                            </button>
+                            <button class="action-btn ${userCommented ? 'commented' : ''}" onclick="openComments('${postId}')">
+                                <img src="${userCommented ? 'https://img.icons8.com/ios-filled/50/007AFF/comments.png' : 'https://img.icons8.com/ios/50/65676b/comments.png'}">
+                                <span>${commentCount}</span>
+                            </button>
+                        </div>
+                    `;
+                    card.innerHTML = html;
+                    container.appendChild(card);
+
+                    // Aplicar protección a las imágenes después de renderizar
+                    const images = card.querySelectorAll('img');
+                    images.forEach(img => {
+                        img.addEventListener('contextmenu', (e) => {
+                            e.preventDefault();
+                            return false;
+                        });
+                        img.addEventListener('dragstart', (e) => {
+                            e.preventDefault();
+                            return false;
+                        });
+                    });
+                });
+            } else {
+                container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones aún.</p>";
+            }
+        });
+    </script>
+</body>
+</html>

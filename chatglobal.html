@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SnapBook Pro - Chat Global</title>
+    <style>
+        :root {
+            --bg-black: #000000; --header-bg: rgba(10, 10, 10, 0.9);
+            --input-bg: #1c1c1e; --border: #262629; --accent: #007aff;
+            --color-android: #2ecc71; --color-iphone: #6F4E37;
+            --color-mac: #9b59b6; --color-pc: #3498db; --color-web: #3a3a3c; --color-app: #e67e22;
+            --premium-gold: #FFD700;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: var(--bg-black); font-family: -apple-system, sans-serif; height: 100vh; display: flex; flex-direction: column; color: white; overflow: hidden; }
+        
+        .badge-v {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 13px; height: 13px; background: var(--premium-gold); color: black;
+            font-size: 9px; border-radius: 50%; margin-left: 4px; font-weight: 900;
+            box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); vertical-align: middle;
+        }
+
+        .header { height: 60px; background: var(--header-bg); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 0.5px solid var(--border); position: fixed; top: 0; width: 100%; z-index: 100; }
+        .header h1 { font-size: 17px; font-weight: 600; position: absolute; left: 50%; transform: translateX(-50%); margin: 0; }
+        .ios-btn { color: #007aff; background: none; border: none; font-size: 17px; cursor: pointer; font-weight: 500; }
+        
+        #paywall { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(25px); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .paywall-card { background: rgba(28, 28, 30, 0.8); padding: 40px 30px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.1); width: 85%; max-width: 350px; }
+        .price-tag { font-size: 28px; font-weight: 800; margin: 15px 0; color: var(--premium-gold); }
+        .btn-premium { width: 100%; background: #fff; color: #000; border: none; padding: 16px; border-radius: 20px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+
+        /* --- ESTILOS DE HISTORIAS (MODULARES) --- */
+        .stories-container {
+            position: fixed;
+            top: 60px;
+            left: 0;
+            right: 0;
+            height: 110px;
+            background: rgba(10, 10, 10, 0.8);
+            backdrop-filter: blur(15px);
+            border-bottom: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 12px;
+            overflow-x: auto;
+            z-index: 99;
+        }
+        .stories-container::-webkit-scrollbar { display: none; }
+        .story-item { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; cursor: pointer; position: relative; }
+        .story-avatar-wrapper { width: 66px; height: 66px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); display: flex; align-items: center; justify-content: center; }
+        .story-avatar-inner { width: 100%; height: 100%; border-radius: 50%; border: 2px solid black; overflow: hidden; background: #222; display: flex; align-items: center; justify-content: center; }
+        .story-avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
+        .story-label { font-size: 11px; color: #8e8e93; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        /* Contador de vistas en la historia */
+        .story-views-badge {
+            font-size: 10px;
+            color: #aaa;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-top: -2px;
+        }
+        .story-views-badge svg { opacity: 0.7; }
+
+        .add-story-btn { display: flex; flex-direction: column; align-items: center; gap: 5px; flex-shrink: 0; cursor: pointer; }
+        .add-circle { width: 66px; height: 66px; border-radius: 50%; background: #1c1c1e; border: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 24px; color: var(--accent); position: relative; }
+        .add-plus { position: absolute; bottom: 0; right: 0; width: 20px; height: 20px; background: var(--accent); border-radius: 50%; border: 2px solid black; display: flex; align-items: center; justify-content: center; font-size: 14px; color: white; font-weight: bold; }
+
+        /* --- VISOR DE HISTORIA MEJORADO --- */
+        #story-viewer-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .story-img-full { max-width: 100%; max-height: 80vh; object-fit: contain; }
+        .story-close { position: absolute; top: 40px; right: 20px; font-size: 30px; color: white; cursor: pointer; z-index: 2001; transition: all 0.2s ease; }
+        .story-close:active { transform: scale(1.2); }
+
+        /* Texto sobre la historia */
+        .story-text-overlay {
+            position: absolute;
+            bottom: 120px;
+            left: 20px;
+            right: 20px;
+            text-align: center;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(5px);
+            padding: 12px 20px;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 500;
+            color: white;
+            z-index: 2003;
+            display: none;
+        }
+
+        /* Barra superior del visor */
+        .story-viewer-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 50px 20px 20px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 2002;
+        }
+        .story-viewer-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid white;
+        }
+        .story-viewer-info { flex: 1; }
+        .story-viewer-nick { font-size: 15px; font-weight: 700; color: white; }
+        .story-viewer-time { font-size: 12px; color: rgba(255,255,255,0.6); }
+
+        /* Barra inferior del visor con vistas */
+        .story-viewer-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 20px 50px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
+            z-index: 2002;
+        }
+        .story-views-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 8px 16px;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .story-views-btn:active { background: rgba(255,255,255,0.25); }
+        .story-views-count { font-size: 16px; font-weight: 800; }
+
+        /* Panel de lista de vistas (slide-up) */
+        #views-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1c1c1e;
+            border-radius: 24px 24px 0 0;
+            z-index: 3000;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+            max-height: 60vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #views-panel.open { transform: translateY(0); }
+        .views-panel-handle {
+            width: 36px;
+            height: 4px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 2px;
+            margin: 12px auto 0;
+            flex-shrink: 0;
+        }
+        .views-panel-header {
+            padding: 16px 20px 12px;
+            border-bottom: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .views-panel-title {
+            font-size: 17px;
+            font-weight: 700;
+        }
+        .views-panel-count {
+            font-size: 14px;
+            color: #8e8e93;
+        }
+        .views-panel-list {
+            overflow-y: auto;
+            flex: 1;
+            padding: 8px 0 30px;
+        }
+        .views-panel-list::-webkit-scrollbar { display: none; }
+        .view-person-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 20px;
+            transition: background 0.15s;
+        }
+        .view-person-item:active { background: rgba(255,255,255,0.05); }
+        .view-person-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #333;
+            flex-shrink: 0;
+        }
+        .view-person-info { flex: 1; }
+        .view-person-nick { font-size: 15px; font-weight: 600; }
+        .view-person-time { font-size: 12px; color: #8e8e93; margin-top: 2px; }
+        .views-empty {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8e8e93;
+        }
+        .views-empty-icon { font-size: 40px; margin-bottom: 10px; }
+        .views-empty-text { font-size: 15px; }
+
+        /* Overlay para cerrar el panel */
+        #views-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2999;
+            display: none;
+        }
+        #views-overlay.active { display: block; }
+
+        /* --- MODAL DE CARGA --- */
+        #story-upload-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
+        .upload-card { background: rgba(28, 28, 30, 0.95); padding: 30px; border-radius: 30px; width: 90%; max-width: 450px; text-align: center; backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .upload-card h2 { font-size: 24px; font-weight: 700; margin: 0 0 20px 0; }
+        .file-input-wrapper { position: relative; margin: 20px 0; }
+        .file-input-label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; padding: 40px 20px; border: 2px dashed rgba(0,122,255,0.5); border-radius: 20px; background: rgba(0,122,255,0.05); cursor: pointer; transition: all 0.3s ease; }
+        .file-input-label:hover { border-color: #007aff; background: rgba(0,122,255,0.1); }
+        .file-input-label.has-image { border: none; background: transparent; padding: 0; }
+        .file-input-icon { font-size: 40px; margin-bottom: 10px; }
+        .file-input-text { font-size: 14px; color: #8e8e93; }
+        #story-file { display: none; }
+        .preview-container { display: none; width: 100%; margin: 20px 0; }
+        .preview-container.active { display: block; }
+        .preview-image { width: 100%; max-height: 300px; border-radius: 20px; object-fit: cover; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .preview-actions { display: flex; gap: 10px; margin-top: 15px; justify-content: center; }
+        .preview-actions button { padding: 8px 16px; border-radius: 10px; border: none; font-size: 13px; cursor: pointer; font-weight: 600; }
+        .btn-change-image { background: rgba(255,255,255,0.1); color: white; }
+        .btn-change-image:active { background: rgba(255,255,255,0.2); }
+        
+        /* Campo de texto para historia */
+        .story-text-input {
+            width: 100%;
+            margin: 15px 0;
+            padding: 12px 16px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #2c2c2e;
+            color: white;
+            font-size: 15px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .story-text-input:focus { border-color: var(--accent); }
+
+        .btn-publish { width: 100%; background: linear-gradient(135deg, #007aff 0%, #0051d5 100%); color: white; border: none; padding: 16px; border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 16px; margin-top: 10px; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,122,255,0.3); }
+        .btn-publish:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(0,122,255,0.2); }
+        /* --- FIN ESTILOS HISTORIAS --- */
+
+        /* AJUSTE DE PADDING PARA EL CHAT (PARA QUE SE VEA CON LAS HISTORIAS) */
+        #chat-container { flex: 1; overflow-y: auto; padding: 180px 12px 140px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .msg-group { display: flex; align-items: flex-end; gap: 8px; width: 100%; transition: transform 0.1s ease-out; position: relative; }
+        .avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; background: #222; border: 0.5px solid #333; }
+        .content { display: flex; flex-direction: column; max-width: 75%; }
+        .nick { font-size: 12px; font-weight: 700; color: #8e8e93; margin-bottom: 3px; margin-left: 5px; display: flex; align-items: center; }
+        .bubble { padding: 10px 16px; border-radius: 20px; font-size: 15px; line-height: 1.4; box-shadow: 0 1px 2px rgba(0,0,0,0.3); }
+        .reply-box { background: rgba(0,0,0,0.2); border-left: 3px solid white; padding: 4px 8px; border-radius: 4px; margin-bottom: 6px; font-size: 13px; }
+        .info { font-size: 9px; color: #666; margin-top: 4px; font-weight: 800; text-transform: uppercase; margin-left: 5px; display: flex; gap: 8px; }
+        
+        /* Colores de Plataforma */
+        .plat-ANDROID { background-color: var(--color-android); }
+        .plat-IPHONE { background-color: var(--color-iphone); }
+        .plat-MAC { background-color: var(--color-mac); }
+        .plat-PC { background-color: var(--color-pc); }
+        .plat-WEB { background-color: var(--color-web); }
+        .plat-APP { background-color: var(--color-app); }
+        
+        .me { flex-direction: row-reverse; }
+        .me .content { align-items: flex-end; }
+        .me .bubble { border-bottom-right-radius: 4px; }
+        .other .bubble { border-bottom-left-radius: 4px; }
+
+        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.95); z-index: 200; border-top: 0.5px solid var(--border); padding-bottom: 30px; }
+        #reply-preview { display: none; background: #1c1c1e; margin: 10px 15px 0; padding: 8px 12px; border-radius: 12px 12px 0 0; border-left: 4px solid var(--accent); position: relative; }
+        #reply-preview b { color: var(--accent); font-size: 13px; }
+        #reply-preview p { margin: 2px 0 0; font-size: 14px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #close-reply { position: absolute; right: 10px; top: 8px; font-size: 20px; color: #666; cursor: pointer; }
+        .input-bar { padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
+        .field { flex: 1; background: var(--input-bg); border-radius: 20px; padding: 10px 16px; color: white; border: none; outline: none; font-size: 16px; }
+        #send-btn { background: #007aff; border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div id="paywall">
+        <div class="paywall-card">
+            <span style="font-size: 60px;">🚀</span>
+            <h2>SnapBook Premium</h2>
+            <p style="color: #8e8e93;">Has agotado tus 20 mensajes gratuitos. Ve a la tienda para comprar más mensajes o suscríbete.</p>
+            <div class="price-tag">$50 <span>MXN / Mes</span></div>
+            <button class="btn-premium" onclick="window.location.href='tienda.html'">Ir a la Tienda 💰</button>
+            <button class="btn-premium" style="background:#333; color:white;" onclick="window.location.href='payment.html'">Ver Planes VIP</button>
+            <button class="ios-btn" style="margin-top: 10px; color: #8e8e93;" onclick="document.getElementById('paywall').style.display='none'">Cerrar</button>
+        </div>
+    </div>
+
+    <header class="header">
+        <button class="ios-btn" id="back-nav">‹ Atrás</button>
+        <h1>Chat Global</h1>
+        <div style="width: 45px;"></div>
+    </header>
+
+    <!-- SECCIÓN DE HISTORIAS -->
+    <div class="stories-container" id="stories-list">
+        <div class="add-story-btn" id="open-upload">
+            <div class="add-circle">📸<div class="add-plus">+</div></div>
+            <div class="story-label">Tu historia</div>
+        </div>
+    </div>
+
+    <!-- VISOR DE HISTORIAS MEJORADO -->
+    <div id="story-viewer-modal">
+        <!-- Botón cerrar -->
+        <span class="story-close" id="close-viewer">×</span>
+
+        <!-- Cabecera con avatar y nick -->
+        <div class="story-viewer-header">
+            <img src="" class="story-viewer-avatar" id="story-viewer-avatar" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+            <div class="story-viewer-info">
+                <div class="story-viewer-nick" id="story-viewer-nick"></div>
+                <div class="story-viewer-time" id="story-viewer-time"></div>
+            </div>
+        </div>
+
+        <!-- Imagen de la historia -->
+        <img src="" class="story-img-full" id="story-img-display">
+
+        <!-- Texto sobre la historia -->
+        <div class="story-text-overlay" id="story-text-display"></div>
+
+        <!-- Pie con botón de vistas -->
+        <div class="story-viewer-footer">
+            <button class="story-views-btn" id="btn-show-views">
+                <!-- Icono ojo -->
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                </svg>
+                <span class="story-views-count" id="story-views-count">0</span>
+                <span>vistas</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- OVERLAY PARA CERRAR EL PANEL -->
+    <div id="views-overlay"></div>
+
+    <!-- PANEL DESLIZABLE DE LISTA DE VISTAS -->
+    <div id="views-panel">
+        <div class="views-panel-handle"></div>
+        <div class="views-panel-header">
+            <span class="views-panel-title">👁 Vistas</span>
+            <span class="views-panel-count" id="views-panel-count">0 personas</span>
+        </div>
+        <div class="views-panel-list" id="views-panel-list">
+            <!-- Se llena dinámicamente -->
+        </div>
+    </div>
+
+    <!-- MODAL DE CARGA -->
+    <div id="story-upload-modal">
+        <span class="story-close" id="close-upload">×</span>
+        <div class="upload-card">
+            <h2>Nueva Historia</h2>
+            <div class="file-input-wrapper">
+                <label class="file-input-label" id="file-input-label" for="story-file">
+                    <div class="file-input-icon">📸</div>
+                    <div class="file-input-text">Toca para seleccionar una imagen</div>
+                </label>
+                <input type="file" id="story-file" accept="image/*">
+            </div>
+            <div class="preview-container" id="preview-container">
+                <img id="preview-image" class="preview-image" src="" alt="Vista previa">
+                <div class="preview-actions">
+                    <button class="btn-change-image" id="btn-change-image">Cambiar imagen</button>
+                </div>
+            </div>
+            <!-- Campo de texto para la historia -->
+            <input type="text" id="story-text-input" class="story-text-input" placeholder="Añade un texto a tu historia..." maxlength="100">
+            
+            <button class="btn-publish" id="btn-upload-story">Publicar Historia</button>
+        </div>
+    </div>
+
+    <main id="chat-container"></main>
+
+    <div class="bottom-nav">
+        <div id="reply-preview">
+            <span id="close-reply">×</span>
+            <b id="reply-title"></b>
+            <p id="reply-text"></p>
+        </div>
+        <div class="input-bar">
+            <input type="text" id="msg-input" class="field" placeholder="Mensaje..." autocomplete="off">
+            <button id="send-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        // --- IMPORTACIÓN ORIGINAL DE VIEW_GLOBAL.JS ---
+        import { db, auth, getPlatformName, setReplyData, getReplyData, clearReplyData } from './view_global.js';
+        import { ref, onValue, query, limitToLast, push, get, set, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        
+        // --- IMPORTACIÓN DEL MÓDULO DE HISTORIAS ---
+        import { initStories } from './stories_module.js';
+
+        const container = document.getElementById("chat-container");
+        const msgInput = document.getElementById("msg-input");
+        const replyPreview = document.getElementById("reply-preview");
+        const paywall = document.getElementById("paywall");
+
+        const formatTime = (ts) => ts ? new Date(parseInt(ts)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "";
+        const formatTimeAgo = (ts) => {
+            if (!ts) return "";
+            const diff = Date.now() - parseInt(ts);
+            const mins = Math.floor(diff / 60000);
+            if (mins < 1) return "Ahora mismo";
+            if (mins < 60) return `Hace ${mins} min`;
+            const hrs = Math.floor(mins / 60);
+            if (hrs < 24) return `Hace ${hrs} h`;
+            return `Hace ${Math.floor(hrs / 24)} d`;
+        };
+
+        // --- SWIPE LOGIC (ORIGINAL) ---
+        let touchStartX = 0; let activeEl = null;
+        const handleStart = (e) => { touchStartX = e.touches[0].clientX; activeEl = e.currentTarget; };
+        const handleMove = (e) => {
+            let x = e.touches[0].clientX - touchStartX;
+            if (x > 0 && x < 60) activeEl.style.transform = `translateX(${x}px)`;
+        };
+        const handleEnd = (e, nick, text) => {
+            let diff = e.changedTouches[0].clientX - touchStartX;
+            activeEl.style.transform = `translateX(0)`;
+            if (diff > 50) {
+                const data = setReplyData(nick, text); 
+                document.getElementById("reply-title").innerText = data.replyNick;
+                document.getElementById("reply-text").innerText = data.replyText;
+                replyPreview.style.display = "block";
+                msgInput.focus();
+                if (navigator.vibrate) navigator.vibrate(10);
+            }
+        };
+
+        document.getElementById("close-reply").onclick = () => { clearReplyData(); replyPreview.style.display = "none"; };
+
+        // =====================================================
+        //  LÓGICA DE VISTAS DE HISTORIAS
+        // =====================================================
+
+        let currentStoryId = null;
+        let currentUser = null;
+
+        const storyViewerModal = document.getElementById('story-viewer-modal');
+        const viewsPanel = document.getElementById('views-panel');
+        const viewsOverlay = document.getElementById('views-overlay');
+        const viewsPanelList = document.getElementById('views-panel-list');
+        const viewsPanelCount = document.getElementById('views-panel-count');
+        const storyViewsCount = document.getElementById('story-views-count');
+        const storyTextDisplay = document.getElementById('story-text-display');
+
+        // Abrir panel de vistas
+        document.getElementById('btn-show-views').onclick = () => {
+            viewsPanel.classList.add('open');
+            viewsOverlay.classList.add('active');
+        };
+
+        // Cerrar panel de vistas al tocar el overlay
+        viewsOverlay.onclick = () => {
+            viewsPanel.classList.remove('open');
+            viewsOverlay.classList.remove('active');
+        };
+
+        // Registrar vista y cargar datos de vistas en tiempo real
+        async function openStoryWithViews(storyId, storyData) {
+            currentStoryId = storyId;
+
+            // Mostrar datos básicos en el visor
+            document.getElementById('story-img-display').src = storyData.image || '';
+            document.getElementById('story-viewer-nick').textContent = storyData.nick || 'Usuario';
+            document.getElementById('story-viewer-time').textContent = formatTimeAgo(storyData.time);
+            document.getElementById('story-viewer-avatar').src = storyData.perfil || '';
+
+            // Mostrar texto si existe
+            if (storyData.text && storyData.text.trim() !== "") {
+                storyTextDisplay.textContent = storyData.text;
+                storyTextDisplay.style.display = 'block';
+            } else {
+                storyTextDisplay.style.display = 'none';
+            }
+
+            storyViewerModal.style.display = 'flex';
+
+            // Registrar vista si el usuario no es el dueño
+            if (currentUser && currentUser.uid !== storyData.uid) {
+                const viewRef = ref(db, `stories/${storyId}/views/${currentUser.uid}`);
+                const existingView = await get(viewRef);
+                if (!existingView.exists()) {
+                    await set(viewRef, {
+                        nick: localStorage.getItem('nick') || 'Usuario',
+                        perfil: localStorage.getItem('perfil') || '',
+                        time: Date.now().toString()
+                    });
+                }
+            }
+
+            // Escuchar vistas en tiempo real
+            const viewsRef = ref(db, `stories/${storyId}/views`);
+            onValue(viewsRef, (snap) => {
+                const views = snap.val() || {};
+                const viewList = Object.values(views);
+                const count = viewList.length;
+
+                // Actualizar contador en el botón
+                storyViewsCount.textContent = count;
+
+                // Actualizar contador en el panel
+                viewsPanelCount.textContent = `${count} ${count === 1 ? 'persona' : 'personas'}`;
+
+                // Renderizar lista de personas
+                if (count === 0) {
+                    viewsPanelList.innerHTML = `
+                        <div class="views-empty">
+                            <div class="views-empty-icon">👁</div>
+                            <div class="views-empty-text">Nadie ha visto esta historia aún</div>
+                        </div>`;
+                } else {
+                    // Ordenar por tiempo más reciente
+                    const sorted = viewList.sort((a, b) => parseInt(b.time || 0) - parseInt(a.time || 0));
+                    viewsPanelList.innerHTML = sorted.map(v => `
+                        <div class="view-person-item">
+                            <img class="view-person-avatar" src="${v.perfil || ''}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+                            <div class="view-person-info">
+                                <div class="view-person-nick">${v.nick || 'Usuario'}</div>
+                                <div class="view-person-time">${formatTimeAgo(v.time)}</div>
+                            </div>
+                        </div>`).join('');
+                }
+            });
+        }
+
+        // Cerrar visor
+        document.getElementById('close-viewer').onclick = () => {
+            storyViewerModal.style.display = 'none';
+            viewsPanel.classList.remove('open');
+            viewsOverlay.classList.remove('active');
+            currentStoryId = null;
+        };
+
+        // Exponer función para que stories_module.js pueda usarla
+        window.openStoryWithViews = openStoryWithViews;
+
+        // =====================================================
+        //  FIN LÓGICA DE VISTAS
+        // =====================================================
+
+        auth.onAuthStateChanged((user) => {
+            if (!user) return;
+            currentUser = user;
+
+            // --- INICIALIZAR HISTORIAS (MODULAR) ---
+            initStories();
+
+            // CARGAR CHAT (ORIGINAL)
+            onValue(query(ref(db, 'chatglobar'), limitToLast(50)), (snap) => {
+                container.innerHTML = "";
+                snap.forEach(child => {
+                    const d = child.val();
+                    const isMe = d.uid === user.uid;
+                    const plat = (d.multi || "WEB").toUpperCase();
+                    const badge = d.isVerificado ? '<span class="badge-v">✔</span>' : '';
+
+                    const group = document.createElement("div");
+                    group.className = `msg-group ${isMe ? 'me' : 'other'}`;
+                    group.ontouchstart = handleStart; group.ontouchmove = handleMove;
+                    group.ontouchend = (e) => handleEnd(e, d.nick, d.text);
+
+                    group.innerHTML = `
+                        <img src="${d.perfil || ''}" class="avatar" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+                        <div class="content">
+                            <span class="nick">${d.nick} ${badge}</span>
+                            <div class="bubble plat-${plat}">
+                                ${d.replyText ? `<div class="reply-box"><b>${d.replyNick}</b>${d.replyText}</div>` : ""}
+                                ${d.text}
+                            </div>
+                            <div class="info"><span>${plat}</span><span>${formatTime(d.time)}</span></div>
+                        </div>`;
+                    container.appendChild(group);
+                });
+                container.scrollTop = container.scrollHeight;
+            });
+
+            // ENVÍO CON LÓGICA DE 20 + EXTRAS (ORIGINAL)
+            const send = async () => {
+                const text = msgInput.value.trim();
+                if(!text) return;
+
+                const userRef = ref(db, `Users/${user.uid}`);
+                const userSnap = await get(userRef);
+                const userData = userSnap.val() || {};
+
+                // Definición de estatus
+                const tieneCheck = (userData.premium === 'verificado');
+                const esVIP = (userData.type === 'premium' || tieneCheck);
+                const mHoy = userData.mensajesHoy || 0;
+                const mExtra = userData.mensajesExtra || 0;
+
+                // Validación de permiso de envío
+                if (esVIP || mHoy < 20 || mExtra > 0) {
+                    const reply = getReplyData();
+                    const msgData = {
+                        uid: user.uid,
+                        nick: localStorage.getItem('nick') || "User",
+                        perfil: localStorage.getItem('perfil') || "",
+                        text: text,
+                        multi: getPlatformName(),
+                        time: Date.now().toString(),
+                        isVerificado: tieneCheck
+                    };
+                    if(reply) { msgData.replyNick = reply.replyNick; msgData.replyText = reply.replyText; }
+
+                    await push(ref(db, 'chatglobar'), msgData);
+                    
+                    // Actualización de contadores
+                    if (!esVIP) {
+                        if (mHoy < 20) {
+                            await update(userRef, { mensajesHoy: mHoy + 1 });
+                        } else {
+                            await update(userRef, { mensajesExtra: mExtra - 1 });
+                        }
+                    }
+
+                    msgInput.value = "";
+                    replyPreview.style.display = "none";
+                    clearReplyData();
+                } else {
+                    paywall.style.display = "flex";
+                }
+            };
+
+            document.getElementById("send-btn").onclick = send;
+            msgInput.onkeypress = (e) => { if(e.key === 'Enter') send(); };
+        });
+
+        // Gestión del selector de archivo personalizado
+        const storyFile = document.getElementById('story-file');
+        const fileInputLabel = document.getElementById('file-input-label');
+        const previewContainer = document.getElementById('preview-container');
+        const previewImage = document.getElementById('preview-image');
+        const btnChangeImage = document.getElementById('btn-change-image');
+
+        fileInputLabel.onclick = () => storyFile.click();
+        btnChangeImage.onclick = () => storyFile.click();
+
+        storyFile.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    previewImage.src = event.target.result;
+                    previewContainer.classList.add('active');
+                    fileInputLabel.classList.add('has-image');
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+
+        document.getElementById('back-nav').onclick = () => window.history.back();
+    </script>
+</body>
+</html>

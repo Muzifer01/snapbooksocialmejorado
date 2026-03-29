@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapBookSocial - Crear Publicación</title>
+    <style>
+        :root {
+            --bg-black: #000000;
+            --card-white: #ffffff;
+            --text-main: #1c1e21;
+            --text-muted: #65676b;
+            --accent: #007AFF;
+            --poll-bg: #f0f2f5;
+        }
+
+        body {
+            margin: 0;
+            background-color: var(--bg-black);
+            font-family: -apple-system, system-ui, sans-serif;
+            color: white;
+        }
+
+        /* HEADER - IDÉNTICO A HOME.HTML */
+        .header {
+            padding: 50px 20px 15px;
+            background: var(--bg-black);
+            position: sticky; 
+            top: 0; 
+            z-index: 100;
+        }
+        .header h1 { 
+            font-size: 32px; 
+            margin: 0; 
+            font-weight: 800; 
+            letter-spacing: -1px;
+        }
+
+        /* CONTENEDOR PRINCIPAL */
+        #feed-container {
+            padding: 10px 15px 120px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* TARJETA DE CREACIÓN - IDÉNTICA A POST-CARD */
+        .post-card {
+            background: var(--card-white);
+            border-radius: 18px;
+            padding: 15px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            color: var(--text-main);
+            animation: slideUp 0.4s ease-out;
+            position: relative;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .form-group textarea,
+        .form-group input[type="text"],
+        .form-group input[type="file"],
+        .form-group select {
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            transition: 0.2s;
+        }
+
+        .form-group textarea:focus,
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* ZONA DE CARGA DE IMAGEN */
+        .image-upload-zone {
+            border: 2px dashed var(--accent);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            background: rgba(0, 122, 255, 0.05);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .image-upload-zone:hover {
+            background: rgba(0, 122, 255, 0.1);
+            border-color: var(--accent);
+            transform: scale(1.02);
+        }
+
+        .image-upload-zone.dragover {
+            background: rgba(0, 122, 255, 0.15);
+            border-color: var(--accent);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            color: var(--text-main);
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .upload-subtext {
+            color: var(--text-muted);
+            font-size: 12px;
+        }
+
+        #post-image {
+            display: none;
+        }
+
+        /* PREVIEW DE IMAGEN */
+        .image-preview-container {
+            margin-top: 15px;
+            border-radius: 12px;
+            overflow: hidden;
+            display: none;
+            position: relative;
+        }
+
+        .image-preview-container.show {
+            display: block;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        .image-remove-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+        }
+
+        .image-remove-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+
+        /* SECCIÓN DE ENCUESTAS */
+        .poll-section {
+            background: var(--poll-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .poll-section h3 {
+            margin: 0 0 15px 0;
+            font-size: 14px;
+            color: var(--text-main);
+        }
+
+        .poll-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .poll-option-input {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .poll-option-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .poll-option-input button {
+            background: #ff6b6b;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-add-option {
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .btn-add-option:active {
+            transform: scale(0.95);
+        }
+
+        /* BOTONES DE ACCIÓN */
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-action {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: 0.2s;
+            color: var(--text-main);
+        }
+
+        .btn-action.active {
+            border-color: var(--accent);
+            background: rgba(0, 122, 255, 0.1);
+            color: var(--accent);
+        }
+
+        /* BOTÓN PUBLICAR */
+        .btn-publish {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-publish:active {
+            transform: scale(0.98);
+        }
+
+        .btn-publish:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* NAV BAR - IDÉNTICA A HOME.HTML */
+        .nav-bar {
+            position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 400px; background: rgba(25, 25, 25, 0.9);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 35px; display: flex; justify-content: space-around;
+            align-items: center; padding: 12px 0; border: 1px solid rgba(255,255,255,0.1);
+            z-index: 1000;
+        }
+
+        .nav-item { 
+            color: #888; font-size: 10px; font-weight: bold; 
+            text-align: center; text-decoration: none; 
+        }
+        .nav-item.active { color: white; }
+        .nav-item img { width: 24px; height: 24px; display: block; margin: 0 auto 4px; }
+
+        .btn-add {
+            width: 55px; height: 55px; background: var(--accent);
+            border-radius: 50%; border: none; color: white; font-size: 30px;
+            cursor: pointer; box-shadow: 0 5px 15px rgba(0,122,255,0.4);
+            display: flex; justify-content: center; align-items: center;
+            text-decoration: none; position: relative; top: -5px;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* LOADING */
+        .loading {
+            display: none;
+            text-align: center;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .loading.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>Crear Posts</h1>
+        <div id="current-user-avatar" style="width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 2px solid var(--accent);">
+            <img src="https://www.w3schools.com/howto/img_avatar.png" style="width: 100%; height: 100%; object-fit: cover;">
+        </div>
+    </header>
+
+    <main id="feed-container">
+        <div class="post-card">
+            <!-- TIPO DE PUBLICACIÓN -->
+            <div class="action-buttons">
+                <button class="btn-action active" onclick="setPostType('text')" id="btn-text">📝 Texto</button>
+                <button class="btn-action" onclick="setPostType('image')" id="btn-image">🖼️ Imagen</button>
+                <button class="btn-action" onclick="setPostType('poll')" id="btn-poll">📊 Encuesta</button>
+            </div>
+
+            <!-- FORMULARIO -->
+            <form id="create-form">
+                <!-- TEXTO -->
+                <div class="form-group">
+                    <label for="post-text">¿Qué estás pensando?</label>
+                    <textarea id="post-text" placeholder="Comparte tu pensamiento..." required></textarea>
+                </div>
+
+                <!-- IMAGEN -->
+                <div id="image-group" style="display: none;">
+                    <div class="image-upload-zone" id="upload-zone" onclick="document.getElementById('post-image').click()">
+                        <div class="upload-icon">🖼️</div>
+                        <div class="upload-text">Toca para seleccionar una imagen</div>
+                        <div class="upload-subtext">o arrastra una aquí</div>
+                    </div>
+                    <input type="file" id="post-image" accept="image/*">
+                    <div class="image-preview-container" id="image-preview-container">
+                        <img id="image-preview" class="image-preview" alt="Preview">
+                        <button type="button" class="image-remove-btn" onclick="removeImage()">✕</button>
+                    </div>
+                </div>
+
+                <!-- ENCUESTA -->
+                <div class="poll-section" id="poll-section" style="display: none;">
+                    <h3>Opciones de la Encuesta</h3>
+                    <div class="poll-options" id="poll-options">
+                        <div class="poll-option-input">
+                            <input type="text" class="poll-option" placeholder="Opción 1">
+                            <button type="button" onclick="removePollOption(this)">✕</button>
+                        </div>
+                        <div class="poll-option-input">
+                            <input type="text" class="poll-option" placeholder="Opción 2">
+                            <button type="button" onclick="removePollOption(this)">✕</button>
+                        </div>
+                    </div>
+                    <button type="button" class="btn-add-option" onclick="addPollOption()">+ Añadir Opción</button>
+                </div>
+
+                <!-- BOTÓN PUBLICAR -->
+                <button type="button" class="btn-publish" onclick="publishPost()" id="btn-publish">Publicar</button>
+                <div class="loading" id="loading">Publicando...</div>
+            </form>
+        </div>
+    </main>
+
+    <nav class="nav-bar">
+        <a href="home.html" class="nav-item">
+            <img src="https://img.icons8.com/m_rounded/512/FFFFFF/home.png" alt="Home">
+            <span>INICIO</span>
+        </a>
+
+        <a href="createposts.html" class="btn-add">+</a>
+
+        <a href="menu.html" class="nav-item">
+            <img src="https://img.icons8.com/m_rounded/512/FFFFFF/menu.png" alt="Menu">
+            <span>MENÚ</span>
+        </a>
+    </nav>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+        // CONFIGURACIÓN FIREBASE
+        const firebaseConfig = {
+            apiKey: "AIzaSyDN89D9cljm0e8OzrPtloYOUcOY7XSXBqg",
+            authDomain: "socialtest-3d114.firebaseapp.com",
+            databaseURL: "https://socialtest-3d114-default-rtdb.firebaseio.com",
+            projectId: "socialtest-3d114",
+            storageBucket: "socialtest-3d114.firebasestorage.app",
+            messagingSenderId: "779140232754",
+            appId: "1:779140232754:android:8b1d492ce1970d98e26e2b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+
+        let currentUser = null;
+        let currentPostType = 'text';
+        let userProfileData = { nick: 'Usuario', perfil: 'https://www.w3schools.com/howto/img_avatar.png' };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                const userRef = ref(db, `Users/${user.uid}`);
+                onValue(userRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        userProfileData = {
+                            nick: userData.nick || 'Usuario',
+                            perfil: userData.perfil || 'https://www.w3schools.com/howto/img_avatar.png'
+                        };
+                        // Actualizar avatar en cabecera
+                        const avatarImg = document.querySelector('#current-user-avatar img');
+                        if (avatarImg) avatarImg.src = userProfileData.perfil;
+                    }
+                });
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        window.setPostType = (type) => {
+            currentPostType = type;
+            document.getElementById('btn-text').classList.remove('active');
+            document.getElementById('btn-image').classList.remove('active');
+            document.getElementById('btn-poll').classList.remove('active');
+            document.getElementById(`btn-${type}`).classList.add('active');
+
+            document.getElementById('image-group').style.display = type === 'image' ? 'block' : 'none';
+            document.getElementById('poll-section').style.display = type === 'poll' ? 'block' : 'none';
+        };
+
+        document.getElementById('post-image').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const preview = document.getElementById('image-preview');
+                    preview.src = event.target.result;
+                    document.getElementById('image-preview-container').classList.add('show');
+                    document.getElementById('upload-zone').style.display = 'none';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        const uploadZone = document.getElementById('upload-zone');
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.classList.remove('dragover');
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                document.getElementById('post-image').files = files;
+                const event = new Event('change', { bubbles: true });
+                document.getElementById('post-image').dispatchEvent(event);
+            }
+        });
+
+        window.removeImage = () => {
+            document.getElementById('post-image').value = '';
+            document.getElementById('image-preview-container').classList.remove('show');
+            document.getElementById('upload-zone').style.display = 'block';
+        };
+
+        window.addPollOption = () => {
+            const pollOptions = document.getElementById('poll-options');
+            const optionCount = pollOptions.children.length + 1;
+            const newOption = document.createElement('div');
+            newOption.className = 'poll-option-input';
+            newOption.innerHTML = `
+                <input type="text" class="poll-option" placeholder="Opción ${optionCount}">
+                <button type="button" onclick="removePollOption(this)">✕</button>
+            `;
+            pollOptions.appendChild(newOption);
+        };
+
+        window.removePollOption = (btn) => {
+            btn.parentElement.remove();
+        };
+
+        window.publishPost = async () => {
+            if (!currentUser) {
+                alert('Debes estar autenticado');
+                return;
+            }
+
+            const postText = document.getElementById('post-text').value.trim();
+            if (!postText) {
+                alert('Escribe algo para publicar');
+                return;
+            }
+
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('btn-publish').disabled = true;
+
+            try {
+                const newPostRef = push(ref(db, 'ListPosts'));
+                const postId = newPostRef.key;
+                let imageUrl = '';
+
+                // Subir imagen si existe
+                if (currentPostType === 'image') {
+                    const imageFile = document.getElementById('post-image').files[0];
+                    if (imageFile) {
+                        const storagePath = `posts/${currentUser.uid}/${Date.now()}`;
+                        const fileRef = storageRef(storage, storagePath);
+                        await uploadBytes(fileRef, imageFile);
+                        imageUrl = await getDownloadURL(fileRef);
+                    }
+                }
+
+                // Detectar plataforma
+                const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+                let platform = 'Web';
+                if (/android/i.test(userAgent)) {
+                    platform = 'Android';
+                } else if (/iPad|iPhone|iPod/.test(userAgent) && !window.MSStream) {
+                    platform = 'iPhone';
+                } else if (/Mac/.test(userAgent)) {
+                    platform = 'Mac';
+                } else if (/Win/.test(userAgent)) {
+                    platform = 'PC';
+                }
+
+                // Preparar datos del post
+                const postData = {
+                    uid: currentUser.uid,
+                    nick: userProfileData.nick || 'Usuario',
+                    perfil: userProfileData.perfil || 'https://www.w3schools.com/howto/img_avatar.png',
+                    text: postText,
+                    time: Date.now(),
+                    multi: platform,
+                    post_id: postId,
+                    likes: {},
+                    comments: {},
+                    commentCount: 0
+                };
+
+                if (imageUrl) {
+                    postData.image = imageUrl;
+                }
+
+                // Crear encuesta si es tipo poll
+                if (currentPostType === 'poll') {
+                    const pollOptions = document.querySelectorAll('.poll-option');
+                    const options = {};
+                    pollOptions.forEach((input, index) => {
+                        if (input.value.trim()) {
+                            options[`option_${index}`] = {
+                                text: input.value.trim(),
+                                votes: 0
+                            };
+                        }
+                    });
+
+                    if (Object.keys(options).length < 2) {
+                        alert('Necesitas al menos 2 opciones para la encuesta');
+                        document.getElementById('loading').classList.remove('show');
+                        document.getElementById('btn-publish').disabled = false;
+                        return;
+                    }
+
+                    postData.poll = {
+                        options: options,
+                        totalVotes: 0,
+                        userVotes: {}
+                    };
+                }
+
+                // Guardar en Firebase
+                await set(newPostRef, postData);
+
+                alert('¡Publicación creada exitosamente!');
+                document.getElementById('create-form').reset();
+                document.getElementById('image-preview').classList.remove('show');
+                window.location.href = 'home.html';
+
+            } catch (error) {
+                console.error('Error al publicar:', error);
+                alert('Error al publicar: ' + error.message);
+            } finally {
+                document.getElementById('loading').classList.remove('show');
+                document.getElementById('btn-publish').disabled = false;
+            }
+        };
+    </script>
+</body>
+</html>

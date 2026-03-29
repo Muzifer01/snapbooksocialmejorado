@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapBook - Login</title>
+    <style>
+        :root { --bg: #000; --glass: rgba(28, 28, 30, 0.8); --accent: #007AFF; }
+        body { margin: 0; background: var(--bg); color: white; font-family: -apple-system, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
+        .bg-blur { position: absolute; width: 300px; height: 300px; background: var(--accent); filter: blur(120px); border-radius: 50%; opacity: 0.3; }
+        .container { position: relative; z-index: 1; width: 85%; max-width: 380px; background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 30px; padding: 40px; border: 1px solid rgba(255,255,255,0.1); text-align: center; }
+        .logo { font-size: 32px; font-weight: 800; margin-bottom: 30px; }
+        input { width: 100%; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; color: white; margin-bottom: 15px; box-sizing: border-box; outline: none; }
+        .btn { width: 100%; background: var(--accent); color: white; border: none; padding: 15px; border-radius: 15px; font-weight: bold; cursor: pointer; }
+        .link { margin-top: 20px; font-size: 13px; color: #888; }
+        .link a { color: var(--accent); text-decoration: none; }
+    </style>
+</head>
+<body>
+    <div class="bg-blur"></div>
+    <div class="container">
+        <div class="logo">SnapBookSocial</div>
+        
+        <input type="email" id="email" placeholder="Correo">
+        <input type="password" id="pass" placeholder="Contraseña">
+        <button class="btn" id="login-btn">Entrar</button>
+
+        <div class="link">¿No tienes cuenta? <a href="register.html">Regístrate</a></div>
+    </div>
+
+    <script type="module">
+    import { auth } from './firebase-config.js?v=1';
+    import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+    const loginBtn = document.getElementById('login-btn');
+    const emailInput = document.getElementById('email');
+    const passInput = document.getElementById('pass');
+
+    // Función principal de acceso (Correo/Contraseña)
+    const handleLogin = async () => {
+        const email = emailInput.value.trim();
+        const pass = passInput.value;
+
+        if (!email || !pass) {
+            alert("Por favor, completa todos los campos.");
+            return;
+        }
+
+        // Feedback visual
+        loginBtn.disabled = true;
+        loginBtn.style.opacity = "0.7";
+        loginBtn.innerText = "Verificando...";
+
+        try {
+            // 1. Autenticación con Firebase Auth
+            const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+            const user = userCredential.user;
+
+            // 2. Guardar datos básicos en LocalStorage
+            localStorage.setItem('uid', user.uid);
+            localStorage.setItem('correo', user.email);
+
+            // 3. Redirección (¡Recuerda que en GitHub debe coincidir mayúsculas/minúsculas!)
+            window.location.href = "Home.html"; // O "home.html" si así se llama tu archivo.
+
+        } catch (error) {
+            console.error("Error de login:", error.code);
+            loginBtn.disabled = false;
+            loginBtn.style.opacity = "1";
+            loginBtn.innerText = "Entrar";
+
+            // Manejo de errores amigable
+            if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                alert("Correo o contraseña incorrectos.");
+            } else if (error.code === 'auth/too-many-requests') {
+                alert("Demasiados intentos. Intenta más tarde.");
+            } else {
+                alert("Error al intentar entrar. Revisa tu conexión.");
+            }
+        }
+    };
+
+    // Evento clic
+    loginBtn.onclick = handleLogin;
+
+    // Permitir entrar al presionar "Enter" en el teclado
+    [emailInput, passInput].forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleLogin();
+        });
+    });
+</script>
+</body>
+</html>
