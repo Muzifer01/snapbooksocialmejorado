@@ -629,7 +629,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, onValue, push, set, runTransaction, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, onValue, push, set, runTransaction, get, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         const firebaseConfig = {
@@ -652,6 +652,7 @@
         let activePostId = null;
         let currentMood = 'all';
         let lastPostsData = {};
+        const deletingExpiredPosts = new Set();
 
         onAuthStateChanged(auth, async (user) => {
             console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
@@ -698,6 +699,30 @@
             if (!timestamp) return "";
             const date = new Date(timestamp);
             return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
+        };
+
+        const getPostExpiration = (post) => {
+            if (!post || typeof post !== 'object') return null;
+            const rawValue = post.countdown?.expiresAt ?? post.expiresAt ?? post.expirationTime ?? post.expireAt ?? null;
+            const expiresAt = Number(rawValue);
+            return Number.isFinite(expiresAt) && expiresAt > 0 ? expiresAt : null;
+        };
+
+        const isPostExpired = (post) => {
+            const expiresAt = getPostExpiration(post);
+            return expiresAt !== null && expiresAt <= Date.now();
+        };
+
+        const deleteExpiredPost = async (postId) => {
+            if (!postId || deletingExpiredPosts.has(postId)) return;
+            deletingExpiredPosts.add(postId);
+            try {
+                await remove(ref(db, `ListPosts/${postId}`));
+            } catch (error) {
+                console.warn('No se pudo eliminar la publicación expirada', postId, error);
+            } finally {
+                deletingExpiredPosts.delete(postId);
+            }
         };
 
         window.toggleLike = async (postId) => {
@@ -851,6 +876,12 @@
 
                     postIds.forEach(postId => {
                         const post = data[postId];
+
+                        if (isPostExpired(post)) {
+                            deleteExpiredPost(postId);
+                            return;
+                        }
+
                         const postMood = (post.mood || "").toLowerCase();
                         const matchesMood = currentMood === 'all' || postMood === currentMood;
                         if (!matchesMood) return;
@@ -910,12 +941,13 @@
 
                         // Temporizador
                         let timerHtml = '';
-                        if (post.countdown && post.countdown.expiresAt) {
-                            const timeLeft = post.countdown.expiresAt - Date.now();
+                        const postExpiresAt = getPostExpiration(post);
+                        if (postExpiresAt) {
+                            const timeLeft = postExpiresAt - Date.now();
                             if (timeLeft > 0) {
                                 const hours = Math.floor(timeLeft / (1000 * 60 * 60));
                                 const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                                timerHtml = '<div class="timer-badge" data-timer="' + post.countdown.expiresAt + '">\u23f0 Expira en ' + hours + 'h ' + minutes + 'm</div>';
+                                timerHtml = '<div class="timer-badge" data-timer="' + postExpiresAt + '">\u23f0 Expira en ' + hours + 'h ' + minutes + 'm</div>';
                             }
                         }
 
@@ -930,6 +962,10 @@
                         card.setAttribute('data-time', post.time || 0);
                         card.setAttribute('data-likes', likeCount);
                         card.setAttribute('data-post-id', postId);
+                        const expiresAt = getPostExpiration(post);
+                        if (expiresAt) {
+                            card.setAttribute('data-expires-at', expiresAt);
+                        }
                         container.appendChild(card);
                     });
 
@@ -1212,22 +1248,26 @@
             const postCards = document.querySelectorAll('.post-card');
             postCards.forEach(card => {
                 const timerElement = card.querySelector('[data-timer]');
-                if (timerElement) {
-                    const expiresAt = parseInt(timerElement.getAttribute('data-timer'));
-                    const now = Date.now();
-                    const timeLeft = expiresAt - now;
-                    
-                    if (timeLeft <= 0) {
-                        timerElement.style.display = 'none';
-                    } else {
-                        const hours = Math.floor(timeLeft / (1000 * 60 * 60));
-                        const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                        timerElement.textContent = '⏰ Expira en ' + hours + 'h ' + minutes + 'm';
-                    }
+                if (!timerElement) return;
+
+                const expiresAt = parseInt(timerElement.getAttribute('data-timer'));
+                const now = Date.now();
+                const timeLeft = expiresAt - now;
+                const postId = card.getAttribute('data-post-id');
+
+                if (timeLeft <= 0) {
+                    card.remove();
+                    deleteExpiredPost(postId);
+                    return;
                 }
+
+                const hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                timerElement.textContent = '⏰ Expira en ' + hours + 'h ' + minutes + 'm';
             });
         };
-        setInterval(updateTimers, 60000);
+        updateTimers();
+        setInterval(updateTimers, 1000);
 
         // ===== SHAKE PARA SORPRESA =====
         let lastShakeTime = 0;
@@ -1274,6 +1314,7 @@
         shakeBtn.onclick = () => showRandomPost();
         document.body.appendChild(shakeBtn);
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
