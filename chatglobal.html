@@ -54,6 +54,28 @@
         .story-avatar-inner { width: 100%; height: 100%; border-radius: 50%; border: 2px solid black; overflow: hidden; background: #222; display: flex; align-items: center; justify-content: center; }
         .story-avatar-inner img { width: 100%; height: 100%; object-fit: cover; }
         .story-label { font-size: 11px; color: #8e8e93; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .story-count-badge {
+            position: absolute;
+            top: 0;
+            right: -2px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 5px;
+            border-radius: 999px;
+            background: var(--accent);
+            color: white;
+            font-size: 10px;
+            font-weight: 800;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid black;
+            z-index: 2;
+        }
+        .story-item.has-multiple .story-count-badge { display: inline-flex; }
+        .story-item.seen .story-avatar-wrapper { background: linear-gradient(45deg, #555, #404040); }
+        .story-item.seen .story-avatar-inner { opacity: 0.72; }
+        .story-item.seen .story-label, .story-item.seen .story-views-badge { color: #6f6f73; }
 
         /* Contador de vistas en la historia */
         .story-views-badge {
@@ -117,6 +139,19 @@
         .story-viewer-info { flex: 1; }
         .story-viewer-nick { font-size: 15px; font-weight: 700; color: white; }
         .story-viewer-time { font-size: 12px; color: rgba(255,255,255,0.6); }
+        .story-expiry-time {
+            font-size: 11px;
+            color: rgba(255, 100, 100, 0.9);
+            margin-top: 2px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .story-expiry-time::before {
+            content: '⏱';
+            font-size: 10px;
+        }
 
         /* Barra inferior del visor con vistas */
         .story-viewer-footer {
@@ -219,6 +254,246 @@
         .views-empty-icon { font-size: 40px; margin-bottom: 10px; }
         .views-empty-text { font-size: 15px; }
 
+        /* --- ESTILOS PARA REACCIONES Y COMENTARIOS --- */
+        .story-reactions-container {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+        .story-reaction-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 20px;
+            padding: 8px 12px;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+        .story-reaction-btn:active { background: rgba(255,255,255,0.25); }
+        
+        /* Panel de reacciones rápidas */
+        .story-reactions-panel {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 12px 16px;
+            display: none;
+            gap: 8px;
+            z-index: 2004;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+        .story-reactions-panel.active {
+            display: flex;
+        }
+        .emoji-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            padding: 4px 8px;
+        }
+        .emoji-btn:active { transform: scale(1.2); }
+        
+        /* Panel de comentarios */
+        .story-comment-panel {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
+            background: rgba(28, 28, 30, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 12px 16px;
+            display: none;
+            gap: 8px;
+            z-index: 2004;
+            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            flex-direction: row;
+        }
+        .story-comment-panel.active {
+            display: flex;
+        }
+        .story-comment-input {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 15px;
+            padding: 10px 14px;
+            color: white;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .story-comment-input::placeholder { color: rgba(255,255,255,0.5); }
+        .story-comment-input:focus { border-color: var(--accent); }
+        .btn-send-comment {
+            background: var(--accent);
+            border: none;
+            color: white;
+            border-radius: 15px;
+            padding: 10px 16px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .btn-send-comment:active { background: #0051d5; }
+        
+        /* Panel de reacciones y comentarios (slide-up) */
+        #reactions-comments-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1c1c1e;
+            border-radius: 24px 24px 0 0;
+            z-index: 3000;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+            max-height: 60vh;
+            display: flex;
+            flex-direction: column;
+        }
+        #reactions-comments-panel.open { transform: translateY(0); }
+        .reactions-comments-header {
+            padding: 16px 20px 12px;
+            border-bottom: 0.5px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+        }
+        .reactions-comments-title {
+            font-size: 17px;
+            font-weight: 700;
+        }
+        .close-reactions-comments {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .reactions-comments-content {
+            overflow-y: auto;
+            flex: 1;
+            padding: 12px 0 30px;
+        }
+        .reactions-section, .comments-section {
+            padding: 12px 20px;
+        }
+        .reactions-title, .comments-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #8e8e93;
+            margin-bottom: 8px;
+        }
+        .reactions-list {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .reaction-item {
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            padding: 6px 12px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .reaction-count {
+            color: #8e8e93;
+            font-size: 12px;
+        }
+        .comments-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .comment-item {
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            padding: 12px;
+            border-left: 3px solid var(--accent);
+        }
+        .comment-nick {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+        .comment-text {
+            font-size: 14px;
+            color: #e0e0e0;
+            line-height: 1.4;
+        }
+        .comment-time {
+            font-size: 11px;
+            color: #8e8e93;
+            margin-top: 4px;
+        }
+        .empty-reactions, .empty-comments {
+            text-align: center;
+            padding: 20px;
+            color: #8e8e93;
+            font-size: 14px;
+        }
+
+        /* Estilos para menciones resaltadas */
+        .mention {
+            color: #007aff;
+            font-weight: 600;
+        }
+        
+        .story-text-overlay .mention {
+            color: #00d4ff;
+            font-weight: 700;
+            text-shadow: 0 0 10px rgba(0, 212, 255, 0.5);
+        }
+
+        /* Notificación de compartir */
+        .share-toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 3001;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUpToast {
+            from {
+                opacity: 0;
+                transform: translateX(-50%) translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        .share-toast {
+            animation: slideUpToast 0.3s ease-out;
+        }
+
         /* Overlay para cerrar el panel */
         #views-overlay {
             position: fixed;
@@ -228,6 +503,81 @@
             display: none;
         }
         #views-overlay.active { display: block; }
+
+        /* Overlay para cerrar panel de reacciones/comentarios */
+        #reactions-comments-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 2999;
+            display: none;
+        }
+        #reactions-comments-overlay.active { display: block; }
+
+        /* Modal de confirmación de compartir */
+        #share-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .share-card {
+            background: rgba(28, 28, 30, 0.95);
+            padding: 30px;
+            border-radius: 30px;
+            width: 90%;
+            max-width: 350px;
+            text-align: center;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        .share-card h2 {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 15px 0;
+        }
+        .share-card p {
+            font-size: 14px;
+            color: #8e8e93;
+            margin: 0 0 20px 0;
+        }
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            flex-direction: column;
+        }
+        .share-btn {
+            padding: 12px 20px;
+            border-radius: 15px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 15px;
+            transition: all 0.2s;
+        }
+        .share-btn-confirm {
+            background: var(--accent);
+            color: white;
+        }
+        .share-btn-confirm:active {
+            background: #0051d5;
+        }
+        .share-btn-cancel {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+        .share-btn-cancel:active {
+            background: rgba(255, 255, 255, 0.2);
+        }
 
         /* --- MODAL DE CARGA --- */
         #story-upload-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); z-index: 2000; display: none; flex-direction: column; align-items: center; justify-content: center; }
@@ -249,6 +599,70 @@
         .btn-change-image { background: rgba(255,255,255,0.1); color: white; }
         .btn-change-image:active { background: rgba(255,255,255,0.2); }
         
+        /* Selector de fondos para historias de texto */
+        .background-selector {
+            margin: 20px 0;
+            display: none;
+        }
+        .background-selector.active {
+            display: block;
+        }
+        .background-label {
+            display: block;
+            font-size: 13px;
+            color: #8e8e93;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .background-colors {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .bg-color-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .bg-color-btn:hover {
+            transform: scale(1.1);
+        }
+        .bg-color-btn.selected {
+            border-color: white;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Vista previa de texto */
+        .text-preview-container {
+            width: 100%;
+            height: 250px;
+            border-radius: 20px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+        .text-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+            font-size: 28px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            line-height: 1.4;
+            word-break: break-word;
+        }
+        
         /* Campo de texto para historia */
         .story-text-input {
             width: 100%;
@@ -266,6 +680,23 @@
 
         .btn-publish { width: 100%; background: linear-gradient(135deg, #007aff 0%, #0051d5 100%); color: white; border: none; padding: 16px; border-radius: 20px; font-weight: 700; cursor: pointer; font-size: 16px; margin-top: 10px; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,122,255,0.3); }
         .btn-publish:active { transform: scale(0.98); box-shadow: 0 2px 8px rgba(0,122,255,0.2); }
+        
+        /* Estilos para historias de texto en el visor */
+        .story-text-only {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 20px;
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 2px 15px rgba(0, 0, 0, 0.4);
+            line-height: 1.5;
+            word-break: break-word;
+        }
         /* --- FIN ESTILOS HISTORIAS --- */
 
         /* AJUSTE DE PADDING PARA EL CHAT (PARA QUE SE VEA CON LAS HISTORIAS) */
@@ -300,6 +731,50 @@
         .input-bar { padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
         .field { flex: 1; background: var(--input-bg); border-radius: 20px; padding: 10px 16px; color: white; border: none; outline: none; font-size: 16px; }
         #send-btn { background: #007aff; border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #scroll-bottom-btn {
+            position: fixed;
+            right: 16px;
+            bottom: 105px;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(28, 28, 30, 0.95);
+            color: white;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+            z-index: 210;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 20px;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        #scroll-bottom-btn.show { display: flex; }
+        .chat-empty {
+            text-align: center;
+            color: #8e8e93;
+            margin: auto 0;
+            padding: 30px 20px 40px;
+        }
+        .chat-empty .emoji { font-size: 34px; display: block; margin-bottom: 10px; }
+        #toast {
+            position: fixed;
+            left: 50%;
+            bottom: 120px;
+            transform: translateX(-50%) translateY(20px);
+            background: rgba(28,28,30,0.95);
+            color: white;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 13px;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.22s ease;
+            z-index: 5000;
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
@@ -341,6 +816,7 @@
             <div class="story-viewer-info">
                 <div class="story-viewer-nick" id="story-viewer-nick"></div>
                 <div class="story-viewer-time" id="story-viewer-time"></div>
+                <div class="story-expiry-time" id="story-expiry-time"></div>
             </div>
         </div>
 
@@ -350,17 +826,57 @@
         <!-- Texto sobre la historia -->
         <div class="story-text-overlay" id="story-text-display"></div>
 
-        <!-- Pie con botón de vistas -->
+        <!-- Pie con botón de vistas y reacciones -->
         <div class="story-viewer-footer">
-            <button class="story-views-btn" id="btn-show-views">
-                <!-- Icono ojo -->
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                    <circle cx="12" cy="12" r="3"/>
-                </svg>
-                <span class="story-views-count" id="story-views-count">0</span>
-                <span>vistas</span>
-            </button>
+            <div class="story-reactions-container">
+                <button class="story-reaction-btn" id="btn-reactions" title="Reaccionar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+                        <line x1="9" y1="9" x2="9.01" y2="9"/>
+                        <line x1="15" y1="9" x2="15.01" y2="9"/>
+                    </svg>
+                </button>
+                <button class="story-reaction-btn" id="btn-comment" title="Comentar">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                </button>
+                <button class="story-reaction-btn" id="btn-share-story" title="Compartir en chat">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="18" cy="5" r="3"/>
+                        <circle cx="6" cy="12" r="3"/>
+                        <circle cx="18" cy="19" r="3"/>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                    </svg>
+                </button>
+                <button class="story-views-btn" id="btn-show-views">
+                    <!-- Icono ojo -->
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                        <circle cx="12" cy="12" r="3"/>
+                    </svg>
+                    <span class="story-views-count" id="story-views-count">0</span>
+                    <span>vistas</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Panel de reacciones rápidas -->
+        <div class="story-reactions-panel" id="story-reactions-panel">
+            <button class="emoji-btn" data-emoji="❤️">❤️</button>
+            <button class="emoji-btn" data-emoji="😂">😂</button>
+            <button class="emoji-btn" data-emoji="🔥">🔥</button>
+            <button class="emoji-btn" data-emoji="😍">😍</button>
+            <button class="emoji-btn" data-emoji="😮">😮</button>
+            <button class="emoji-btn" data-emoji="😢">😢</button>
+        </div>
+
+        <!-- Panel de comentarios -->
+        <div class="story-comment-panel" id="story-comment-panel">
+            <input type="text" id="story-comment-input" class="story-comment-input" placeholder="Escribe un comentario..." maxlength="200">
+            <button class="btn-send-comment" id="btn-send-comment">Enviar</button>
         </div>
     </div>
 
@@ -379,6 +895,42 @@
         </div>
     </div>
 
+    <!-- PANEL DE REACCIONES Y COMENTARIOS -->
+    <div id="reactions-comments-panel">
+        <div class="reactions-comments-header">
+            <span class="reactions-comments-title">Reacciones y Comentarios</span>
+            <button class="close-reactions-comments" id="close-reactions-comments">×</button>
+        </div>
+        <div class="reactions-comments-content">
+            <!-- Reacciones -->
+            <div class="reactions-section">
+                <div class="reactions-title">Reacciones</div>
+                <div class="reactions-list" id="reactions-list">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+            <!-- Comentarios -->
+            <div class="comments-section">
+                <div class="comments-title">Comentarios</div>
+                <div class="comments-list" id="comments-list">
+                    <!-- Se llena dinámicamente -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE COMPARTIR HISTORIA -->
+    <div id="share-modal">
+        <div class="share-card">
+            <h2>✈️ Compartir Historia</h2>
+            <p>¿Deseas compartir esta historia en el chat global?</p>
+            <div class="share-buttons">
+                <button class="share-btn share-btn-confirm" id="btn-share-confirm">Sí, compartir</button>
+                <button class="share-btn share-btn-cancel" id="btn-share-cancel">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE CARGA -->
     <div id="story-upload-modal">
         <span class="story-close" id="close-upload">×</span>
@@ -388,6 +940,7 @@
                 <label class="file-input-label" id="file-input-label" for="story-file">
                     <div class="file-input-icon">📸</div>
                     <div class="file-input-text">Toca para seleccionar una imagen</div>
+                    <div class="file-input-text" style="margin-top:8px;font-size:12px;">PNG/JPG · máximo 3 MB</div>
                 </label>
                 <input type="file" id="story-file" accept="image/*">
             </div>
@@ -397,14 +950,36 @@
                     <button class="btn-change-image" id="btn-change-image">Cambiar imagen</button>
                 </div>
             </div>
+            
+            <!-- Selector de fondos para historias de texto -->
+            <div class="background-selector">
+                <label class="background-label">Elige un fondo para tu historia:</label>
+                <div class="background-colors" id="background-colors">
+                    <button class="bg-color-btn" data-bg="linear-gradient(135deg, #667eea 0%, #764ba2 100%)" title="Púrpura" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"></button>
+                    <button class="bg-color-btn" data-bg="linear-gradient(135deg, #f093fb 0%, #f5576c 100%)" title="Rosa" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"></button>
+                    <button class="bg-color-btn" data-bg="linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)" title="Océano" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"></button>
+                    <button class="bg-color-btn" data-bg="linear-gradient(135deg, #fa709a 0%, #fee140 100%)" title="Atardecer" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%)"></button>
+                    <button class="bg-color-btn" data-bg="linear-gradient(135deg, #30cfd0 0%, #330867 100%)" title="Neón" style="background: linear-gradient(135deg, #30cfd0 0%, #330867 100%)"></button>
+                    <button class="bg-color-btn" data-bg="linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)" title="Pastel" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%)"></button>
+                </div>
+            </div>
+            
+            <!-- Vista previa de texto -->
+            <div class="text-preview-container" id="text-preview-container" style="display: none;">
+                <div class="text-preview" id="text-preview"></div>
+            </div>
+            
             <!-- Campo de texto para la historia -->
-            <input type="text" id="story-text-input" class="story-text-input" placeholder="Añade un texto a tu historia..." maxlength="100">
+            <input type="text" id="story-text-input" class="story-text-input" placeholder="Añade un texto a tu historia..." maxlength="200">
             
             <button class="btn-publish" id="btn-upload-story">Publicar Historia</button>
         </div>
     </div>
 
     <main id="chat-container"></main>
+
+    <button id="scroll-bottom-btn" title="Bajar al final">↓</button>
+    <div id="toast"></div>
 
     <div class="bottom-nav">
         <div id="reply-preview">
@@ -432,6 +1007,7 @@
         const msgInput = document.getElementById("msg-input");
         const replyPreview = document.getElementById("reply-preview");
         const paywall = document.getElementById("paywall");
+        const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
 
         const formatTime = (ts) => ts ? new Date(parseInt(ts)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "";
         const formatTimeAgo = (ts) => {
@@ -443,6 +1019,24 @@
             const hrs = Math.floor(mins / 60);
             if (hrs < 24) return `Hace ${hrs} h`;
             return `Hace ${Math.floor(hrs / 24)} d`;
+        };
+        const escapeHTML = (value = '') => value
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+        const linkifyText = (value = '') => escapeHTML(value)
+            .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer" style="color:white;text-decoration:underline;word-break:break-word;">$1</a>')
+            .replace(/\n/g, '<br>');
+        let toastTimer = null;
+        const showToast = (text) => {
+            const toast = document.getElementById('toast');
+            if (!toast) return;
+            toast.textContent = text;
+            toast.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => toast.classList.remove('show'), 1600);
         };
 
         // --- SWIPE LOGIC (ORIGINAL) ---
@@ -466,6 +1060,17 @@
         };
 
         document.getElementById("close-reply").onclick = () => { clearReplyData(); replyPreview.style.display = "none"; };
+
+        const updateScrollButton = () => {
+            const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
+            if (distance > 180) scrollBottomBtn.classList.add('show');
+            else scrollBottomBtn.classList.remove('show');
+        };
+
+        container.addEventListener('scroll', updateScrollButton);
+        scrollBottomBtn.onclick = () => {
+            container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+        };
 
         // =====================================================
         //  LÓGICA DE VISTAS DE HISTORIAS
@@ -554,7 +1159,7 @@
                         <div class="view-person-item">
                             <img class="view-person-avatar" src="${v.perfil || ''}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
                             <div class="view-person-info">
-                                <div class="view-person-nick">${v.nick || 'Usuario'}</div>
+                                <div class="view-person-nick">${escapeHTML(v.nick || 'Usuario')}</div>
                                 <div class="view-person-time">${formatTimeAgo(v.time)}</div>
                             </div>
                         </div>`).join('');
@@ -586,12 +1191,29 @@
 
             // CARGAR CHAT (ORIGINAL)
             onValue(query(ref(db, 'chatglobar'), limitToLast(50)), (snap) => {
+                const nearBottomBeforeUpdate = (container.scrollHeight - container.scrollTop - container.clientHeight) < 120;
                 container.innerHTML = "";
+
+                if (!snap.exists()) {
+                    container.innerHTML = `
+                        <div class="chat-empty">
+                            <span class="emoji">💬</span>
+                            <div>Aún no hay mensajes en el chat global.</div>
+                            <div style="font-size:13px;margin-top:6px;">Sé la primera persona en escribir algo.</div>
+                        </div>`;
+                    updateScrollButton();
+                    return;
+                }
+
                 snap.forEach(child => {
                     const d = child.val();
                     const isMe = d.uid === user.uid;
                     const plat = (d.multi || "WEB").toUpperCase();
                     const badge = d.isVerificado ? '<span class="badge-v">✔</span>' : '';
+                    const safeNick = escapeHTML(d.nick || 'Usuario');
+                    const safeText = linkifyText(d.text || '');
+                    const safeReplyNick = escapeHTML(d.replyNick || '');
+                    const safeReplyText = linkifyText(d.replyText || '');
 
                     const group = document.createElement("div");
                     group.className = `msg-group ${isMe ? 'me' : 'other'}`;
@@ -601,16 +1223,43 @@
                     group.innerHTML = `
                         <img src="${d.perfil || ''}" class="avatar" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
                         <div class="content">
-                            <span class="nick">${d.nick} ${badge}</span>
+                            <span class="nick">${safeNick} ${badge}</span>
                             <div class="bubble plat-${plat}">
-                                ${d.replyText ? `<div class="reply-box"><b>${d.replyNick}</b>${d.replyText}</div>` : ""}
-                                ${d.text}
+                                ${d.replyText ? `<div class="reply-box"><b>${safeReplyNick}</b><div>${safeReplyText}</div></div>` : ""}
+                                ${safeText}
                             </div>
                             <div class="info"><span>${plat}</span><span>${formatTime(d.time)}</span></div>
                         </div>`;
+
+                    const bubble = group.querySelector('.bubble');
+                    if (bubble) {
+                        bubble.title = 'Doble clic para copiar';
+                        bubble.ondblclick = async () => {
+                            try {
+                                await navigator.clipboard.writeText(d.text || '');
+                                showToast('Mensaje copiado');
+                            } catch (err) {
+                                console.error('No se pudo copiar:', err);
+                            }
+                        };
+                        bubble.oncontextmenu = async (e) => {
+                            e.preventDefault();
+                            try {
+                                await navigator.clipboard.writeText(d.text || '');
+                                showToast('Mensaje copiado');
+                            } catch (err) {
+                                console.error('No se pudo copiar:', err);
+                            }
+                        };
+                    }
+
                     container.appendChild(group);
                 });
-                container.scrollTop = container.scrollHeight;
+
+                if (nearBottomBeforeUpdate) {
+                    container.scrollTop = container.scrollHeight;
+                }
+                updateScrollButton();
             });
 
             // ENVÍO CON LÓGICA DE 20 + EXTRAS (ORIGINAL)
@@ -678,6 +1327,12 @@
         storyFile.onchange = (e) => {
             const file = e.target.files[0];
             if (file) {
+                if (window.validateStoryFile && !window.validateStoryFile(file)) {
+                    storyFile.value = '';
+                    previewContainer.classList.remove('active');
+                    fileInputLabel.classList.remove('has-image');
+                    return;
+                }
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     previewImage.src = event.target.result;
@@ -688,7 +1343,16 @@
             }
         };
 
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            document.getElementById('story-viewer-modal').style.display = 'none';
+            document.getElementById('story-upload-modal').style.display = 'none';
+            viewsPanel.classList.remove('open');
+            viewsOverlay.classList.remove('active');
+        });
+
         document.getElementById('back-nav').onclick = () => window.history.back();
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
