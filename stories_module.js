@@ -1,5 +1,5 @@
 /**
- * SnapBook Pro - Módulo de Historias (v5 con Texto, Vistas y Contador)
+ * SnapBook Pro - Módulo de Historias (v6 Agrupado por Usuario estilo WhatsApp)
  * Incluye barra de progreso, temporizador, previsualización de imagen, sistema de vistas y texto.
  */
 import { db, auth } from './view_global.js';
@@ -17,11 +17,14 @@ export function initStories() {
 
     if (!storiesList || !uploadModal || !viewerModal) return;
 
-    // Variables para el temporizador
+    // Variables para el temporizador y navegación
     let storyTimer = null;
     let isPaused = false;
     let elapsedTime = 0;
-    const STORY_DURATION = 5000; // 5 segundos
+    const STORY_DURATION = 5000; // 5 segundos por historia
+    
+    let currentGroupStories = [];
+    let currentStoryIndex = 0;
 
     // Crear barra de progreso si no existe
     let progressBar = document.getElementById("story-progress-bar");
@@ -41,6 +44,37 @@ export function initStories() {
         viewerModal.appendChild(progressBar);
     }
 
+    // Función para mostrar una historia específica del grupo
+    function showStoryAtIndex(index) {
+        if (index < 0 || index >= currentGroupStories.length) {
+            closeStoryViewer();
+            return;
+        }
+
+        currentStoryIndex = index;
+        const s = currentGroupStories[index].data;
+        const storyId = currentGroupStories[index].id;
+
+        if (window.openStoryWithViews) {
+            window.openStoryWithViews(storyId, s);
+        } else {
+            document.getElementById("story-img-display").src = s.image;
+            document.getElementById("story-viewer-nick").innerText = s.nick;
+            viewerModal.style.display = "flex";
+        }
+        
+        startStoryTimer();
+    }
+
+    function closeStoryViewer() {
+        if (storyTimer) clearInterval(storyTimer);
+        viewerModal.style.display = "none";
+        const viewsPanel = document.getElementById('views-panel');
+        const viewsOverlay = document.getElementById('views-overlay');
+        if (viewsPanel) viewsPanel.classList.remove('open');
+        if (viewsOverlay) viewsOverlay.classList.remove('active');
+    }
+
     // Función para iniciar el temporizador
     function startStoryTimer() {
         if (storyTimer) clearInterval(storyTimer);
@@ -56,31 +90,48 @@ export function initStories() {
 
                 if (elapsedTime >= STORY_DURATION) {
                     clearInterval(storyTimer);
-                    viewerModal.style.display = "none";
-                    // Limpiar panel de vistas al cerrar automáticamente
-                    const viewsPanel = document.getElementById('views-panel');
-                    const viewsOverlay = document.getElementById('views-overlay');
-                    if (viewsPanel) viewsPanel.classList.remove('open');
-                    if (viewsOverlay) viewsOverlay.classList.remove('active');
+                    // Pasar a la siguiente historia del mismo usuario
+                    showStoryAtIndex(currentStoryIndex + 1);
                 }
             }
         }, 50);
     }
 
-    // Pausar/Reanudar al tocar (evitar pausar si se toca el botón de vistas o el panel)
+    // Pausar/Reanudar y Navegación (Izquierda/Derecha)
     viewerModal.onmousedown = (e) => {
-        if (e.target.closest('#btn-show-views') || e.target.closest('#views-panel')) return;
+        if (e.target.closest('#btn-show-views') || e.target.closest('#views-panel') || e.target.closest('#close-viewer')) return;
         isPaused = true;
     };
-    viewerModal.onmouseup = () => {
+    
+    viewerModal.onmouseup = (e) => {
+        if (e.target.closest('#btn-show-views') || e.target.closest('#views-panel') || e.target.closest('#close-viewer')) return;
         isPaused = false;
+        
+        // Navegación simple: clic izquierda (atrás), clic derecha (adelante)
+        const width = window.innerWidth;
+        if (e.clientX < width / 3) {
+            showStoryAtIndex(currentStoryIndex - 1);
+        } else if (e.clientX > (width * 2) / 3) {
+            showStoryAtIndex(currentStoryIndex + 1);
+        }
     };
+
     viewerModal.ontouchstart = (e) => {
-        if (e.target.closest('#btn-show-views') || e.target.closest('#views-panel')) return;
+        if (e.target.closest('#btn-show-views') || e.target.closest('#views-panel') || e.target.closest('#close-viewer')) return;
         isPaused = true;
     };
-    viewerModal.ontouchend = () => {
+    
+    viewerModal.ontouchend = (e) => {
+        if (e.target.closest('#btn-show-views') || e.target.closest('#views-panel') || e.target.closest('#close-viewer')) return;
         isPaused = false;
+        
+        const width = window.innerWidth;
+        const touchX = e.changedTouches[0].clientX;
+        if (touchX < width / 3) {
+            showStoryAtIndex(currentStoryIndex - 1);
+        } else if (touchX > (width * 2) / 3) {
+            showStoryAtIndex(currentStoryIndex + 1);
+        }
     };
 
     // Abrir/Cerrar Modales
@@ -102,54 +153,59 @@ export function initStories() {
 
     const closeViewerBtn = document.getElementById("close-viewer");
     if (closeViewerBtn) {
-        closeViewerBtn.onclick = () => {
-            if (storyTimer) clearInterval(storyTimer);
-            viewerModal.style.display = "none";
-            // Cerrar panel de vistas si está abierto
-            const viewsPanel = document.getElementById('views-panel');
-            const viewsOverlay = document.getElementById('views-overlay');
-            if (viewsPanel) viewsPanel.classList.remove('open');
-            if (viewsOverlay) viewsOverlay.classList.remove('active');
-        };
+        closeViewerBtn.onclick = closeStoryViewer;
     }
 
-    // Escuchar Historias en Firebase
+    // Escuchar Historias en Firebase y Agrupar por Usuario
     onValue(ref(db, 'stories'), (snap) => {
-        // Limpiar lista manteniendo el botón de añadir
         const addBtn = document.getElementById("open-upload");
         storiesList.innerHTML = "";
         if (addBtn) storiesList.appendChild(addBtn);
 
         if (!snap.exists()) return;
 
+        const allStories = [];
         snap.forEach(child => {
-            const s = child.val();
-            const storyId = child.key;
-            const viewsCount = s.views ? Object.keys(s.views).length : 0;
+            allStories.push({ id: child.key, data: child.val() });
+        });
+
+        // Agrupar por UID
+        const groups = {};
+        allStories.forEach(s => {
+            const uid = s.data.uid;
+            if (!groups[uid]) {
+                groups[uid] = {
+                    uid: uid,
+                    nick: s.data.nick,
+                    perfil: s.data.perfil,
+                    stories: []
+                };
+            }
+            groups[uid].stories.push(s);
+        });
+
+        // Ordenar historias dentro de cada grupo por tiempo (más antiguas primero para ver en orden)
+        Object.values(groups).forEach(group => {
+            group.stories.sort((a, b) => parseInt(a.data.time) - parseInt(b.data.time));
+            
+            // Calcular total de vistas del grupo (opcional, aquí mostramos las de la última historia o total)
+            const lastStory = group.stories[group.stories.length - 1];
+            const viewsCount = lastStory.data.views ? Object.keys(lastStory.data.views).length : 0;
 
             const item = document.createElement("div");
             item.className = "story-item";
             item.onclick = () => {
-                // Usar la función global definida en chatglobal.html para manejar vistas y texto
-                if (window.openStoryWithViews) {
-                    window.openStoryWithViews(storyId, s);
-                    startStoryTimer();
-                } else {
-                    // Fallback si la función no existe
-                    if (storyTimer) clearInterval(storyTimer);
-                    document.getElementById("story-img-display").src = s.image;
-                    document.getElementById("story-viewer-nick").innerText = s.nick;
-                    viewerModal.style.display = "flex";
-                    startStoryTimer();
-                }
+                currentGroupStories = group.stories;
+                showStoryAtIndex(0);
             };
+            
             item.innerHTML = `
                 <div class="story-avatar-wrapper">
                     <div class="story-avatar-inner">
-                        <img src="${s.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+                        <img src="${group.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
                     </div>
                 </div>
-                <div class="story-label">${s.nick}</div>
+                <div class="story-label">${group.nick}</div>
                 <div class="story-views-badge">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
@@ -184,9 +240,9 @@ export function initStories() {
                     nick: localStorage.getItem('nick') || "User",
                     perfil: localStorage.getItem('perfil') || "",
                     image: e.target.result,
-                    text: text, // Guardar el texto de la historia
+                    text: text,
                     time: Date.now().toString(),
-                    views: {} // Inicializar objeto de vistas vacío
+                    views: {}
                 };
                 try {
                     await push(ref(db, 'stories'), storyData);
