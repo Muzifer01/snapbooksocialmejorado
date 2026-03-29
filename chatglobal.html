@@ -672,6 +672,9 @@
 
         /* ============= NUEVOS ESTILOS: REACCIONES ANIMADAS ============= */
         .flying-emoji { position: fixed; font-size: 30px; z-index: 9999; pointer-events: none; animation: flyUp 1.5s ease-out forwards; }
+        .double-tap-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); font-size: 100px; color: white; text-shadow: 0 0 20px rgba(255, 0, 0, 0.8); pointer-events: none; z-index: 3000; opacity: 0; }
+        .double-tap-heart.animate { animation: heartPop 0.8s cubic-bezier(0.17, 0.89, 0.32, 1.49) forwards; }
+        @keyframes heartPop { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 30% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 50% { transform: translate(-50%, -50%) scale(1); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
         @keyframes flyUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
             50% { opacity: 1; transform: translateY(-200px) scale(1.3); }

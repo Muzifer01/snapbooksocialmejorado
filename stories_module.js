@@ -148,6 +148,16 @@ export function initStories() {
 
     // Elementos de reacciones, comentarios y compartir
     const reactionsPanel = document.getElementById("story-reactions-panel");
+    
+    // Crear el corazón de doble toque si no existe
+    let doubleTapHeart = document.getElementById("double-tap-heart");
+    if (!doubleTapHeart) {
+        doubleTapHeart = document.createElement("div");
+        doubleTapHeart.id = "double-tap-heart";
+        doubleTapHeart.className = "double-tap-heart";
+        doubleTapHeart.innerHTML = "❤️";
+        viewerModal.appendChild(doubleTapHeart);
+    }
     const commentPanel = document.getElementById("story-comment-panel");
     const commentInput = document.getElementById("story-comment-input");
     const btnSendComment = document.getElementById("btn-send-comment");
@@ -641,12 +651,35 @@ export function initStories() {
         }, 50);
     }
 
-    // Pausar/Reanudar y Navegación (Izquierda/Derecha)
+    // Pausar/Reanudar y Navegación (Izquierda/Derecha) + Doble Toque
+    let lastTapTime = 0;
     viewerModal.onmousedown = (e) => {
         if (e.target.closest('#btn-show-views') || e.target.closest('#views-panel') || e.target.closest('#close-viewer') || e.target.closest('#btn-reactions') || e.target.closest('#btn-comment') || e.target.closest('#btn-share-story') || e.target.closest('.story-reactions-panel') || e.target.closest('.story-comment-panel')) return;
         isPaused = true;
+        
+        const currentTime = Date.now();
+        const tapLength = currentTime - lastTapTime;
+        if (tapLength < 300 && tapLength > 0) {
+            // DOBLE TOQUE DETECTADO
+            handleDoubleTapReaction();
+            lastTapTime = 0; // Reset
+        } else {
+            lastTapTime = currentTime;
+        }
     };
     
+    function handleDoubleTapReaction() {
+        if (!currentStoryId) return;
+        // Mostrar animación
+        doubleTapHeart.classList.remove('animate');
+        void doubleTapHeart.offsetWidth; // Trigger reflow
+        doubleTapHeart.classList.add('animate');
+        // Enviar reacción ❤️
+        sendReaction("❤️");
+        // Vibración si es posible
+        if (navigator.vibrate) navigator.vibrate(50);
+    }
+
     viewerModal.onmouseup = (e) => {
         if (e.target.closest('#btn-show-views') || e.target.closest('#views-panel') || e.target.closest('#close-viewer') || e.target.closest('#btn-reactions') || e.target.closest('#btn-comment') || e.target.closest('#btn-share-story') || e.target.closest('.story-reactions-panel') || e.target.closest('.story-comment-panel')) return;
         isPaused = false;
