@@ -282,14 +282,63 @@ export function initStories() {
                 commentsList.innerHTML = commentsArray.map(c => {
                     const timeAgo = formatTimeAgo(c.time);
                     const highlightedText = highlightMentions(escapeHTML(c.text));
+                    const plat = (c.multi || 'WEB').toUpperCase();
+                    const platformColors = { ANDROID: '#2ecc71', IPHONE: '#6F4E37', MAC: '#9b59b6', PC: '#3498db', WEB: '#3a3a3c', APP: '#e67e22' };
+                    const platColor = platformColors[plat] || '#3a3a3c';
+                    const likes = c.likes ? Object.keys(c.likes).length : 0;
+                    const myLike = c.likes && auth.currentUser && c.likes[auth.currentUser.uid] ? 'liked' : '';
                     return `
-                        <div class="comment-item">
-                            <div class="comment-nick">${escapeHTML(c.nick || 'Usuario')}</div>
+                        <div class="comment-item" style="border-left-color:${platColor};">
+                            <div class="comment-nick" style="color:${platColor};">💬 ${escapeHTML(c.nick || 'Usuario')} <span style="font-size:10px;color:#8e8e93;">${plat}</span></div>
                             <div class="comment-text">${highlightedText}</div>
+                            <div class="comment-actions">
+                                <button class="comment-like-btn ${myLike}" data-comment-id="${c.id}" data-story-id="${storyId}">❤️ ${likes}</button>
+                                <button class="comment-reply-btn" data-comment-id="${c.id}">💬 Responder</button>
+                            </div>
                             <div class="comment-time">${timeAgo}</div>
+                            ${c.replies ? Object.entries(c.replies).map(([rkey, r]) => `
+                                <div class="comment-reply-item">
+                                    <div class="comment-nick" style="font-size:12px;color:#00d4ff;">↳ ${escapeHTML(r.nick || 'Usuario')}</div>
+                                    <div class="comment-text" style="font-size:13px;">${highlightMentions(escapeHTML(r.text))}</div>
+                                    <div class="comment-time">${formatTimeAgo(r.time)}</div>
+                                </div>
+                            `).join('') : ''}
                         </div>
                     `;
                 }).join('');
+                
+                // Event listeners para likes
+                commentsList.querySelectorAll('.comment-like-btn').forEach(btn => {
+                    btn.onclick = async () => {
+                        const commentId = btn.dataset.commentId;
+                        const storyIdData = btn.dataset.storyId;
+                        if (!auth.currentUser) return;
+                        const likeRef = ref(db, `stories/${storyIdData}/comments/${commentId}/likes/${auth.currentUser.uid}`);
+                        const snap = await get(likeRef);
+                        if (snap.exists()) {
+                            await remove(likeRef);
+                        } else {
+                            await set(likeRef, true);
+                        }
+                        await loadReactionsAndComments(storyIdData);
+                    };
+                });
+                
+                // Event listeners para responder
+                commentsList.querySelectorAll('.comment-reply-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        const text = prompt('Escribe tu respuesta:');
+                        if (!text || !auth.currentUser) return;
+                        const commentId = btn.dataset.commentId;
+                        const replyRef = ref(db, `stories/${storyId}/comments/${commentId}/replies`);
+                        push(replyRef, {
+                            uid: auth.currentUser.uid,
+                            nick: localStorage.getItem('nick') || 'Usuario',
+                            text: text,
+                            time: Date.now().toString()
+                        }).then(() => loadReactionsAndComments(storyId));
+                    };
+                });
             }
         } catch (err) {
             console.error("Error cargando reacciones y comentarios:", err);
@@ -326,13 +375,22 @@ export function initStories() {
             const perfil = localStorage.getItem('perfil') || '';
 
             const mentions = detectMentions(text);
+            
+            // Obtener plataforma del usuario
+            const userRef = ref(db, `Users/${user.uid}`);
+            const userSnap = await get(userRef);
+            const userData = userSnap.val() || {};
+            const multi = userData.multi || 'WEB';
 
             const commentData = {
                 uid: user.uid,
                 nick: nick,
                 perfil: perfil,
                 text: text,
-                time: Date.now().toString()
+                multi: multi,
+                time: Date.now().toString(),
+                likes: {},
+                replies: {}
             };
 
             const commentRef = ref(db, `stories/${currentStoryId}/comments`);
@@ -431,6 +489,7 @@ export function initStories() {
         const s = currentGroupStories[index].data;
         currentStoryId = currentGroupStories[index].id;
         currentStoryData = s;
+        window._currentStoryData = s;
         markStoryAsSeenLocally(currentStoryId);
 
         // Verificar si la historia ha expirado
@@ -483,6 +542,58 @@ export function initStories() {
             window.openStoryWithViews(currentStoryId, s);
         } else {
             viewerModal.style.display = "flex";
+        }
+
+        // Mostrar encuesta si existe
+        const pollOverlay = document.getElementById('story-poll-overlay');
+        if (pollOverlay && s.poll) {
+            pollOverlay.innerHTML = `
+                <div class="poll-question">${escapeHTML(s.poll.question)}</div>
+                ${s.poll.options.map((opt, i) => {
+                    const votes = s.poll.votes && s.poll.votes[i] ? Object.keys(s.poll.votes[i]).length : 0;
+                    const totalVotes = s.poll.options.reduce((sum, _, idx) => sum + (s.poll.votes && s.poll.votes[idx] ? Object.keys(s.poll.votes[idx]).length : 0), 0);
+                    const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+                    const hasVoted = s.poll.votes && s.poll.votes[i] && auth.currentUser && s.poll.votes[i][auth.currentUser.uid];
+                    return `
+                        <div class="poll-option ${hasVoted ? 'voted' : ''}" onclick="votePoll('${currentStoryId}', ${i})">
+                            <span class="poll-option-text">${escapeHTML(opt)}</span>
+                            <span class="poll-option-percent">${percent}%</span>
+                            <div class="poll-bar"><div class="poll-bar-fill" style="width:${percent}%"></div></div>
+                        </div>
+                    `;
+                }).join('')}
+            `;
+            pollOverlay.style.display = 'block';
+        } else if (pollOverlay) {
+            pollOverlay.style.display = 'none';
+        }
+        
+        // Mostrar cuenta regresiva si existe
+        const countdownOverlay = document.getElementById('story-countdown-overlay');
+        if (countdownOverlay && s.countdown) {
+            countdownOverlay.innerHTML = `
+                <div class="countdown-label">${escapeHTML(s.countdown.title)}</div>
+                <div class="countdown-timer" id="countdown-timer"></div>
+            `;
+            countdownOverlay.style.display = 'block';
+            updateCountdown(s.countdown.datetime);
+        } else if (countdownOverlay) {
+            countdownOverlay.style.display = 'none';
+        }
+        
+        // Mostrar pregúntame si existe
+        const askmeOverlay = document.getElementById('story-askme-overlay');
+        if (askmeOverlay && s.askme) {
+            askmeOverlay.innerHTML = `
+                <div class="askme-prompt">${escapeHTML(s.askme.prompt)}</div>
+                <div class="askme-input-row">
+                    <input type="text" class="askme-input" id="askme-answer" placeholder="Tu respuesta..." maxlength="100">
+                    <button class="askme-send-btn" onclick="sendAskmeAnswer('${currentStoryId}')">Enviar</button>
+                </div>
+            `;
+            askmeOverlay.style.display = 'block';
+        } else if (askmeOverlay) {
+            askmeOverlay.style.display = 'none';
         }
 
         const storyTextDisplay = document.getElementById("story-text-display");
@@ -795,6 +906,9 @@ export function initStories() {
             if (file && !isValidStoryFile(file)) return;
 
             const mentions = detectMentions(text);
+            
+            // Obtener datos del editor (filtros, encuesta, etc)
+            const editorData = window.getEditorData ? window.getEditorData() : {};
 
             const originalText = btnUpload.innerText;
             btnUpload.innerText = "Publicando...";
@@ -803,17 +917,26 @@ export function initStories() {
             if (file) {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
+                    let imageData = e.target.result;
+                    // Si hay imagen editada (con dibujo), usar esa
+                    if (editorData.editedImage) imageData = editorData.editedImage;
+                    
                     const storyData = {
                         uid: user.uid,
                         nick: localStorage.getItem('nick') || "User",
                         perfil: localStorage.getItem('perfil') || "",
-                        image: e.target.result,
+                        image: imageData,
                         text: text,
                         time: Date.now().toString(),
                         views: {},
                         reactions: {},
                         comments: {},
-                        isTextStory: false
+                        isTextStory: false,
+                        filter: editorData.filter,
+                        poll: editorData.poll,
+                        countdown: editorData.countdown,
+                        askme: editorData.askme,
+                        highlighted: false
                     };
                     try {
                         await push(ref(db, 'stories'), storyData);
@@ -916,3 +1039,103 @@ const escapeHTML = (value = '') => value
 
 window.formatTimeAgo = formatTimeAgo;
 window.escapeHTML = escapeHTML;
+
+
+// Funciones globales para encuestas, countdown, pregúntame
+window.votePoll = async (storyId, optionIndex) => {
+    if (!auth.currentUser) return alert('Debes estar conectado');
+    const voteRef = ref(db, `stories/${storyId}/poll/votes/${optionIndex}/${auth.currentUser.uid}`);
+    await set(voteRef, true);
+    // Recargar historia
+    const storyRef = ref(db, `stories/${storyId}`);
+    const snap = await get(storyRef);
+    if (snap.exists()) {
+        const s = snap.val();
+        window._currentStoryData = s;
+    }
+};
+
+window.updateCountdown = (targetTime) => {
+    const timer = document.getElementById('countdown-timer');
+    if (!timer) return;
+    const update = () => {
+        const now = Date.now();
+        const diff = targetTime - now;
+        if (diff <= 0) {
+            timer.innerHTML = '<div class="countdown-unit"><div class="countdown-number">¡YA!</div></div>';
+            return;
+        }
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        
+        timer.innerHTML = `
+            ${days > 0 ? `<div class="countdown-unit"><div class="countdown-number">${days}</div><div class="countdown-text">Días</div></div>` : ''}
+            <div class="countdown-unit"><div class="countdown-number">${hours}</div><div class="countdown-text">Horas</div></div>
+            <div class="countdown-unit"><div class="countdown-number">${minutes}</div><div class="countdown-text">Min</div></div>
+            <div class="countdown-unit"><div class="countdown-number">${seconds}</div><div class="countdown-text">Seg</div></div>
+        `;
+    };
+    update();
+    setInterval(update, 1000);
+};
+
+window.sendAskmeAnswer = async (storyId) => {
+    const input = document.getElementById('askme-answer');
+    if (!input || !input.value.trim() || !auth.currentUser) return;
+    
+    const answerRef = ref(db, `stories/${storyId}/askme/answers`);
+    await push(answerRef, {
+        uid: auth.currentUser.uid,
+        nick: localStorage.getItem('nick') || 'Usuario',
+        text: input.value.trim(),
+        time: Date.now().toString()
+    });
+    input.value = '';
+    alert('¡Respuesta enviada!');
+};
+
+// Botón destacar historia
+const btnHighlight = document.getElementById('btn-highlight');
+if (btnHighlight) {
+    btnHighlight.onclick = async () => {
+        if (!currentStoryId || !auth.currentUser) return;
+        const highlightRef = ref(db, `stories/${currentStoryId}/highlighted`);
+        const snap = await get(highlightRef);
+        if (snap.exists()) {
+            await remove(highlightRef);
+            btnHighlight.classList.remove('saved');
+        } else {
+            await set(highlightRef, {
+                uid: auth.currentUser.uid,
+                time: Date.now().toString()
+            });
+            btnHighlight.classList.add('saved');
+        }
+    };
+}
+
+// Reacciones animadas (emojis voladores)
+window.createFlyingReaction = (emoji, sourceEl) => {
+    const el = document.createElement('div');
+    el.className = 'flying-emoji';
+    el.textContent = emoji;
+    const rect = sourceEl.getBoundingClientRect();
+    el.style.left = rect.left + 'px';
+    el.style.top = rect.top + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1500);
+};
+
+// Actualizar emoji buttons para crear animación
+if (document.querySelectorAll('.emoji-btn')) {
+    document.querySelectorAll('.emoji-btn').forEach(btn => {
+        const originalOnclick = btn.onclick;
+        btn.onclick = async function() {
+            const emoji = this.getAttribute('data-emoji');
+            window.createFlyingReaction(emoji, this);
+            if (originalOnclick) await originalOnclick.call(this);
+        };
+    });
+}
