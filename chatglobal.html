@@ -718,8 +718,8 @@
         .chat-image-preview .close-img-preview { position: absolute; right: 10px; top: 8px; font-size: 20px; color: #666; cursor: pointer; }
 
         /* ============= NUEVOS ESTILOS: GIF PICKER ============= */
-        /* ===== PANEL DE EMOJIS ESTILO WHATSAPP ===== */
-        #emoji-panel {
+        /* ===== PANEL UNIFICADO EMOJI + GIF (ESTILO WHATSAPP) ===== */
+        #emoji-gif-panel {
             position: fixed;
             bottom: 80px;
             left: 0;
@@ -729,11 +729,42 @@
             z-index: 300;
             display: none;
             flex-direction: column;
-            height: 42vh;
+            height: 44vh;
             border-top: 0.5px solid var(--border);
             box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
         }
-        #emoji-panel.active { display: flex; }
+        #emoji-gif-panel.active { display: flex; }
+        /* Pestañas superiores */
+        .egp-tabs {
+            display: flex;
+            border-bottom: 0.5px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        .egp-tab {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #8e8e93;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 12px 0;
+            cursor: pointer;
+            border-bottom: 2.5px solid transparent;
+            transition: all 0.2s;
+            letter-spacing: 0.3px;
+        }
+        .egp-tab.active {
+            color: #007aff;
+            border-bottom: 2.5px solid #007aff;
+        }
+        /* Contenido de cada pestaña */
+        .egp-content {
+            display: none;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+        }
+        .egp-content.active { display: flex; }
         .emoji-categories {
             display: flex;
             gap: 0;
@@ -820,13 +851,10 @@
         }
         .emoji-btn-toggle.active { background: rgba(255,255,255,0.12); }
         /* ============================= */
-        .gif-btn { background: none; border: 1px solid rgba(255,255,255,0.15); color: #8e8e93; font-size: 12px; font-weight: 800; cursor: pointer; padding: 4px 8px; border-radius: 8px; transition: all 0.2s; }
-        .gif-btn:active { background: rgba(255,255,255,0.1); color: white; }
-        #gif-panel { position: fixed; bottom: 80px; left: 10px; right: 10px; background: #1c1c1e; border-radius: 20px 20px 0 0; z-index: 300; display: none; flex-direction: column; max-height: 50vh; border: 1px solid var(--border); }
-        #gif-panel.active { display: flex; }
-        .gif-search { padding: 12px; border-bottom: 0.5px solid var(--border); }
-        .gif-search input { width: 100%; padding: 10px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(44,44,46,0.8); color: white; font-size: 14px; outline: none; }
-        .gif-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 12px; overflow-y: auto; flex: 1; }
+        /* GIF dentro del panel unificado */
+        .gif-search { padding: 10px 12px; border-bottom: 0.5px solid var(--border); flex-shrink: 0; }
+        .gif-search input { width: 100%; padding: 9px 14px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); background: rgba(44,44,46,0.8); color: white; font-size: 14px; outline: none; }
+        .gif-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px 12px 20px; overflow-y: auto; flex: 1; }
         .gif-grid img { width: 100%; border-radius: 10px; cursor: pointer; transition: transform 0.2s; }
         .gif-grid img:active { transform: scale(0.95); }
 
@@ -926,11 +954,61 @@
         .bottom-nav { position: fixed; bottom: 0; width: 100%; background: rgba(0,0,0,0.95); z-index: 200; border-top: 0.5px solid var(--border); padding-bottom: 30px; }
         #reply-preview { display: none; background: #1c1c1e; margin: 10px 15px 0; padding: 8px 12px; border-radius: 12px 12px 0 0; border-left: 4px solid var(--accent); position: relative; }
         #reply-preview b { color: var(--accent); font-size: 13px; }
-        #reply-preview p { margin: 2px 0 0; font-size: 14px; color: #aaa; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        #close-reply { position: absolute; right: 10px; top: 8px; font-size: 20px; color: #666; cursor: pointer; }
-        .input-bar { padding: 10px 15px; display: flex; align-items: center; gap: 10px; }
-        .field { flex: 1; background: var(--input-bg); border-radius: 20px; padding: 10px 16px; color: white; border: none; outline: none; font-size: 16px; }
-        #send-btn { background: #007aff; border: none; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        #reply-preview p { margin: 2px 0 0; font-size: 12px; color: #8e8e93; }
+        #reply-preview .close-reply { position: absolute; right: 10px; top: 8px; font-size: 18px; color: #666; cursor: pointer; }
+        /* === BARRA DE ENTRADA REDISEÑADA === */
+        .input-bar { padding: 8px 12px; display: flex; align-items: center; gap: 8px; }
+        /* Grupo de botones izquierdo: imagen + emoji + gif */
+        .input-btn-group {
+            display: flex;
+            align-items: center;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 22px;
+            padding: 4px 6px;
+            gap: 2px;
+            flex-shrink: 0;
+        }
+        .input-btn-group button {
+            background: none;
+            border: none;
+            color: #8e8e93;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 14px;
+            transition: all 0.18s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+        .input-btn-group button:active,
+        .input-btn-group button.active { background: rgba(255,255,255,0.12); color: white; }
+        .input-btn-group .gif-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #8e8e93;
+            padding: 4px 7px;
+            border-radius: 10px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            transition: all 0.18s;
+            letter-spacing: 0.5px;
+        }
+        .input-btn-group .gif-label:active,
+        .input-btn-group .gif-label.active { background: rgba(255,255,255,0.12); color: white; }
+        /* Separador vertical dentro del grupo */
+        .input-btn-sep {
+            width: 1px;
+            height: 18px;
+            background: rgba(255,255,255,0.12);
+            flex-shrink: 0;
+        }
+        .field { flex: 1; background: var(--input-bg); border-radius: 20px; padding: 10px 16px; color: white; border: none; outline: none; font-size: 16px; min-width: 0; }
+        #send-btn { background: #007aff; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: transform 0.15s; }
+        #send-btn:active { transform: scale(0.9); }
         #scroll-bottom-btn {
             position: fixed; right: 16px; bottom: 105px; width: 42px; height: 42px;
             border-radius: 50%; border: none; background: rgba(28, 28, 30, 0.95);
@@ -1275,31 +1353,42 @@
         </div>
     </div>
 
-    <!-- GIF Panel -->
-    <!-- PANEL DE EMOJIS ESTILO WHATSAPP -->
-    <div id="emoji-panel">
-        <div class="emoji-categories" id="emoji-categories">
-            <button class="emoji-cat-btn active" data-cat="recientes" title="Recientes">🕐</button>
-            <button class="emoji-cat-btn" data-cat="smileys" title="Smileys">😀</button>
-            <button class="emoji-cat-btn" data-cat="gestos" title="Gestos">👋</button>
-            <button class="emoji-cat-btn" data-cat="personas" title="Personas">👨</button>
-            <button class="emoji-cat-btn" data-cat="animales" title="Animales">🐶</button>
-            <button class="emoji-cat-btn" data-cat="comida" title="Comida">🍎</button>
-            <button class="emoji-cat-btn" data-cat="viajes" title="Viajes">✈️</button>
-            <button class="emoji-cat-btn" data-cat="actividades" title="Actividades">⚽</button>
-            <button class="emoji-cat-btn" data-cat="objetos" title="Objetos">💡</button>
-            <button class="emoji-cat-btn" data-cat="simbolos" title="Símbolos">❤️</button>
-            <button class="emoji-cat-btn" data-cat="banderas" title="Banderas">🏳️</button>
+    <!-- PANEL UNIFICADO EMOJI + GIF (estilo WhatsApp) -->
+    <div id="emoji-gif-panel">
+        <!-- Pestañas superiores -->
+        <div class="egp-tabs">
+            <button class="egp-tab active" id="tab-emoji" data-tab="emoji">🙂 Emojis</button>
+            <button class="egp-tab" id="tab-gif" data-tab="gif">🎞️ GIF</button>
         </div>
-        <div class="emoji-search-bar">
-            <input type="text" id="emoji-search-input" placeholder="Buscar emoji...">
-        </div>
-        <div class="emoji-grid" id="emoji-grid"></div>
-    </div>
 
-    <div id="gif-panel">
-        <div class="gif-search"><input type="text" id="gif-search-input" placeholder="Buscar GIFs..."></div>
-        <div class="gif-grid" id="gif-grid"></div>
+        <!-- CONTENIDO: EMOJIS -->
+        <div class="egp-content active" id="egp-emoji-content">
+            <div class="emoji-search-bar">
+                <input type="text" id="emoji-search-input" placeholder="🔍 Buscar emoji...">
+            </div>
+            <div class="emoji-categories" id="emoji-categories">
+                <button class="emoji-cat-btn active" data-cat="recientes" title="Recientes">🕐</button>
+                <button class="emoji-cat-btn" data-cat="smileys" title="Smileys">😀</button>
+                <button class="emoji-cat-btn" data-cat="gestos" title="Gestos">👋</button>
+                <button class="emoji-cat-btn" data-cat="personas" title="Personas">👨</button>
+                <button class="emoji-cat-btn" data-cat="animales" title="Animales">🐶</button>
+                <button class="emoji-cat-btn" data-cat="comida" title="Comida">🍎</button>
+                <button class="emoji-cat-btn" data-cat="viajes" title="Viajes">✈️</button>
+                <button class="emoji-cat-btn" data-cat="actividades" title="Actividades">⚽</button>
+                <button class="emoji-cat-btn" data-cat="objetos" title="Objetos">💡</button>
+                <button class="emoji-cat-btn" data-cat="simbolos" title="Símbolos">❤️</button>
+                <button class="emoji-cat-btn" data-cat="banderas" title="Banderas">🏳️</button>
+            </div>
+            <div class="emoji-grid" id="emoji-grid"></div>
+        </div>
+
+        <!-- CONTENIDO: GIF -->
+        <div class="egp-content" id="egp-gif-content">
+            <div class="gif-search">
+                <input type="text" id="gif-search-input" placeholder="🔍 Buscar GIFs...">
+            </div>
+            <div class="gif-grid" id="gif-grid"></div>
+        </div>
     </div>
 
     <main id="chat-container"></main>
@@ -1322,13 +1411,16 @@
             <p id="reply-text"></p>
         </div>
         <div class="input-bar">
-            <button class="image-input-btn" id="btn-chat-image" title="Enviar imagen">🖼</button>
-            <input type="file" id="chat-image-file" accept="image/*">
-            <button class="gif-btn" id="btn-gif" title="Enviar GIF">GIF</button>
-            <button class="emoji-btn-toggle" id="btn-emoji" title="Emojis">🙂</button>
+            <!-- GRUPO COMPACTO: Imagen | Emoji+GIF -->
+            <div class="input-btn-group">
+                <button id="btn-chat-image" title="Imagen">🖼️</button>
+                <div class="input-btn-sep"></div>
+                <button id="btn-emoji-gif" title="Emojis y GIFs">🙂</button>
+            </div>
+            <input type="file" id="chat-image-file" accept="image/*" style="display:none">
             <input type="text" id="msg-input" class="field" placeholder="Mensaje..." autocomplete="off">
             <button id="send-btn">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
             </button>
         </div>
     </div>
@@ -1669,10 +1761,10 @@
         const gifGrid = document.getElementById('gif-grid');
         const gifSearchInput = document.getElementById('gif-search-input');
 
-        document.getElementById('btn-gif').onclick = () => {
-            gifPanel.classList.toggle('active');
-            if (gifPanel.classList.contains('active')) loadTrendingGifs();
-        };
+        // El panel GIF ahora está dentro del panel unificado
+        // btn-gif ya no existe como botón separado; la lógica se maneja en btn-emoji-gif
+        // Mantener referencia a gifPanel para compatibilidad con sendGifMessage
+        const gifPanelUnified = document.getElementById('emoji-gif-panel');
 
         async function loadTrendingGifs() {
             gifGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#8e8e93;">Cargando GIFs...</div>';
@@ -1724,7 +1816,7 @@
                 isVerificado: tieneCheck
             };
             await push(ref(db, 'chatglobar'), msgData);
-            gifPanel.classList.remove('active');
+            gifPanelUnified.classList.remove('active');
             gifSearchInput.value = '';
         }
 
@@ -2392,7 +2484,7 @@
             viewsOverlay.classList.remove('active');
             dmModal.classList.remove('active');
             groupsPanel.classList.remove('active');
-            gifPanel.classList.remove('active');
+            gifPanelUnified.classList.remove('active');
         });
 
         document.getElementById('back-nav').onclick = () => window.history.back();
@@ -2488,10 +2580,8 @@
             ]
         };
 
-        const emojiPanel = document.getElementById('emoji-panel');
         const emojiGrid = document.getElementById('emoji-grid');
         const emojiSearchInput = document.getElementById('emoji-search-input');
-        const btnEmoji = document.getElementById('btn-emoji');
         let currentEmojiCat = 'smileys';
         let recentEmojis = JSON.parse(localStorage.getItem('recentEmojis') || '[]');
 
@@ -2571,30 +2661,45 @@
             }, 300);
         };
 
-        // Abrir/cerrar panel de emojis
-        btnEmoji.onclick = () => {
-            const isActive = emojiPanel.classList.toggle('active');
-            btnEmoji.classList.toggle('active', isActive);
+        // ===== LÓGICA DEL PANEL UNIFICADO EMOJI + GIF =====
+        const emojiGifPanel = document.getElementById('emoji-gif-panel');
+        const btnEmojiGif = document.getElementById('btn-emoji-gif');
+
+        // Abrir/cerrar panel unificado
+        btnEmojiGif.onclick = (e) => {
+            e.stopPropagation();
+            const isActive = emojiGifPanel.classList.toggle('active');
+            btnEmojiGif.classList.toggle('active', isActive);
             if (isActive) {
-                // Cerrar GIF panel si está abierto
-                document.getElementById('gif-panel').classList.remove('active');
+                // Mostrar pestaña de emojis por defecto
+                switchEgpTab('emoji');
                 renderEmojiGrid(currentEmojiCat);
-                emojiSearchInput.focus();
             }
         };
 
+        // Cambiar pestañas
+        function switchEgpTab(tab) {
+            document.querySelectorAll('.egp-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+            document.getElementById('egp-emoji-content').classList.toggle('active', tab === 'emoji');
+            document.getElementById('egp-gif-content').classList.toggle('active', tab === 'gif');
+            if (tab === 'gif') loadTrendingGifs();
+        }
+        document.querySelectorAll('.egp-tab').forEach(tab => {
+            tab.onclick = () => switchEgpTab(tab.dataset.tab);
+        });
+
         // Cerrar panel al hacer clic fuera
         document.addEventListener('click', (e) => {
-            if (!emojiPanel.contains(e.target) && e.target !== btnEmoji) {
-                emojiPanel.classList.remove('active');
-                btnEmoji.classList.remove('active');
+            if (!emojiGifPanel.contains(e.target) && e.target !== btnEmojiGif) {
+                emojiGifPanel.classList.remove('active');
+                btnEmojiGif.classList.remove('active');
             }
         });
 
         // Cerrar panel al enviar mensaje
         document.getElementById('send-btn').addEventListener('click', () => {
-            emojiPanel.classList.remove('active');
-            btnEmoji.classList.remove('active');
+            emojiGifPanel.classList.remove('active');
+            btnEmojiGif.classList.remove('active');
         }, true);
 
     </script>
