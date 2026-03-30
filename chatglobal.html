@@ -1353,12 +1353,39 @@
             if (currentUser && currentUser.uid !== storyData.uid) {
                 const viewRef = ref(db, `stories/${storyId}/views/${currentUser.uid}`);
                 const existingView = await get(viewRef);
+
+                // Obtener datos reales del usuario desde Firebase (no solo localStorage)
+                let nickReal = localStorage.getItem('nick') || 'Usuario';
+                let perfilReal = localStorage.getItem('perfil') || '';
+                try {
+                    const userSnap = await get(ref(db, `Users/${currentUser.uid}`));
+                    if (userSnap.exists()) {
+                        const ud = userSnap.val();
+                        nickReal = ud.nick || ud.nombre || ud.displayName || nickReal;
+                        perfilReal = ud.perfil || ud.photoURL || ud.foto || perfilReal;
+                        // Sincronizar localStorage con los datos más recientes de Firebase
+                        if (nickReal) localStorage.setItem('nick', nickReal);
+                        if (perfilReal) localStorage.setItem('perfil', perfilReal);
+                    }
+                } catch(e) { console.warn('No se pudo leer Users/', e); }
+
                 if (!existingView.exists()) {
+                    // Primera vista: guardar con datos completos
                     await set(viewRef, {
-                        nick: localStorage.getItem('nick') || 'Usuario',
-                        perfil: localStorage.getItem('perfil') || '',
+                        nick: nickReal,
+                        perfil: perfilReal,
                         time: Date.now().toString()
                     });
+                } else {
+                    // Vista ya existente: actualizar si le faltan nick o perfil
+                    const existingData = existingView.val();
+                    if (!existingData.nick || !existingData.perfil) {
+                        await set(viewRef, {
+                            nick: nickReal,
+                            perfil: perfilReal,
+                            time: existingData.time || Date.now().toString()
+                        });
+                    }
                 }
             }
 
