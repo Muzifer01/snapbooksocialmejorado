@@ -894,145 +894,21 @@
             transition: all 0.15s;
             flex-shrink: 0;
         }
+
+        .sticker-cat-btn.premium-cat {
+            background: linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.2));
+            border: 1px solid rgba(255,215,0,0.4);
+            color: #FFD700;
+        }
+        .sticker-cat-btn.premium-cat.active {
+            background: linear-gradient(135deg, #FFD700, #FF8C00);
+            color: #000;
+        }
         .sticker-cat-btn.active {
             background: #25d366;
             color: white;
             font-weight: 700;
         }
-        .sticker-cat-crear {
-            background: rgba(37,211,102,0.18) !important;
-            color: #25d366 !important;
-            border: 1px solid rgba(37,211,102,0.4) !important;
-        }
-        /* ===== MODAL CREADOR DE STICKERS ===== */
-        #sticker-creator-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.82);
-            z-index: 5000;
-            align-items: center;
-            justify-content: center;
-        }
-        #sticker-creator-overlay.active { display: flex; }
-        #sticker-creator-modal {
-            background: #1c1c1e;
-            border-radius: 20px;
-            width: min(94vw, 400px);
-            max-height: 90vh;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            padding: 0;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        }
-        #sticker-creator-modal::-webkit-scrollbar { display: none; }
-        .sc-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 18px 12px;
-            border-bottom: 0.5px solid rgba(255,255,255,0.08);
-        }
-        .sc-title {
-            font-size: 17px;
-            font-weight: 700;
-            color: white;
-        }
-        .sc-close {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: white;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            font-size: 18px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            line-height: 1;
-        }
-        .sc-body { padding: 16px 18px 20px; display: flex; flex-direction: column; gap: 14px; }
-        .sc-upload-area {
-            border: 2px dashed rgba(255,255,255,0.18);
-            border-radius: 14px;
-            text-align: center;
-            padding: 22px 12px;
-            cursor: pointer;
-            transition: border-color 0.2s, background 0.2s;
-        }
-        .sc-upload-area:hover { border-color: #25d366; background: rgba(37,211,102,0.06); }
-        .sc-upload-area span { display: block; color: rgba(255,255,255,0.5); font-size: 13px; margin-top: 6px; }
-        .sc-upload-area .sc-upload-icon { font-size: 34px; }
-        #sc-canvas-wrap {
-            display: none;
-            border-radius: 14px;
-            overflow: hidden;
-            background: rgba(255,255,255,0.04);
-            text-align: center;
-            position: relative;
-        }
-        #sc-canvas {
-            max-width: 100%;
-            border-radius: 12px;
-            display: block;
-            margin: 0 auto;
-        }
-        .sc-field-label { font-size: 12px; color: rgba(255,255,255,0.45); margin-bottom: 4px; }
-        .sc-input-row { display: flex; gap: 8px; align-items: center; }
-        .sc-text-input {
-            flex: 1;
-            background: rgba(255,255,255,0.07);
-            border: none;
-            border-radius: 10px;
-            padding: 9px 12px;
-            color: white;
-            font-size: 14px;
-            outline: none;
-        }
-        .sc-text-input::placeholder { color: rgba(255,255,255,0.3); }
-        .sc-color-input {
-            width: 38px;
-            height: 38px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            padding: 0;
-            background: none;
-        }
-        .sc-size-select {
-            background: rgba(255,255,255,0.07);
-            border: none;
-            border-radius: 10px;
-            padding: 9px 10px;
-            color: white;
-            font-size: 13px;
-            outline: none;
-            cursor: pointer;
-        }
-        .sc-actions { display: flex; gap: 10px; margin-top: 4px; }
-        .sc-btn {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 12px;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.15s;
-        }
-        .sc-btn:active { opacity: 0.75; }
-        .sc-btn-secondary { background: rgba(255,255,255,0.1); color: white; }
-        .sc-btn-primary { background: #25d366; color: white; }
-        .sc-mystickers-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 0 8px;
-        }
-        .sc-mystickers-title { font-size: 13px; color: rgba(255,255,255,0.6); font-weight: 600; }
-        .sc-preview-tip { font-size: 11px; color: rgba(255,255,255,0.35); text-align: center; margin-top: 2px; }
 
         /* ===== PANEL SELECTOR DE IMÁGENES ESTILO WHATSAPP ===== */
         #img-picker-panel {
@@ -1795,7 +1671,6 @@
             <!-- Categorías de stickers -->
             <div class="sticker-cats" id="sticker-cats">
                 <button class="sticker-cat-btn active" data-scat="mis-stickers">📷 Mis Stickers</button>
-                <button class="sticker-cat-btn sticker-cat-crear" data-scat="crear-sticker" id="btn-crear-sticker">✏️ Crear</button>
                 <button class="sticker-cat-btn" data-scat="feliz">😄 Feliz</button>
                 <button class="sticker-cat-btn" data-scat="amor">❤️ Amor</button>
                 <button class="sticker-cat-btn" data-scat="risa">😂 Risa</button>
@@ -1808,67 +1683,13 @@
                 <button class="sticker-cat-btn" data-scat="fiesta">🎉 Fiesta</button>
                 <button class="sticker-cat-btn" data-scat="animales">🐶 Animales</button>
                 <button class="sticker-cat-btn" data-scat="comida">🍕 Comida</button>
+                <button class="sticker-cat-btn premium-cat" data-scat="premium_feliz">⭐😄 Feliz</button>
+                <button class="sticker-cat-btn premium-cat" data-scat="premium_amor">⭐❤️ Amor</button>
+                <button class="sticker-cat-btn premium-cat" data-scat="premium_cool">⭐😎 Cool</button>
+                <button class="sticker-cat-btn premium-cat" data-scat="premium_fiesta">⭐🎉 Fiesta</button>
+                <button class="sticker-cat-btn premium-cat" data-scat="premium_animales">⭐🐶 Animales</button>
             </div>
             <div class="gif-grid" id="sticker-grid"></div>
-        </div>
-    </div>
-
-    <!-- MODAL CREADOR DE STICKERS -->
-    <div id="sticker-creator-overlay">
-        <div id="sticker-creator-modal">
-            <div class="sc-header">
-                <span class="sc-title">✏️ Crear Sticker</span>
-                <button class="sc-close" id="sc-close-btn">×</button>
-            </div>
-            <div class="sc-body">
-                <!-- Zona de subida -->
-                <div class="sc-upload-area" id="sc-upload-area">
-                    <div class="sc-upload-icon">🖼️</div>
-                    <span>Toca para elegir una imagen</span>
-                    <span style="font-size:11px;">JPG, PNG, GIF, WebP</span>
-                </div>
-                <input type="file" id="sc-file-input" accept="image/*" style="display:none">
-
-                <!-- Canvas preview -->
-                <div id="sc-canvas-wrap">
-                    <canvas id="sc-canvas" width="300" height="300"></canvas>
-                    <p class="sc-preview-tip">Vista previa del sticker</p>
-                </div>
-
-                <!-- Texto overlay -->
-                <div id="sc-text-section">
-                    <div class="sc-field-label">Texto sobre el sticker (opcional)</div>
-                    <div class="sc-input-row">
-                        <input type="text" class="sc-text-input" id="sc-text-input" placeholder="Escribe algo..." maxlength="40">
-                        <input type="color" class="sc-color-input" id="sc-text-color" value="#ffffff" title="Color del texto">
-                        <select class="sc-size-select" id="sc-text-size">
-                            <option value="18">S</option>
-                            <option value="24" selected>M</option>
-                            <option value="32">L</option>
-                            <option value="42">XL</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Emoji overlay -->
-                <div id="sc-emoji-section">
-                    <div class="sc-field-label">Emoji encima (opcional)</div>
-                    <div class="sc-input-row">
-                        <input type="text" class="sc-text-input" id="sc-emoji-input" placeholder="😎 🔥 ❤️ ..." maxlength="8">
-                        <select class="sc-size-select" id="sc-emoji-size">
-                            <option value="32">S</option>
-                            <option value="48" selected>M</option>
-                            <option value="64">L</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Botones acción -->
-                <div class="sc-actions" id="sc-actions" style="display:none">
-                    <button class="sc-btn sc-btn-secondary" id="sc-reset-btn">🔄 Cambiar imagen</button>
-                    <button class="sc-btn sc-btn-primary" id="sc-save-btn">💾 Guardar sticker</button>
-                </div>
-            </div>
         </div>
     </div>
 
@@ -2566,7 +2387,7 @@
             dmMessages.innerHTML = '<div style="text-align:center;padding:20px;color:#8e8e93;">Cargando mensajes...</div>';
 
             const chatId = [currentUser.uid, targetUid].sort().join('_');
-            const dmRef = query(ref(db, `dms/${chatId}`), limitToLast(50));
+            const dmRef = query(ref(db, `dms/${chatId}`), limitToLast(150));
             onValue(dmRef, (snap) => {
                 dmMessages.innerHTML = '';
                 if (!snap.exists()) {
@@ -2662,7 +2483,7 @@
         function loadChat() {
             if (chatListener) { /* Firebase auto-manages listeners */ }
 
-            onValue(query(ref(db, currentGroupRef), limitToLast(50)), (snap) => {
+            onValue(query(ref(db, currentGroupRef), limitToLast(150)), (snap) => {
                 const nearBottomBeforeUpdate = (container.scrollHeight - container.scrollTop - container.clientHeight) < 120;
                 container.innerHTML = "";
 
@@ -3638,16 +3459,227 @@
             ]},
         };
 
+        const PREMIUM_STICKERS = {
+            "premium_feliz": { label: "😄 Feliz Premium", isGif: false, stickers: [
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/ryaZ0vgXxQMfvZqy84/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/ryaZ0vgXxQMfvZqy84/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/UYufYyzS6qqCf4EJca/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/UYufYyzS6qqCf4EJca/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/iq008F6TA8P1tdI0NM/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/iq008F6TA8P1tdI0NM/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/w1nnzNLnAgO5zYhKYd/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/w1nnzNLnAgO5zYhKYd/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/tAfk4jJB7WooOB02IT/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/tAfk4jJB7WooOB02IT/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/HfZ5GUs4SFahEe1fvk/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/HfZ5GUs4SFahEe1fvk/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/WPzRMZrXRaKhhGDNTB/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/WPzRMZrXRaKhhGDNTB/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/0iBGgLXda4QM61UgbX/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/0iBGgLXda4QM61UgbX/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/jyPfEwFekF0wt7LV6i/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/jyPfEwFekF0wt7LV6i/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/0qAujcLGKolhsQE7kb/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/0qAujcLGKolhsQE7kb/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9dHM/Ud4uTmWzys4fSGaEoV/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9dHM/Ud4uTmWzys4fSGaEoV/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9dHM/QRf1KyyJ9462ofLWrk/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNjczcTF2NnEwcjk1OWJ0Yjdrbm13NGR1MXZ6OXBtNGlocHMzdDJsciZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9dHM/QRf1KyyJ9462ofLWrk/giphy.gif"},
+            ]},
+            "premium_amor": { label: "❤️ Amor Premium", isGif: false, stickers: [
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/gCxd0kUSR6I9dflWgm/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/gCxd0kUSR6I9dflWgm/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/w78ifyfLK7q8308f0k/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/w78ifyfLK7q8308f0k/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/1oPXuHfr7oA5MsesEl/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/1oPXuHfr7oA5MsesEl/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/xUPGcgvoipFxRtpMl2/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/xUPGcgvoipFxRtpMl2/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/Lqx1czoPLTQg3I68d1/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/Lqx1czoPLTQg3I68d1/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/7IW6yq0ehNDWeyyce8/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/7IW6yq0ehNDWeyyce8/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9ZQ/YondZW6AMjgTEHevF0/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9ZQ/YondZW6AMjgTEHevF0/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/ckfRgBRi2KTcoQlEqw/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/ckfRgBRi2KTcoQlEqw/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/F5rnYsSEwsFk9niwCD/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/F5rnYsSEwsFk9niwCD/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9dHM/l0Iy693IrMwNZCJby/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9dHM/l0Iy693IrMwNZCJby/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/iXVDt4F3XsZBWRZaka/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/iXVDt4F3XsZBWRZaka/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/E2WYVim3KMj23HziKY/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwaGFkN2Y5bDZ3emFzcDByZnp3dDdoNWl5bDBpNmNxbTJ3OHJ0bTc3OSZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/E2WYVim3KMj23HziKY/giphy.gif"},
+            ]},
+            "premium_cool": { label: "😎 Cool Premium", isGif: false, stickers: [
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9dHM/YzPWa8c7QQ4XHo3xBF/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9dHM/YzPWa8c7QQ4XHo3xBF/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/ek4CGerDFY68BXGed3/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/ek4CGerDFY68BXGed3/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/see1sKEEvFNOzWDmee/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/see1sKEEvFNOzWDmee/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/xisaS8E6pNBqDgiwLY/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/xisaS8E6pNBqDgiwLY/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/14o3AsSMpn6PkY/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/14o3AsSMpn6PkY/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/6cRrdQ1x5vgppPwcyw/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/6cRrdQ1x5vgppPwcyw/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/KpDKc8DcCuDH3wpaIR/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/KpDKc8DcCuDH3wpaIR/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/spKa8oct7RwUDVsxJG/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/spKa8oct7RwUDVsxJG/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/nuFpnCSYOtFniOp5RW/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/nuFpnCSYOtFniOp5RW/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/dyGQHxV0MHxbLMaAU5/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/dyGQHxV0MHxbLMaAU5/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/6DrD5HlC70jpbAS6Y6/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/6DrD5HlC70jpbAS6Y6/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/PcjENjqMYS6wI6yzox/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcweGEzbWhxenVibnF3Y2RnbGdkcGxkMzd1dXo2cjVqOGswamZ3aGdwYiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/PcjENjqMYS6wI6yzox/giphy.gif"},
+            ]},
+            "premium_fiesta": { label: "🎉 Fiesta Premium", isGif: false, stickers: [
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/3MbGVRMWnn8Oh8lh0m/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/3MbGVRMWnn8Oh8lh0m/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/FJaKqj9YG8cw6FeW8b/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/FJaKqj9YG8cw6FeW8b/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/LS7brKKqYWMGlO5x86/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/LS7brKKqYWMGlO5x86/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/2JZV4dWt8zyt7M4ISM/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/2JZV4dWt8zyt7M4ISM/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/d7nKsp16SEtZD1dTXh/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/d7nKsp16SEtZD1dTXh/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/pVavmCDtgkwnuCn2rF/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/pVavmCDtgkwnuCn2rF/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/gKrbnqo25MlI2TUC78/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/gKrbnqo25MlI2TUC78/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/GPV6LaVEUPhvKlsJcv/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/GPV6LaVEUPhvKlsJcv/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/PotiYSwEnO33KX007a/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/PotiYSwEnO33KX007a/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/xT9IgMgdur6larNA1a/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/xT9IgMgdur6larNA1a/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/8YBx8YADjme8OfSBxT/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/8YBx8YADjme8OfSBxT/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/N3DFBM3S2rgLuyummQ/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwNXNudWRrY2JhaTJmbzEyOXE5ZXpweDQxajlzZjVxYTlqaGF1aGUwMiZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/N3DFBM3S2rgLuyummQ/giphy.gif"},
+            ]},
+            "premium_animales": { label: "🐶 Animales Premium", isGif: false, stickers: [
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/10a8AOSeP6Rqfu/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/10a8AOSeP6Rqfu/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/PYHR828bbasaHUSvpf/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/PYHR828bbasaHUSvpf/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/RH1cJQ6BfOGtEy0r46/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/RH1cJQ6BfOGtEy0r46/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/6bXd6ZTYpZWrC/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/6bXd6ZTYpZWrC/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/z3A8QI3qRMs9l0suj4/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/z3A8QI3qRMs9l0suj4/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/iXVDt4F3XsZBWRZaka/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/iXVDt4F3XsZBWRZaka/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/caaF3868Ck9yuWEmPK/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/caaF3868Ck9yuWEmPK/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/PNo3rrww1K4lTqHly1/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/PNo3rrww1K4lTqHly1/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/MHdsaPD5z17X4MFgPH/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/MHdsaPD5z17X4MFgPH/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/zHlTEx4Q7NnAtRA9wr/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/zHlTEx4Q7NnAtRA9wr/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/8TFz7t3wamtnmU62ps/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/8TFz7t3wamtnmU62ps/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/AKwXa6a4v5v1b1Zlpw/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZzh5dWh6Zm5qeWNhYjNsZjc5b2JheHBicGJlc29pc2g4eDVkMmE3cyZlcD12MV9zdGlja2Vyc19zZWFyY2gmY3Q9cw/AKwXa6a4v5v1b1Zlpw/giphy.gif"},
+            ]},
+            "premium_gif_trending": { label: "🔥 GIFs Trending", isGif: true, stickers: [
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/YV6qGn76sStZS/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/YV6qGn76sStZS/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/tXL4FHPSnVJ0A/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/tXL4FHPSnVJ0A/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/cubWV5RQBVVgCtT8C4/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/cubWV5RQBVVgCtT8C4/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/l0ExayQDzrI2xOb8A/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/l0ExayQDzrI2xOb8A/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/OuQmhmAAdJFLi/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/OuQmhmAAdJFLi/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/JpG2A9P3dPHXaTYrwu/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/JpG2A9P3dPHXaTYrwu/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/cmqmewQaOS3XS91a2u/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/cmqmewQaOS3XS91a2u/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/xT9IgG50Fb7Mi0prBC/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/xT9IgG50Fb7Mi0prBC/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/lsJCkIKV6AT28/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/lsJCkIKV6AT28/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/H5C8CevNMbpBqNqFjl/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/H5C8CevNMbpBqNqFjl/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/HFpU6ykvMDCR3NqOzW/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/HFpU6ykvMDCR3NqOzW/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/WRQBXSCnEFJIuxktnw/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwcW1hYzRzZnVpcGd0OTl5NGQzd3RxNGczdzhzam4wa3l6bmZqdjh3bSZlcD12MV9naWZzX3RyZW5kaW5nJmN0PWc/WRQBXSCnEFJIuxktnw/giphy.gif"},
+            ]},
+            "premium_gif_funny": { label: "😂 GIFs Funny", isGif: true, stickers: [
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/LBb735fuQwRKAVzN23/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/LBb735fuQwRKAVzN23/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/pUeXcg80cO8I8/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/pUeXcg80cO8I8/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/96wrfvjuXCGKU24EzH/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/96wrfvjuXCGKU24EzH/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/PrVAwWYQl1JPG/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/PrVAwWYQl1JPG/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/NpATWgCGJVn9K/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/NpATWgCGJVn9K/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/EioRMCrxAUcbDeu2vR/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/EioRMCrxAUcbDeu2vR/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/dV9O9k4Gt0NNkYkFPY/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/dV9O9k4Gt0NNkYkFPY/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/fXnRObM8Q0RkOmR5nf/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/fXnRObM8Q0RkOmR5nf/giphy.gif"},
+                {p:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/iGc3hjjyUj528DgyAp/100.gif",f:"https://media3.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/iGc3hjjyUj528DgyAp/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/H5C8CevNMbpBqNqFjl/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/H5C8CevNMbpBqNqFjl/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/U0475P2diaBOsNOq22/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/U0475P2diaBOsNOq22/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/AAsj7jdrHjtp6/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwZGxsMXdwMmNlemZkeDJlM2J2bDhwNzBhZHp6djBtYXV2cXNxZ3BjcyZlcD12MV9naWZzX3NlYXJjaCZjdD1n/AAsj7jdrHjtp6/giphy.gif"},
+            ]},
+            "premium_gif_love": { label: "💕 GIFs Amor", isGif: true, stickers: [
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/VRGLZ1TjnRHUs/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/VRGLZ1TjnRHUs/giphy.gif"},
+                {p:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Vr115pWzOnMtO/100.gif",f:"https://media4.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/Vr115pWzOnMtO/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/qFmdpUKAFZ6rMobzzu/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/qFmdpUKAFZ6rMobzzu/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/PF6e8Xq8dVnVX1BGLS/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/PF6e8Xq8dVnVX1BGLS/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l378AJF1rsaEMTQic/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l378AJF1rsaEMTQic/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l0ErNXgr9AmORhhIc/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/l0ErNXgr9AmORhhIc/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/KmxmoHUGPDjfQXqGgv/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/KmxmoHUGPDjfQXqGgv/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/TJmckDZWy0Bq5lxQZD/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/TJmckDZWy0Bq5lxQZD/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/UCNB6hX1eI3Cw/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/UCNB6hX1eI3Cw/giphy.gif"},
+                {p:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/naAaDvbAoOYdW/100.gif",f:"https://media0.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/naAaDvbAoOYdW/giphy.gif"},
+                {p:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/kMD098hd9MyO8EMBbU/100.gif",f:"https://media1.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/kMD098hd9MyO8EMBbU/giphy.gif"},
+                {p:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ytu2GUYbvhz7zShGwS/100.gif",f:"https://media2.giphy.com/media/v1.Y2lkPWE1YTU4ZDcwbXpsY3owbmxhMXg5YWFmcWZ3eGFzdzc4cGc5cXMwMDBrNTE5M2tyMSZlcD12MV9naWZzX3NlYXJjaCZjdD1n/ytu2GUYbvhz7zShGwS/giphy.gif"},
+            ]},
+        };
+
         // ===== LÓGICA DE STICKERS PÚBLICOS INTEGRADOS =====
         const stickerGrid = document.getElementById('sticker-grid');
         const stickerSearchInput = document.getElementById('sticker-search-input');
         let currentStickerCat = 'mis-stickers';
         let stickerSearchTimer = null;
+        let userIsPremium = false;
+
+        function checkUserPremium() {
+            if (!currentUser) return;
+            get(ref(db, 'Users/' + currentUser.uid + '/premium')).then(snap => {
+                userIsPremium = snap.exists() && snap.val() === true;
+            });
+        }
+
+        // ===== FUNCIONES DE STICKERS PROPIOS =====
+        async function sendStickerMessage(stickerUrl) {
+            if (!currentUser) return;
+            const userRef = ref(db, `Users/${currentUser.uid}`);
+            const userSnap = await get(userRef);
+            const userData = userSnap.val() || {};
+            const tieneCheck = (userData.premium === 'verificado');
+            const msgData = {
+                uid: currentUser.uid,
+                nick: localStorage.getItem('nick') || 'User',
+                perfil: localStorage.getItem('perfil') || '',
+                text: '[Sticker]',
+                image: stickerUrl,
+                multi: getPlatformName(),
+                time: Date.now().toString(),
+                isVerificado: tieneCheck
+            };
+            await push(ref(db, 'chatglobar'), msgData);
+            const egp = document.getElementById('emoji-gif-panel');
+            if (egp) egp.classList.remove('active');
+        }
+
+        function loadMyStickers() {
+            if (!currentUser) {
+                stickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#8e8e93;">Inicia sesión para ver tus stickers</div>';
+                return;
+            }
+            stickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#8e8e93;">Cargando...</div>';
+            const myRef = ref(db, `UserStickers/${currentUser.uid}`);
+            get(myRef).then(snap => {
+                stickerGrid.innerHTML = '';
+                // Botón añadir
+                const addBtn = document.createElement('div');
+                addBtn.style.cssText = 'display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.08);border-radius:12px;cursor:pointer;min-height:80px;border:2px dashed rgba(255,255,255,0.2);';
+                addBtn.innerHTML = '<div style="text-align:center;"><div style="font-size:24px;">+</div><div style="font-size:10px;color:#8e8e93;margin-top:4px;">Añadir</div></div>';
+                addBtn.onclick = () => {
+                    const inp = document.createElement('input');
+                    inp.type = 'file';
+                    inp.accept = 'image/*';
+                    inp.onchange = async (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) { alert('Máximo 2MB'); return; }
+                        const reader = new FileReader();
+                        reader.onload = async (ev) => {
+                            const dataUrl = ev.target.result;
+                            await push(ref(db, `UserStickers/${currentUser.uid}`), { url: dataUrl, time: Date.now() });
+                            loadMyStickers();
+                        };
+                        reader.readAsDataURL(file);
+                    };
+                    inp.click();
+                };
+                stickerGrid.appendChild(addBtn);
+
+                if (snap.exists()) {
+                    const stickers = snap.val();
+                    Object.entries(stickers).forEach(([key, val]) => {
+                        const wrapper = document.createElement('div');
+                        wrapper.style.cssText = 'position:relative;cursor:pointer;';
+                        const img = document.createElement('img');
+                        img.src = val.url;
+                        img.alt = 'mi sticker';
+                        img.loading = 'lazy';
+                        img.style.cssText = 'width:100%;border-radius:8px;background:transparent;';
+                        img.onclick = () => sendStickerMessage(val.url);
+                        const delBtn = document.createElement('div');
+                        delBtn.style.cssText = 'position:absolute;top:2px;right:2px;background:rgba(255,0,0,0.8);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;';
+                        delBtn.textContent = '×';
+                        delBtn.onclick = (ev) => {
+                            ev.stopPropagation();
+                            remove(ref(db, `UserStickers/${currentUser.uid}/${key}`)).then(() => loadMyStickers());
+                        };
+                        wrapper.appendChild(img);
+                        wrapper.appendChild(delBtn);
+                        stickerGrid.appendChild(wrapper);
+                    });
+                }
+            });
+        }
 
         function loadStickers(cat) {
             currentStickerCat = cat;
+            document.querySelectorAll('.sticker-cat-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.scat === cat);
+            });
             if (cat === 'mis-stickers') { loadMyStickers(); return; }
             stickerGrid.innerHTML = '';
+            if (cat.startsWith('premium_')) {
+                renderPremiumStickers(cat);
+                return;
+            }
             const catData = PUBLIC_STICKERS[cat];
             if (!catData || !catData.stickers.length) {
                 stickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#8e8e93;">Sin stickers</div>';
@@ -3658,24 +3690,66 @@
 
         function renderPublicStickers(stickers) {
             stickerGrid.innerHTML = stickers.map(s =>
-                `<img src="${s.p}" data-full="${s.f}" alt="sticker" loading="lazy" style="background:transparent">`
+                '<img src="' + s.p + '" data-full="' + s.f + '" alt="sticker" loading="lazy" style="background:transparent;cursor:pointer;">'
             ).join('');
             stickerGrid.querySelectorAll('img').forEach(img => {
                 img.onclick = () => sendStickerMessage(img.dataset.full);
             });
         }
 
+        function renderPremiumStickers(cat) {
+            const catData = PREMIUM_STICKERS[cat];
+            if (!catData) return;
+            if (userIsPremium) {
+                stickerGrid.innerHTML = catData.stickers.map(s =>
+                    '<img src="' + s.p + '" data-full="' + s.f + '" alt="sticker premium" loading="lazy" style="background:transparent;cursor:pointer;">'
+                ).join('');
+                stickerGrid.querySelectorAll('img').forEach(img => {
+                    img.onclick = () => sendStickerMessage(img.dataset.full);
+                });
+            } else {
+                stickerGrid.innerHTML =
+                    '<div style="grid-column:1/-1;text-align:center;padding:12px 8px 4px;color:#FFD700;font-weight:bold;font-size:13px;">⭐ Contenido Premium ⭐</div>' +
+                    '<div style="grid-column:1/-1;text-align:center;padding:4px 8px 12px;color:#aaa;font-size:11px;">Activa Premium para desbloquear</div>' +
+                    catData.stickers.map(s =>
+                        '<div style="position:relative;cursor:pointer;" onclick="showPremiumModal()">' +
+                        '<img src="' + s.p + '" alt="sticker premium" loading="lazy" style="background:transparent;filter:blur(3px);opacity:0.6;">' +
+                        '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;">🔒</div>' +
+                        '</div>'
+                    ).join('') +
+                    '<div style="grid-column:1/-1;text-align:center;padding:12px;">' +
+                    '<button onclick="showPremiumModal()" style="background:linear-gradient(135deg,#FFD700,#FF8C00);color:#000;border:none;border-radius:20px;padding:10px 24px;font-weight:bold;font-size:14px;cursor:pointer;">⭐ Activar Premium</button>' +
+                    '</div>';
+            }
+        }
+
+        window.showPremiumModal = function() {
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:9999;display:flex;align-items:center;justify-content:center;';
+            modal.innerHTML =
+                '<div style="background:#1e1e1e;border-radius:20px;padding:32px 24px;max-width:320px;width:90%;text-align:center;border:1px solid #FFD700;">' +
+                '<div style="font-size:48px;margin-bottom:12px;">⭐</div>' +
+                '<h2 style="color:#FFD700;margin:0 0 8px;font-size:20px;">Contenido Premium</h2>' +
+                '<p style="color:#ccc;font-size:13px;margin:0 0 20px;">Desbloquea stickers y GIFs exclusivos activando tu cuenta Premium.</p>' +
+                '<div style="background:rgba(255,215,0,0.1);border-radius:12px;padding:12px;margin-bottom:20px;">' +
+                '<div style="color:#FFD700;font-size:13px;">✓ Stickers exclusivos</div>' +
+                '<div style="color:#FFD700;font-size:13px;">✓ GIFs premium</div>' +
+                '<div style="color:#FFD700;font-size:13px;">✓ Sin publicidad</div>' +
+                '</div>' +
+                '<button onclick="this.closest(\'div[style]\').remove()" style="background:#333;color:#fff;border:none;border-radius:20px;padding:10px 20px;cursor:pointer;margin-right:8px;">Cerrar</button>' +
+                '<button onclick="this.closest(\'div[style]\').remove()" style="background:linear-gradient(135deg,#FFD700,#FF8C00);color:#000;border:none;border-radius:20px;padding:10px 20px;font-weight:bold;cursor:pointer;">Próximamente</button>' +
+                '</div>';
+            document.body.appendChild(modal);
+        };
+
         function searchStickers(q) {
             if (currentStickerCat === 'mis-stickers') { loadMyStickers(); return; }
             if (!q.trim()) { loadStickers(currentStickerCat); return; }
             const term = q.toLowerCase();
-            // Buscar en todas las categorías
             const results = [];
             for (const cat of Object.keys(PUBLIC_STICKERS)) {
                 const label = PUBLIC_STICKERS[cat].label.toLowerCase();
-                if (label.includes(term)) {
-                    results.push(...PUBLIC_STICKERS[cat].stickers);
-                }
+                if (label.includes(term)) results.push(...PUBLIC_STICKERS[cat].stickers);
             }
             if (!results.length) {
                 stickerGrid.innerHTML = '<div style="text-align:center;padding:20px;color:#8e8e93;">No se encontraron stickers</div>';
@@ -3684,224 +3758,10 @@
             }
         }
 
-        // ===== LÓGICA: MIS STICKERS (localStorage) =====
-        const MY_STICKERS_KEY = 'myCustomStickers_v1';
-
-        function getMyStickers() {
-            try { return JSON.parse(localStorage.getItem(MY_STICKERS_KEY) || '[]'); }
-            catch(e) { return []; }
-        }
-        function saveMyStickers(arr) {
-            localStorage.setItem(MY_STICKERS_KEY, JSON.stringify(arr));
-        }
-
-        function loadMyStickers() {
-            stickerGrid.innerHTML = '';
-            const myStickers = getMyStickers();
-            if (!myStickers.length) {
-                stickerGrid.innerHTML = `
-                    <div style="text-align:center;padding:30px 20px;color:#8e8e93;">
-                        <div style="font-size:36px;margin-bottom:10px;">🖼️</div>
-                        <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.5);margin-bottom:6px;">Sin stickers propios</div>
-                        <div style="font-size:12px;">Pulsa <strong style="color:#25d366;">✏️ Crear</strong> para hacer el tuyo</div>
-                    </div>`;
-                return;
-            }
-            const grid = document.createElement('div');
-            grid.style.cssText = 'display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:10px;';
-            myStickers.forEach((dataUrl, idx) => {
-                const wrap = document.createElement('div');
-                wrap.style.cssText = 'position:relative;border-radius:10px;overflow:hidden;background:rgba(255,255,255,0.05);aspect-ratio:1;cursor:pointer;';
-                const img = document.createElement('img');
-                img.src = dataUrl;
-                img.style.cssText = 'width:100%;height:100%;object-fit:contain;padding:4px;box-sizing:border-box;';
-                img.onclick = () => sendStickerMessage(dataUrl);
-                // Botón eliminar
-                const delBtn = document.createElement('button');
-                delBtn.textContent = '×';
-                delBtn.style.cssText = 'position:absolute;top:3px;right:3px;background:rgba(255,59,48,0.85);border:none;color:white;border-radius:50%;width:20px;height:20px;font-size:13px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    const arr = getMyStickers();
-                    arr.splice(idx, 1);
-                    saveMyStickers(arr);
-                    loadMyStickers();
-                };
-                wrap.appendChild(img);
-                wrap.appendChild(delBtn);
-                grid.appendChild(wrap);
-            });
-            stickerGrid.appendChild(grid);
-        }
-
-        async function sendStickerMessage(dataUrl) {
-            if (!currentUser) return;
-            const userRef = ref(db, `Users/${currentUser.uid}`);
-            const userSnap = await get(userRef);
-            const userData = userSnap.val() || {};
-            const tieneCheck = (userData.premium === 'verificado');
-            const msgData = {
-                uid: currentUser.uid,
-                nick: localStorage.getItem('nick') || 'User',
-                perfil: localStorage.getItem('perfil') || '',
-                text: '[STICKER]',
-                image: dataUrl,
-                multi: getPlatformName(),
-                time: Date.now().toString(),
-                isVerificado: tieneCheck
-            };
-            await push(ref(db, currentGroupRef), msgData);
-            document.getElementById('emoji-gif-panel').classList.remove('active');
-            document.getElementById('btn-emoji-gif').classList.remove('active');
-        }
-
-        // Handlers de categorías de stickers
+        // Registrar clicks en botones de categoría
         document.querySelectorAll('.sticker-cat-btn').forEach(btn => {
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                const scat = btn.dataset.scat;
-                if (scat === 'crear-sticker') {
-                    openStickerCreator();
-                    return;
-                }
-                document.querySelectorAll('.sticker-cat-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                loadStickers(scat);
-            };
+            btn.addEventListener('click', () => loadStickers(btn.dataset.scat));
         });
-
-        // ===== CREADOR DE STICKERS =====
-        const stickerCreatorOverlay = document.getElementById('sticker-creator-overlay');
-        const scCanvas = document.getElementById('sc-canvas');
-        const scCtx = scCanvas.getContext('2d');
-        let scCurrentImage = null;
-
-        function openStickerCreator() {
-            stickerCreatorOverlay.classList.add('active');
-            scCurrentImage = null;
-            scCanvas.width = 300; scCanvas.height = 300;
-            scCtx.clearRect(0,0,300,300);
-            document.getElementById('sc-canvas-wrap').style.display = 'none';
-            document.getElementById('sc-upload-area').style.display = 'block';
-            document.getElementById('sc-actions').style.display = 'none';
-            document.getElementById('sc-text-input').value = '';
-            document.getElementById('sc-emoji-input').value = '';
-            document.getElementById('sc-text-section').style.display = 'none';
-            document.getElementById('sc-emoji-section').style.display = 'none';
-        }
-        function closeStickerCreator() {
-            stickerCreatorOverlay.classList.remove('active');
-        }
-        document.getElementById('sc-close-btn').onclick = closeStickerCreator;
-        stickerCreatorOverlay.addEventListener('click', (e) => {
-            if (e.target === stickerCreatorOverlay) closeStickerCreator();
-        });
-
-        function scDrawSticker() {
-            if (!scCurrentImage) return;
-            const W = 300, H = 300;
-            scCanvas.width = W; scCanvas.height = H;
-            scCtx.clearRect(0,0,W,H);
-            // Dibuja imagen centrada con aspect-ratio
-            const iw = scCurrentImage.naturalWidth || scCurrentImage.width;
-            const ih = scCurrentImage.naturalHeight || scCurrentImage.height;
-            const scale = Math.min(W/iw, H/ih);
-            const dw = iw * scale, dh = ih * scale;
-            const dx = (W - dw)/2, dy = (H - dh)/2;
-            scCtx.drawImage(scCurrentImage, dx, dy, dw, dh);
-            // Dibuja emoji (top-right)
-            const emoji = document.getElementById('sc-emoji-input').value.trim();
-            const emojiSize = parseInt(document.getElementById('sc-emoji-size').value);
-            if (emoji) {
-                scCtx.font = `${emojiSize}px serif`;
-                scCtx.textAlign = 'right';
-                scCtx.textBaseline = 'top';
-                scCtx.fillText(emoji, W - 8, 8);
-            }
-            // Dibuja texto (bottom, con sombra)
-            const text = document.getElementById('sc-text-input').value.trim();
-            const textSize = parseInt(document.getElementById('sc-text-size').value);
-            const textColor = document.getElementById('sc-text-color').value;
-            if (text) {
-                scCtx.font = `bold ${textSize}px Arial, sans-serif`;
-                scCtx.textAlign = 'center';
-                scCtx.textBaseline = 'bottom';
-                scCtx.shadowColor = 'rgba(0,0,0,0.8)';
-                scCtx.shadowBlur = 6;
-                scCtx.fillStyle = textColor;
-                scCtx.fillText(text, W/2, H - 8);
-                scCtx.shadowBlur = 0;
-            }
-        }
-
-        function scLoadImageFile(file) {
-            if (!file || !file.type.startsWith('image/')) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const img = new Image();
-                img.onload = () => {
-                    scCurrentImage = img;
-                    document.getElementById('sc-upload-area').style.display = 'none';
-                    document.getElementById('sc-canvas-wrap').style.display = 'block';
-                    document.getElementById('sc-actions').style.display = 'flex';
-                    document.getElementById('sc-text-section').style.display = 'block';
-                    document.getElementById('sc-emoji-section').style.display = 'block';
-                    scDrawSticker();
-                };
-                img.src = ev.target.result;
-            };
-            reader.readAsDataURL(file);
-        }
-
-        // Abrir selector de archivo
-        document.getElementById('sc-upload-area').onclick = () => {
-            document.getElementById('sc-file-input').click();
-        };
-        document.getElementById('sc-file-input').onchange = (e) => {
-            scLoadImageFile(e.target.files[0]);
-            e.target.value = '';
-        };
-        // Drag & Drop
-        document.getElementById('sc-upload-area').ondragover = (e) => { e.preventDefault(); };
-        document.getElementById('sc-upload-area').ondrop = (e) => {
-            e.preventDefault();
-            scLoadImageFile(e.dataTransfer.files[0]);
-        };
-
-        // Redibuja en tiempo real al cambiar text/emoji/color/size
-        ['sc-text-input','sc-text-color','sc-text-size','sc-emoji-input','sc-emoji-size'].forEach(id => {
-            document.getElementById(id).oninput = scDrawSticker;
-            document.getElementById(id).onchange = scDrawSticker;
-        });
-
-        // Botón reset
-        document.getElementById('sc-reset-btn').onclick = () => {
-            scCurrentImage = null;
-            document.getElementById('sc-canvas-wrap').style.display = 'none';
-            document.getElementById('sc-upload-area').style.display = 'block';
-            document.getElementById('sc-actions').style.display = 'none';
-            document.getElementById('sc-text-section').style.display = 'none';
-            document.getElementById('sc-emoji-section').style.display = 'none';
-            document.getElementById('sc-text-input').value = '';
-            document.getElementById('sc-emoji-input').value = '';
-        };
-
-        // Guardar sticker
-        document.getElementById('sc-save-btn').onclick = () => {
-            if (!scCurrentImage) return;
-            scDrawSticker();
-            const dataUrl = scCanvas.toDataURL('image/png');
-            const arr = getMyStickers();
-            if (arr.length >= 30) { arr.shift(); } // máximo 30 stickers
-            arr.push(dataUrl);
-            saveMyStickers(arr);
-            closeStickerCreator();
-            // Volver a mis stickers
-            document.querySelectorAll('.sticker-cat-btn').forEach(b => b.classList.remove('active'));
-            document.querySelector('.sticker-cat-btn[data-scat="mis-stickers"]').classList.add('active');
-            loadMyStickers();
-            if (typeof showToast === 'function') showToast('✅ Sticker guardado');
-        };
 
         // Búsqueda de stickers
         stickerSearchInput.oninput = () => {
@@ -4001,7 +3861,6 @@
         }, true);
 
     </script>
-<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
