@@ -1150,6 +1150,54 @@
         .voice-bar.played { background: white; }
         .voice-duration { font-size: 11px; color: rgba(255,255,255,0.8); white-space: nowrap; flex-shrink: 0; }
 
+        /* ============= AUTODESTRUCCIÓN ============= */
+        .destruct-btn {
+            background: none; border: none; font-size: 18px; cursor: pointer;
+            padding: 6px 6px; transition: transform 0.2s; line-height: 1;
+            color: #8e8e93;
+        }
+        .destruct-btn.active { color: #ff3b5c; }
+        .destruct-btn:active { transform: scale(1.2); }
+        .destruct-timer {
+            font-size: 10px; color: #ff3b5c; font-weight: 800;
+            margin-left: 4px; animation: voicePulse 1s infinite;
+        }
+        .msg-group.destructing { animation: fadeOut 0.4s ease forwards; }
+        @keyframes fadeOut { to { opacity: 0; transform: scale(0.85); } }
+
+        /* ============= ESTADO ACTIVO / AUSENTE ============= */
+        #status-badge {
+            display: flex; align-items: center; gap: 5px;
+            font-size: 11px; color: #8e8e93; cursor: pointer;
+            padding: 2px 8px; border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+            transition: background 0.2s;
+        }
+        #status-badge:active { background: rgba(255,255,255,0.1); }
+        .status-dot {
+            width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+        }
+        .status-dot.activo  { background: #2ecc71; box-shadow: 0 0 5px #2ecc71; }
+        .status-dot.ausente { background: #f39c12; }
+        .status-dot.ocupado { background: #ff3b5c; }
+        .status-menu {
+            position: absolute; top: 54px; left: 50%; transform: translateX(-50%);
+            background: rgba(28,28,30,0.97); backdrop-filter: blur(20px);
+            border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            z-index: 500; overflow: hidden; min-width: 170px;
+            display: none;
+        }
+        .status-menu.active { display: block; animation: fadeIn 0.15s ease; }
+        .status-option {
+            padding: 12px 16px; font-size: 14px; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; color: white;
+            transition: background 0.15s;
+            border-bottom: 0.5px solid rgba(255,255,255,0.06);
+        }
+        .status-option:last-child { border-bottom: none; }
+        .status-option:active { background: rgba(255,255,255,0.08); }
+
         /* ============= NUEVOS ESTILOS: VISTO / ELIMINAR / EDITAR ============= */
         .msg-seen { font-size: 11px; color: #007aff; margin-left: 5px; display: flex; align-items: center; gap: 2px; }
         .msg-seen.sent { color: #6e6e73; }
@@ -1385,7 +1433,24 @@
     <header class="header">
         <button class="ios-btn" id="back-nav">‹ Atrás</button>
         <h1>Chat Global</h1>
-        <button class="ios-btn" id="btn-groups" style="font-size:20px;">💬</button>
+        <div style="position:relative;display:flex;align-items:center;gap:8px;">
+            <div id="status-badge" title="Tu estado">
+                <span class="status-dot activo" id="my-status-dot"></span>
+                <span id="my-status-label">Activo</span>
+            </div>
+            <div class="status-menu" id="status-menu">
+                <div class="status-option" data-status="activo">
+                    <span class="status-dot activo"></span> Activo
+                </div>
+                <div class="status-option" data-status="ausente">
+                    <span class="status-dot ausente"></span> Ausente
+                </div>
+                <div class="status-option" data-status="ocupado">
+                    <span class="status-dot ocupado"></span> Ocupado
+                </div>
+            </div>
+            <button class="ios-btn" id="btn-groups" style="font-size:20px;">💬</button>
+        </div>
     </header>
 
     <!-- SECCIÓN DE HISTORIAS -->
@@ -1852,6 +1917,7 @@
                     <button id="btn-chat-image" title="Imagen">
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                     </button>
+                    <button id="btn-destruct" class="destruct-btn" title="Mensaje que se autodestruye">💣</button>
                     <button id="voice-record-btn" title="Nota de voz">🎤</button>
                 </div>
             </div>
@@ -2651,6 +2717,7 @@
                                 <span>${plat}</span>
                                 <span>${formatTime(d.time)}</span>
                                 ${d.edited ? '<span class="msg-edited-tag">editado</span>' : ''}
+                                ${d.destructAfter ? `<span class="destruct-timer" id="dtimer-${child.key}">💣</span>` : ''}
                                 ${isMe ? `<span class="msg-seen sent" id="seen-${child.key}">✓✓</span>` : ''}
                             </div>
                             <div class="msg-reactions" id="reactions-${child.key}"></div>
@@ -2707,12 +2774,19 @@
                     });
                 });
 
-                // Marcar como leídos y escuchar ticks de visto
+                // Marcar como leídos, escuchar ticks de visto e iniciar timers
                 snap.forEach(child => {
                     lastMsgKeys[child.key] = true;
                     const d = child.val();
                     if (currentUser && d.uid === currentUser.uid) {
                         listenToReads(child.key, currentUser.uid);
+                    }
+                    // Iniciar cuenta regresiva si el mensaje se autodestruye
+                    if (d.destructAfter && d.destructAfter > Date.now()) {
+                        startDestructTimer(child.key, d.destructAfter);
+                    } else if (d.destructAfter && d.destructAfter <= Date.now()) {
+                        // Ya expiró, eliminar
+                        remove(ref(db, `${currentGroupRef}/${child.key}`));
                     }
                 });
                 markMsgsAsRead();
@@ -2840,6 +2914,103 @@
         let lastMsgKeys = {};
 
         // =====================================================
+        //  MENSAJES QUE SE AUTODESTRUYEN
+        // =====================================================
+        let destructMode = false;
+        const btnDestruct = document.getElementById('btn-destruct');
+
+        btnDestruct?.addEventListener('click', () => {
+            destructMode = !destructMode;
+            btnDestruct.classList.toggle('active', destructMode);
+            btnDestruct.title = destructMode ? 'Autodestrucción ON (30s)' : 'Mensaje que se autodestruye';
+            showToast(destructMode ? '💣 Autodestrucción activada (30s)' : '💣 Autodestrucción desactivada');
+        });
+
+        // Iniciar cuenta regresiva en mensajes con destructAfter
+        function startDestructTimer(msgKey, destructAfter) {
+            const timerEl = document.getElementById(`dtimer-${msgKey}`);
+            if (!timerEl) return;
+
+            const tick = () => {
+                const secsLeft = Math.ceil((destructAfter - Date.now()) / 1000);
+                if (secsLeft <= 0) {
+                    // Eliminar de Firebase y del DOM
+                    remove(ref(db, `${currentGroupRef}/${msgKey}`));
+                    const group = timerEl.closest('.msg-group');
+                    if (group) {
+                        group.classList.add('destructing');
+                        setTimeout(() => group.remove(), 400);
+                    }
+                    return;
+                }
+                timerEl.textContent = `💣 ${secsLeft}s`;
+                setTimeout(tick, 1000);
+            };
+            tick();
+        }
+
+        // =====================================================
+        //  ESTADO: ACTIVO / AUSENTE / OCUPADO
+        // =====================================================
+        const statusBadge  = document.getElementById('status-badge');
+        const statusMenu   = document.getElementById('status-menu');
+        const myStatusDot  = document.getElementById('my-status-dot');
+        const myStatusLbl  = document.getElementById('my-status-label');
+        let myStatus = localStorage.getItem('myStatus') || 'activo';
+
+        const STATUS_LABELS = { activo: 'Activo', ausente: 'Ausente', ocupado: 'Ocupado' };
+
+        function applyStatus(status) {
+            myStatus = status;
+            localStorage.setItem('myStatus', status);
+            if (myStatusDot) { myStatusDot.className = `status-dot ${status}`; }
+            if (myStatusLbl) myStatusLbl.textContent = STATUS_LABELS[status] || status;
+            // Guardar en Firebase si hay usuario logueado
+            if (currentUser) {
+                set(ref(db, `status/${currentUser.uid}`), {
+                    estado: status,
+                    nick: localStorage.getItem('nick') || 'User',
+                    perfil: localStorage.getItem('perfil') || '',
+                    time: Date.now()
+                });
+            }
+        }
+
+        applyStatus(myStatus);
+
+        statusBadge?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            statusMenu?.classList.toggle('active');
+        });
+
+        statusMenu?.querySelectorAll('.status-option').forEach(opt => {
+            opt.addEventListener('click', () => {
+                applyStatus(opt.dataset.status);
+                statusMenu.classList.remove('active');
+            });
+        });
+
+        document.addEventListener('click', () => statusMenu?.classList.remove('active'));
+
+        // Mostrar estados de otros usuarios en el header (contador)
+        function listenToStatuses() {
+            onValue(ref(db, 'status'), (snap) => {
+                if (!snap.exists() || !currentUser) return;
+                const data = snap.val();
+                const activos = Object.entries(data).filter(([uid, v]) =>
+                    uid !== currentUser.uid &&
+                    v.estado === 'activo' &&
+                    (Date.now() - v.time) < 300000 // activo en los últimos 5 min
+                ).length;
+                const lbl = document.getElementById('my-status-label');
+                // No sobreescribir si el menu está abierto
+                if (lbl && !statusMenu?.classList.contains('active')) {
+                    // opcional: mostrar cuántos están activos
+                }
+            });
+        }
+
+        // =====================================================
         //  MENSAJES DE VOZ
         // =====================================================
         let mediaRecorder = null;
@@ -2948,11 +3119,15 @@
                     mediaRecorder.start(300); // chunk cada 300 ms
                 })
                 .catch(err => {
-                    const msg = err.name === 'NotAllowedError'  ? '🚫 Permiso de micrófono denegado' :
-                                err.name === 'NotFoundError'    ? '🎤 No se encontró micrófono' :
-                                err.name === 'NotReadableError' ? '⚠️ Micrófono en uso por otra app' :
-                                '❌ No se pudo acceder al micrófono';
-                    showToast(msg);
+                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                        showMicPermissionModal();
+                    } else if (err.name === 'NotFoundError') {
+                        showToast('🎤 No se encontró micrófono en este dispositivo');
+                    } else if (err.name === 'NotReadableError') {
+                        showToast('⚠️ El micrófono está en uso por otra app');
+                    } else {
+                        showToast('❌ No se pudo acceder al micrófono');
+                    }
                 });
         }
 
@@ -3075,6 +3250,58 @@
         // =====================================================
         //  AUTH + INIT
         // =====================================================
+        // ── Modal de permiso de micrófono denegado ──
+        function showMicPermissionModal() {
+            const existing = document.getElementById('mic-perm-modal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'mic-perm-modal';
+            modal.style.cssText = `
+                position:fixed;inset:0;background:rgba(0,0,0,0.88);
+                z-index:9999;display:flex;align-items:flex-end;
+                justify-content:center;padding-bottom:30px;
+                animation:fadeIn .2s ease;
+            `;
+            modal.innerHTML = `
+                <div style="
+                    background:#1c1c1e;border-radius:24px;padding:28px 24px;
+                    width:92%;max-width:380px;border:1px solid rgba(255,255,255,0.1);
+                ">
+                    <div style="font-size:40px;text-align:center;margin-bottom:12px;">🎤</div>
+                    <h3 style="margin:0 0 8px;font-size:17px;text-align:center;color:white;">
+                        Permiso de micrófono bloqueado
+                    </h3>
+                    <p style="color:#8e8e93;font-size:14px;text-align:center;margin:0 0 20px;line-height:1.5;">
+                        Tu navegador bloqueó el micrófono. Para activarlo:
+                    </p>
+                    <div style="background:#2c2c2e;border-radius:14px;padding:14px 16px;margin-bottom:20px;">
+                        <div style="font-size:13px;color:#e0e0e0;line-height:1.8;">
+                            <b style="color:#007aff;">Chrome Android:</b><br>
+                            Toca el 🔒 en la barra de dirección<br>
+                            → Permisos → Micrófono → <b style="color:#2ecc71;">Permitir</b>
+                            <br><br>
+                            <b style="color:#007aff;">Si no aparece:</b><br>
+                            Ajustes del teléfono → Apps → Chrome<br>
+                            → Permisos → Micrófono → <b style="color:#2ecc71;">Permitir</b>
+                        </div>
+                    </div>
+                    <button onclick="document.getElementById('mic-perm-modal').remove()" style="
+                        width:100%;background:#007aff;border:none;color:white;
+                        padding:14px;border-radius:14px;font-size:15px;
+                        font-weight:700;cursor:pointer;
+                    ">Entendido</button>
+                    <button onclick="window.location.reload()" style="
+                        width:100%;background:transparent;border:none;color:#8e8e93;
+                        padding:10px;font-size:14px;cursor:pointer;margin-top:6px;
+                    ">Recargar página tras activarlo</button>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            modal.onclick = e => { if (e.target === modal) modal.remove(); };
+        }
+
         // ── Solicitar permiso de micrófono al cargar ──
         async function requestMicPermission() {
             if (!navigator.mediaDevices?.getUserMedia) return;
@@ -3091,6 +3318,8 @@
             if (!user) return;
             currentUser = user;
             requestNotificationPermission();
+            applyStatus(myStatus);   // Registrar estado en Firebase al loguearse
+            listenToStatuses();
 
             // --- INICIALIZAR HISTORIAS (MODULAR) ---
             initStories();
@@ -3133,7 +3362,8 @@
                         text: text,
                         multi: getPlatformName(),
                         time: Date.now().toString(),
-                        isVerificado: tieneCheck
+                        isVerificado: tieneCheck,
+                        ...(destructMode ? { destructAfter: Date.now() + 30000 } : {})
                     };
                     if(reply) { msgData.replyNick = reply.replyNick; msgData.replyText = reply.replyText; }
                     if(pendingChatImage) { msgData.image = pendingChatImage; }
