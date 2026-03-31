@@ -444,6 +444,200 @@
             color: rgba(255,255,255,0.68);
         }
 
+        .short-card {
+            cursor: pointer;
+        }
+        .short-open-hint {
+            position: absolute;
+            top: 14px;
+            right: 14px;
+            z-index: 3;
+            padding: 7px 10px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 800;
+            color: white;
+            background: rgba(0,0,0,0.38);
+            border: 1px solid rgba(255,255,255,0.18);
+            backdrop-filter: blur(10px);
+        }
+        .short-viewer-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 2600;
+            background: rgba(0,0,0,0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px 14px;
+        }
+        .short-viewer-modal.open {
+            display: flex;
+        }
+        body.viewer-open {
+            overflow: hidden;
+        }
+        .short-viewer-shell {
+            width: min(100%, 980px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+        .short-viewer-stage {
+            position: relative;
+            width: min(100%, 420px);
+            height: min(86vh, 780px);
+            border-radius: 32px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid rgba(255,255,255,0.16);
+            box-shadow: 0 25px 70px rgba(0,0,0,0.55);
+            display: flex;
+            align-items: stretch;
+            justify-content: center;
+        }
+        .short-viewer-video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            background: #000;
+        }
+        .short-viewer-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.08) 35%, rgba(0,0,0,0.78) 100%);
+            pointer-events: none;
+        }
+        .short-viewer-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px;
+        }
+        .short-viewer-count,
+        .short-viewer-close {
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.12);
+            color: white;
+            border-radius: 999px;
+            font-weight: 800;
+            backdrop-filter: blur(10px);
+        }
+        .short-viewer-count {
+            padding: 8px 14px;
+            font-size: 12px;
+        }
+        .short-viewer-close {
+            width: 42px;
+            height: 42px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .short-viewer-body {
+            position: absolute;
+            inset: auto 0 0 0;
+            z-index: 2;
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 18px;
+        }
+        .short-viewer-meta {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .short-viewer-meta .short-caption {
+            -webkit-line-clamp: initial;
+            overflow: visible;
+        }
+        .short-viewer-side-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: stretch;
+        }
+        .short-viewer-side-actions .short-action-btn {
+            min-width: 86px;
+            justify-content: center;
+        }
+        .short-viewer-nav {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.18);
+            background: rgba(255,255,255,0.12);
+            color: white;
+            font-size: 28px;
+            font-weight: 800;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+        .short-viewer-nav:disabled {
+            opacity: 0.35;
+            cursor: default;
+        }
+        .short-viewer-play-hint {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            top: 74px;
+            z-index: 2;
+            padding: 8px 12px;
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            background: rgba(0,0,0,0.32);
+            border: 1px solid rgba(255,255,255,0.14);
+            backdrop-filter: blur(10px);
+            white-space: nowrap;
+        }
+        @media (max-width: 760px) {
+            .short-viewer-modal {
+                padding: 0;
+            }
+            .short-viewer-shell {
+                width: 100%;
+                height: 100%;
+                gap: 0;
+            }
+            .short-viewer-stage {
+                width: 100%;
+                height: 100%;
+                border-radius: 0;
+                max-width: none;
+            }
+            .short-viewer-nav {
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                z-index: 3;
+            }
+            .short-viewer-nav.prev { left: 12px; }
+            .short-viewer-nav.next { right: 12px; }
+            .short-viewer-body {
+                gap: 10px;
+                padding: 16px 14px 24px;
+            }
+            .short-viewer-side-actions .short-action-btn {
+                min-width: 72px;
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+        }
+
         /* ESTILOS DE ENCUESTA */
         .poll-container {
             margin-bottom: 15px;
@@ -761,6 +955,34 @@
         </a>
     </nav>
 
+    <div id="short-viewer-modal" class="short-viewer-modal" aria-hidden="true">
+        <div class="short-viewer-shell">
+            <button class="short-viewer-nav prev" id="short-viewer-prev" type="button" aria-label="Vídeo anterior">‹</button>
+            <div class="short-viewer-stage" id="short-viewer-stage">
+                <video id="short-viewer-video" class="short-viewer-video" playsinline webkit-playsinline preload="metadata"></video>
+                <div class="short-viewer-overlay"></div>
+                <div class="short-viewer-top">
+                    <span class="short-viewer-count" id="short-viewer-count">1 / 1</span>
+                    <button class="short-viewer-close" id="short-viewer-close" type="button" aria-label="Cerrar">✕</button>
+                </div>
+                <div class="short-viewer-play-hint" id="short-viewer-play-hint">Desliza o usa las flechas para cambiar</div>
+                <div class="short-viewer-body">
+                    <div class="short-viewer-meta">
+                        <div class="short-user" id="short-viewer-user"></div>
+                        <div class="short-caption" id="short-viewer-caption"></div>
+                        <div class="short-profile-note">Toca el vídeo para pausar o reanudar.</div>
+                    </div>
+                    <div class="short-viewer-side-actions">
+                        <button class="short-action-btn" id="short-viewer-like" type="button">❤️ 0</button>
+                        <button class="short-action-btn" id="short-viewer-comments" type="button">💬 0</button>
+                        <button class="short-action-btn" id="short-viewer-sound" type="button">🔊 Sonido</button>
+                    </div>
+                </div>
+            </div>
+            <button class="short-viewer-nav next" id="short-viewer-next" type="button" aria-label="Siguiente vídeo">›</button>
+        </div>
+    </div>
+
     <!-- Modal de Comentarios -->
     <div id="comments-modal" class="comments-modal">
         <div class="comments-content">
@@ -807,6 +1029,19 @@
         const shortsSection = document.getElementById('shorts-section');
         const shortsContainer = document.getElementById('shorts-container');
         const shortsCount = document.getElementById('shorts-count');
+        const shortViewerModal = document.getElementById('short-viewer-modal');
+        const shortViewerStage = document.getElementById('short-viewer-stage');
+        const shortViewerVideo = document.getElementById('short-viewer-video');
+        const shortViewerCount = document.getElementById('short-viewer-count');
+        const shortViewerUser = document.getElementById('short-viewer-user');
+        const shortViewerCaption = document.getElementById('short-viewer-caption');
+        const shortViewerLikeBtn = document.getElementById('short-viewer-like');
+        const shortViewerCommentsBtn = document.getElementById('short-viewer-comments');
+        const shortViewerSoundBtn = document.getElementById('short-viewer-sound');
+        const shortViewerPrevBtn = document.getElementById('short-viewer-prev');
+        const shortViewerNextBtn = document.getElementById('short-viewer-next');
+        const shortViewerCloseBtn = document.getElementById('short-viewer-close');
+
 
         let currentUser = null;
         let currentUserProfile = null;
@@ -939,34 +1174,183 @@
             });
         };
 
+        let currentShortVideos = [];
+        let currentShortIndex = 0;
+        let shortViewerTouchStartY = null;
+
+        const getShortVideos = (postsMap = {}) => Object.entries(postsMap)
+            .filter(([_, post]) => post && post.video)
+            .filter(([_, post]) => !isPostExpired(post))
+            .filter(([_, post]) => currentMood === 'all' || (post.mood || '').toLowerCase() === currentMood)
+            .sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
+
+        const updateShortViewerSoundButton = () => {
+            if (!shortViewerSoundBtn || !shortViewerVideo) return;
+            shortViewerSoundBtn.textContent = shortViewerVideo.muted ? '🔇 Silencio' : '🔊 Sonido';
+        };
+
+        const updateShortViewerNavButtons = () => {
+            const hasVideos = currentShortVideos.length > 1;
+            if (shortViewerPrevBtn) shortViewerPrevBtn.disabled = !hasVideos;
+            if (shortViewerNextBtn) shortViewerNextBtn.disabled = !hasVideos;
+        };
+
+        const showShortViewerAt = (index, keepMuted = false) => {
+            if (!currentShortVideos.length || !shortViewerVideo) return;
+
+            const total = currentShortVideos.length;
+            currentShortIndex = (index + total) % total;
+            const [postId, post] = currentShortVideos[currentShortIndex];
+            const likeCount = post.likes ? Object.keys(post.likes).length : 0;
+            const commentCount = post.commentCount || 0;
+            const userLiked = currentUser && post.likes && post.likes[currentUser.uid];
+            const previousMuted = keepMuted ? shortViewerVideo.muted : false;
+
+            shortViewerModal.dataset.postId = postId;
+            shortViewerCount.textContent = `${currentShortIndex + 1} / ${total}`;
+            shortViewerUser.innerHTML = `
+                <img src="${post.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+                <div class="short-user-meta">
+                    <strong>${post.nick || 'Usuario'}</strong>
+                    <span>${formatTime(post.time)}</span>
+                </div>
+            `;
+            shortViewerCaption.textContent = post.text || 'Vídeo corto sin descripción.';
+            shortViewerLikeBtn.classList.toggle('liked', Boolean(userLiked));
+            shortViewerLikeBtn.textContent = `❤️ ${likeCount}`;
+            shortViewerCommentsBtn.textContent = `💬 ${commentCount}`;
+            shortViewerLikeBtn.onclick = async (event) => {
+                event.stopPropagation();
+                await window.toggleLike(postId);
+            };
+            shortViewerCommentsBtn.onclick = (event) => {
+                event.stopPropagation();
+                window.openComments(postId);
+            };
+
+            shortViewerVideo.pause();
+            shortViewerVideo.src = post.video || '';
+            shortViewerVideo.loop = true;
+            shortViewerVideo.controls = false;
+            shortViewerVideo.muted = previousMuted;
+            shortViewerVideo.load();
+            shortViewerVideo.play().catch(() => {});
+            updateShortViewerSoundButton();
+            updateShortViewerNavButtons();
+        };
+
+        window.openShortViewer = (postId) => {
+            currentShortVideos = getShortVideos(lastPostsData).slice(0, 20);
+            const index = currentShortVideos.findIndex(([id]) => id === postId);
+            if (index < 0 || !shortViewerModal) return;
+            shortViewerModal.classList.add('open');
+            shortViewerModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('viewer-open');
+            showShortViewerAt(index);
+        };
+
+        window.closeShortViewer = () => {
+            if (!shortViewerModal) return;
+            shortViewerModal.classList.remove('open');
+            shortViewerModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('viewer-open');
+            shortViewerVideo.pause();
+        };
+
+        const moveShortViewer = (direction) => {
+            if (currentShortVideos.length <= 1) return;
+            showShortViewerAt(currentShortIndex + direction, true);
+        };
+
+        const syncShortViewer = () => {
+            currentShortVideos = getShortVideos(lastPostsData).slice(0, 20);
+            if (!shortViewerModal?.classList.contains('open')) return;
+            if (!currentShortVideos.length) {
+                window.closeShortViewer();
+                return;
+            }
+            const activePostId = shortViewerModal.dataset.postId;
+            const nextIndex = currentShortVideos.findIndex(([id]) => id === activePostId);
+            showShortViewerAt(nextIndex >= 0 ? nextIndex : 0, true);
+        };
+
+        if (shortViewerCloseBtn) shortViewerCloseBtn.onclick = () => window.closeShortViewer();
+        if (shortViewerPrevBtn) shortViewerPrevBtn.onclick = (event) => { event.stopPropagation(); moveShortViewer(-1); };
+        if (shortViewerNextBtn) shortViewerNextBtn.onclick = (event) => { event.stopPropagation(); moveShortViewer(1); };
+        if (shortViewerSoundBtn) {
+            shortViewerSoundBtn.onclick = (event) => {
+                event.stopPropagation();
+                shortViewerVideo.muted = !shortViewerVideo.muted;
+                if (shortViewerVideo.paused) shortViewerVideo.play().catch(() => {});
+                updateShortViewerSoundButton();
+            };
+        }
+        if (shortViewerVideo) {
+            shortViewerVideo.addEventListener('click', (event) => {
+                event.stopPropagation();
+                if (shortViewerVideo.paused) {
+                    shortViewerVideo.play().catch(() => {});
+                } else {
+                    shortViewerVideo.pause();
+                }
+            });
+        }
+        if (shortViewerModal) {
+            shortViewerModal.addEventListener('click', (event) => {
+                if (event.target === shortViewerModal) {
+                    window.closeShortViewer();
+                }
+            });
+        }
+        if (shortViewerStage) {
+            shortViewerStage.addEventListener('touchstart', (event) => {
+                shortViewerTouchStartY = event.changedTouches[0]?.clientY ?? null;
+            }, { passive: true });
+            shortViewerStage.addEventListener('touchend', (event) => {
+                const endY = event.changedTouches[0]?.clientY ?? null;
+                if (shortViewerTouchStartY === null || endY === null) return;
+                const deltaY = shortViewerTouchStartY - endY;
+                if (Math.abs(deltaY) > 60) {
+                    moveShortViewer(deltaY > 0 ? 1 : -1);
+                }
+                shortViewerTouchStartY = null;
+            }, { passive: true });
+        }
+        window.addEventListener('keydown', (event) => {
+            if (!shortViewerModal?.classList.contains('open')) return;
+            if (event.key === 'Escape') window.closeShortViewer();
+            if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') moveShortViewer(-1);
+            if (event.key === 'ArrowDown' || event.key === 'ArrowRight') moveShortViewer(1);
+        });
+
         const renderShortVideos = (postsMap = {}) => {
             if (!shortsSection || !shortsContainer || !shortsCount) return;
 
-            const videos = Object.entries(postsMap)
-                .filter(([_, post]) => post && post.video)
-                .filter(([_, post]) => !isPostExpired(post))
-                .filter(([_, post]) => currentMood === 'all' || (post.mood || '').toLowerCase() === currentMood)
-                .sort((a, b) => (b[1].time || 0) - (a[1].time || 0));
-
+            const videos = getShortVideos(postsMap);
+            currentShortVideos = videos.slice(0, 20);
             shortsCount.textContent = String(videos.length);
 
             if (!videos.length) {
                 shortsSection.style.display = 'none';
                 shortsContainer.innerHTML = '';
+                syncShortViewer();
                 return;
             }
 
             shortsSection.style.display = 'block';
             shortsContainer.innerHTML = '';
 
-            videos.slice(0, 20).forEach(([postId, post]) => {
+            currentShortVideos.forEach(([postId, post], index) => {
                 const likeCount = post.likes ? Object.keys(post.likes).length : 0;
                 const commentCount = post.commentCount || 0;
                 const userLiked = currentUser && post.likes && post.likes[currentUser.uid];
                 const card = document.createElement('article');
                 card.className = 'short-card';
+                card.setAttribute('role', 'button');
+                card.tabIndex = 0;
                 card.innerHTML = `
-                    <video class="short-video" src="${post.video}" playsinline muted loop controls preload="metadata"></video>
+                    <span class="short-open-hint">Abrir</span>
+                    <video class="short-video" src="${post.video}" playsinline muted loop preload="metadata"></video>
                     <div class="short-gradient"></div>
                     <div class="short-content">
                         <div class="short-user">
@@ -978,14 +1362,28 @@
                         </div>
                         <div class="short-caption">${post.text || 'Vídeo corto sin descripción.'}</div>
                         <div class="short-actions">
-                            <button class="short-action-btn ${userLiked ? 'liked' : ''}" onclick="toggleLike('${postId}')">❤️ ${likeCount}</button>
-                            <button class="short-action-btn" onclick="openComments('${postId}')">💬 ${commentCount}</button>
+                            <button class="short-action-btn ${userLiked ? 'liked' : ''}" onclick="event.stopPropagation(); toggleLike('${postId}')">❤️ ${likeCount}</button>
+                            <button class="short-action-btn" onclick="event.stopPropagation(); openComments('${postId}')">💬 ${commentCount}</button>
                         </div>
-                        <div class="short-profile-note">Los comentarios muestran foto y perfil del usuario.</div>
+                        <div class="short-profile-note">Toca la tarjeta para abrir el vídeo en pantalla completa.</div>
                     </div>
                 `;
+                card.addEventListener('click', () => window.openShortViewer(postId));
+                card.addEventListener('keydown', (event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault();
+                        window.openShortViewer(postId);
+                    }
+                });
+                const previewVideo = card.querySelector('.short-video');
+                if (previewVideo) {
+                    previewVideo.currentTime = 0.01;
+                    previewVideo.play().catch(() => {});
+                }
                 shortsContainer.appendChild(card);
             });
+
+            syncShortViewer();
         };
 
         const loadComments = (postId) => {
@@ -1530,6 +1928,7 @@
         shakeBtn.onclick = () => showRandomPost();
         document.body.appendChild(shakeBtn);
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
