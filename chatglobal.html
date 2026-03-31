@@ -3075,6 +3075,18 @@
         // =====================================================
         //  AUTH + INIT
         // =====================================================
+        // ── Solicitar permiso de micrófono al cargar ──
+        async function requestMicPermission() {
+            if (!navigator.mediaDevices?.getUserMedia) return;
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                stream.getTracks().forEach(t => t.stop()); // soltar el mic de inmediato
+            } catch(e) {
+                // Permiso denegado o no disponible, se manejará al grabar
+            }
+        }
+        requestMicPermission();
+
         auth.onAuthStateChanged((user) => {
             if (!user) return;
             currentUser = user;
