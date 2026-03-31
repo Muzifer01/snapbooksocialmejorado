@@ -2843,159 +2843,204 @@
         //  MENSAJES DE VOZ
         // =====================================================
         let mediaRecorder = null;
+        let micStream = null;          // stream guardado aparte
         let audioChunks = [];
         let voiceTimer = null;
         let voiceSeconds = 0;
         let isRecording = false;
 
+        const voiceRecordingBar = document.getElementById('voice-recording-bar');
+        const voiceRecTime     = document.getElementById('voice-rec-time');
+        const voiceRecCancel   = document.getElementById('voice-rec-cancel');
+        const voiceRecSend     = document.getElementById('voice-rec-send');
+        const sendBtn          = document.getElementById('send-btn');
+
+        const SEND_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>`;
+        const MIC_ICON  = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 1 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>`;
+        const STOP_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><rect x="5" y="5" width="14" height="14" rx="2"/></svg>`;
+
         function formatVoiceDuration(secs) {
-            const m = Math.floor(secs / 60);
-            const s = Math.floor(secs % 60);
-            return m + ':' + String(s).padStart(2, '0');
+            const s = Math.max(0, Math.floor(secs));
+            return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
         }
 
-        window.playVoiceMsg = function(btn, audioSrc) {
-            const bubble = btn.closest('.voice-msg-bubble');
-            const bars = bubble.querySelectorAll('.voice-bar');
-            const durationEl = bubble.querySelector('.voice-duration');
+        function updatePrimaryActionButton() {
+            if (!sendBtn) return;
+            const hasText = !!(msgInput?.value || '').trim();
+            const hasImg  = !!pendingChatImage;
+            if (isRecording) {
+                sendBtn.dataset.mode = 'stop';
+                sendBtn.innerHTML = STOP_ICON;
+                sendBtn.style.background = '#ff3b5c';
+            } else if (hasText || hasImg) {
+                sendBtn.dataset.mode = 'send';
+                sendBtn.innerHTML = SEND_ICON;
+                sendBtn.style.background = '#25d366';
+            } else {
+                sendBtn.dataset.mode = 'mic';
+                sendBtn.innerHTML = MIC_ICON;
+                sendBtn.style.background = '#25d366';
+            }
+        }
 
-            // Si ya hay un audio reproduciéndose, pararlo
-            if (window._currentVoiceAudio && !window._currentVoiceAudio.paused) {
-                window._currentVoiceAudio.pause();
-                window._currentVoiceAudio = null;
+        // ── Reproducir nota de voz ──
+        window.playVoiceMsg = function(btn, audioSrc) {
+            const bubble    = btn.closest('.voice-msg-bubble');
+            const bars      = bubble ? [...bubble.querySelectorAll('.voice-bar')] : [];
+            const durEl     = bubble ? bubble.querySelector('.voice-duration') : null;
+
+            if (window._curVoice && !window._curVoice.paused) {
+                window._curVoice.pause();
+                window._curVoice = null;
                 btn.textContent = '▶';
                 bars.forEach(b => b.classList.remove('played'));
                 return;
             }
 
             const audio = new Audio(audioSrc);
-            window._currentVoiceAudio = audio;
+            window._curVoice = audio;
             btn.textContent = '⏸';
 
             audio.ontimeupdate = () => {
                 const pct = audio.currentTime / (audio.duration || 1);
-                const playedCount = Math.floor(pct * bars.length);
-                bars.forEach((b, i) => {
-                    b.classList.toggle('played', i < playedCount);
-                });
-                if (durationEl) durationEl.textContent = formatVoiceDuration(audio.duration - audio.currentTime);
+                bars.forEach((b, i) => b.classList.toggle('played', i < Math.floor(pct * bars.length)));
+                if (durEl) durEl.textContent = formatVoiceDuration((audio.duration || 0) - audio.currentTime);
             };
-
             audio.onended = () => {
                 btn.textContent = '▶';
                 bars.forEach(b => b.classList.remove('played'));
-                if (durationEl) durationEl.textContent = formatVoiceDuration(audio.duration || 0);
+                if (durEl) durEl.textContent = formatVoiceDuration(audio.duration || 0);
             };
-
-            audio.play().catch(() => showToast('No se pudo reproducir el audio'));
+            audio.play().catch(() => showToast('No se pudo reproducir'));
         };
 
-        const voiceRecordBtn = document.getElementById('voice-record-btn');
-        const voiceRecordingBar = document.getElementById('voice-recording-bar');
-        const voiceRecTime = document.getElementById('voice-rec-time');
-        const voiceRecCancel = document.getElementById('voice-rec-cancel');
-        const voiceRecSend = document.getElementById('voice-rec-send');
-        const sendBtn = document.getElementById('send-btn');
-        const SEND_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
-        const MIC_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 1 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>';
-
-        function updatePrimaryActionButton() {
-            if (!sendBtn) return;
-            const hasText = !!(msgInput?.value || '').trim();
-            const hasAttachment = !!pendingChatImage;
-            const mode = (hasText || hasAttachment) ? 'send' : 'mic';
-            sendBtn.dataset.mode = mode;
-            sendBtn.title = mode === 'send' ? 'Enviar' : 'Nota de voz';
-            sendBtn.setAttribute('aria-label', mode === 'send' ? 'Enviar mensaje' : 'Grabar nota de voz');
-            sendBtn.innerHTML = mode === 'send' ? SEND_ICON : MIC_ICON;
-            sendBtn.classList.toggle('recording', isRecording);
-        }
-
+        // ── Iniciar grabación ──
         function startRecording() {
             if (isRecording) return;
-            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
-                isRecording = true;
-                audioChunks = [];
-                voiceSeconds = 0;
-                mediaRecorder = new MediaRecorder(stream);
-                mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+                .then(stream => {
+                    micStream    = stream;
+                    isRecording  = true;
+                    audioChunks  = [];
+                    voiceSeconds = 0;
 
-                voiceRecordBtn.classList.add('recording');
-                voiceRecordingBar.classList.add('active');
-                voiceRecTime.textContent = '0:00';
-                updatePrimaryActionButton();
+                    // Detectar mejor formato disponible
+                    const fmt = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/mp4','']
+                        .find(f => !f || MediaRecorder.isTypeSupported(f));
+                    mediaRecorder = fmt
+                        ? new MediaRecorder(stream, { mimeType: fmt })
+                        : new MediaRecorder(stream);
 
-                voiceTimer = setInterval(() => {
-                    voiceSeconds++;
-                    voiceRecTime.textContent = formatVoiceDuration(voiceSeconds);
-                    if (voiceSeconds >= 120) stopAndSendVoice(); // máx 2 min
-                }, 1000);
+                    mediaRecorder.ondataavailable = e => {
+                        if (e.data && e.data.size > 0) audioChunks.push(e.data);
+                    };
 
-                mediaRecorder.start();
-            }).catch(() => showToast('No se pudo acceder al micrófono'));
+                    voiceRecordingBar?.classList.add('active');
+                    if (voiceRecTime) voiceRecTime.textContent = '0:00';
+                    updatePrimaryActionButton();
+
+                    voiceTimer = setInterval(() => {
+                        voiceSeconds++;
+                        if (voiceRecTime) voiceRecTime.textContent = formatVoiceDuration(voiceSeconds);
+                        if (voiceSeconds >= 120) stopAndSendVoice();
+                    }, 1000);
+
+                    mediaRecorder.start(300); // chunk cada 300 ms
+                })
+                .catch(err => {
+                    const msg = err.name === 'NotAllowedError'  ? '🚫 Permiso de micrófono denegado' :
+                                err.name === 'NotFoundError'    ? '🎤 No se encontró micrófono' :
+                                err.name === 'NotReadableError' ? '⚠️ Micrófono en uso por otra app' :
+                                '❌ No se pudo acceder al micrófono';
+                    showToast(msg);
+                });
         }
 
-        function stopRecording() {
+        // ── Cancelar grabación ──
+        function cancelRecording() {
             if (!isRecording) return;
             isRecording = false;
             clearInterval(voiceTimer);
-            voiceRecordBtn.classList.remove('recording');
-            voiceRecordingBar.classList.remove('active');
+            voiceRecordingBar?.classList.remove('active');
+            micStream?.getTracks().forEach(t => t.stop());
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+            micStream = null; mediaRecorder = null; audioChunks = [];
             updatePrimaryActionButton();
-            if (mediaRecorder) {
-                mediaRecorder.stream.getTracks().forEach(t => t.stop());
-                mediaRecorder.stop();
-            }
+            showToast('Grabación cancelada');
         }
 
-        function cancelRecording() {
-            stopRecording();
-            audioChunks = [];
-        }
+        // ── Detener y enviar ──
+        function stopAndSendVoice() {
+            if (!isRecording || !mediaRecorder) return;
 
-        async function stopAndSendVoice() {
-            return new Promise(resolve => {
-                if (!mediaRecorder) return resolve();
-                mediaRecorder.onstop = async () => {
-                    const blob = new Blob(audioChunks, { type: 'audio/webm' });
+            const duracion = voiceSeconds;
+            isRecording = false;
+            clearInterval(voiceTimer);
+            voiceRecordingBar?.classList.remove('active');
+            updatePrimaryActionButton();
+
+            // Guardar refs antes de limpiarlas
+            const mr     = mediaRecorder;
+            const stream = micStream;
+            micStream    = null;
+            mediaRecorder = null;
+
+            mr.onstop = async () => {
+                try {
+                    const mimeType = mr.mimeType || 'audio/webm';
+                    const blob = new Blob(audioChunks, { type: mimeType });
                     audioChunks = [];
-                    // Convertir a base64
-                    const reader = new FileReader();
-                    reader.onloadend = async () => {
-                        const base64 = reader.result;
-                        if (!currentUser) return resolve();
-                        const userRef2 = await get(ref(db, `Users/${currentUser.uid}`));
-                        const userData2 = userRef2.val() || {};
-                        const tieneCheck2 = userData2.premium === 'verificado';
-                        const msgData = {
-                            uid: currentUser.uid,
-                            nick: localStorage.getItem('nick') || 'User',
-                            perfil: localStorage.getItem('perfil') || '',
-                            text: '',
-                            audio: base64,
-                            audioDuration: voiceSeconds,
-                            multi: getPlatformName(),
-                            time: Date.now().toString(),
-                            isVerificado: tieneCheck2
-                        };
-                        await push(ref(db, currentGroupRef), msgData);
-                        showToast('🎤 Nota de voz enviada');
-                        updatePrimaryActionButton();
-                        resolve();
-                    };
-                    reader.readAsDataURL(blob);
-                };
-                stopRecording();
-            });
+
+                    if (!blob.size) { showToast('Audio vacío, intenta de nuevo'); return; }
+                    if (!currentUser) return;
+
+                    showToast('⏳ Enviando nota de voz...');
+
+                    // Subir a Firebase Storage
+                    const { ref: sRef, uploadBytes, getDownloadURL } =
+                        await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js');
+                    const { getStorage } =
+                        await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js');
+
+                    // Obtener storage desde la app ya inicializada
+                    const { app } = await import('./view_global.js');
+                    const storage = getStorage(app);
+
+                    const ext  = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+                    const path = `voice/${currentUser.uid}_${Date.now()}.${ext}`;
+                    const fileRef = sRef(storage, path);
+
+                    await uploadBytes(fileRef, blob, { contentType: mimeType });
+                    const url = await getDownloadURL(fileRef);
+
+                    const snap = await get(ref(db, `Users/${currentUser.uid}`));
+                    const ud   = snap.val() || {};
+
+                    await push(ref(db, currentGroupRef), {
+                        uid:          currentUser.uid,
+                        nick:         localStorage.getItem('nick') || 'User',
+                        perfil:       localStorage.getItem('perfil') || '',
+                        text:         '',
+                        audio:        url,
+                        audioDuration: duracion,
+                        multi:        getPlatformName(),
+                        time:         Date.now().toString(),
+                        isVerificado: ud.premium === 'verificado'
+                    });
+
+                    showToast('🎤 Nota de voz enviada');
+                } catch(e) {
+                    console.error('Error voz:', e);
+                    showToast('❌ Error al enviar: ' + (e.message || e.code || ''));
+                }
+            };
+
+            stream?.getTracks().forEach(t => t.stop());
+            if (mr.state !== 'inactive') mr.stop();
         }
 
-        voiceRecordBtn.addEventListener('click', () => {
-            if (!isRecording) startRecording();
-            else stopAndSendVoice();
-        });
-
-        voiceRecCancel.addEventListener('click', cancelRecording);
-        voiceRecSend.addEventListener('click', stopAndSendVoice);
+        voiceRecCancel?.addEventListener('click', cancelRecording);
+        voiceRecSend?.addEventListener('click', stopAndSendVoice);
 
         function showMsgReactionPopup(groupEl, msgKey) {
             // Remover popups existentes
@@ -3105,12 +3150,13 @@
             };
 
             sendBtn.onclick = async () => {
-                if (sendBtn.dataset.mode === 'send') {
+                const mode = sendBtn.dataset.mode;
+                if (mode === 'send') {
                     await send();
-                } else if (!isRecording) {
-                    startRecording();
+                } else if (mode === 'stop') {
+                    stopAndSendVoice();
                 } else {
-                    await stopAndSendVoice();
+                    startRecording();
                 }
                 updatePrimaryActionButton();
             };
