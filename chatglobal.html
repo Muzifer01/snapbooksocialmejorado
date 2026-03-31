@@ -708,13 +708,15 @@
 
         /* ============= NUEVOS ESTILOS: CHAT IMAGENES ============= */
         .bubble img.chat-image { max-width: 100%; border-radius: 12px; margin-top: 6px; cursor: pointer; }
+        .bubble video.chat-video { max-width: 100%; width: 100%; border-radius: 12px; margin-top: 6px; background: #000; }
         .image-input-btn { background: none; border: none; color: #8e8e93; font-size: 22px; cursor: pointer; padding: 4px; transition: color 0.2s; }
         .image-input-btn:active { color: white; }
         #chat-image-file { display: none; }
         /* Preview de imagen en chat */
         .chat-image-preview { display: none; background: #1c1c1e; margin: 10px 15px 0; padding: 8px 12px; border-radius: 12px 12px 0 0; border-left: 4px solid #667eea; position: relative; }
         .chat-image-preview.active { display: block; }
-        .chat-image-preview img { max-height: 80px; border-radius: 8px; }
+        .chat-image-preview img,
+        .chat-image-preview video { max-height: 120px; max-width: 100%; border-radius: 8px; display: none; background: #000; }
         .chat-image-preview .close-img-preview { position: absolute; right: 10px; top: 8px; font-size: 20px; color: #666; cursor: pointer; }
 
         /* ============= NUEVOS ESTILOS: GIF PICKER ============= */
@@ -975,13 +977,15 @@
             overflow: hidden;
             background: #1a1a1a;
         }
-        .ipp-item img {
+        .ipp-item img,
+        .ipp-item video {
             width: 100%; height: 100%;
             object-fit: cover;
             display: block;
             transition: filter 0.15s;
         }
-        .ipp-item.selected img { filter: brightness(0.6); }
+        .ipp-item.selected img,
+        .ipp-item.selected video { filter: brightness(0.6); }
         /* Círculo numerado de selección */
         .ipp-check {
             position: absolute;
@@ -1888,6 +1892,7 @@
     <div class="chat-image-preview" id="chat-image-preview">
         <span class="close-img-preview" id="close-img-preview">×</span>
         <img id="chat-image-thumb" src="">
+        <video id="chat-video-thumb" muted playsinline controls></video>
     </div>
 
     <div class="bottom-nav">
@@ -1921,7 +1926,7 @@
                     <button id="voice-record-btn" title="Nota de voz">🎤</button>
                 </div>
             </div>
-            <input type="file" id="chat-image-file" accept="image/*" style="display:none">
+            <input type="file" id="chat-image-file" accept="image/*,video/*" style="display:none">
             <!-- Botón enviar verde circular -->
             <button id="send-btn" title="Nota de voz" data-mode="mic" aria-label="Micrófono">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 1 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
@@ -2238,31 +2243,67 @@
         // =====================================================
         //  CHAT IMAGE & GIF
         // =====================================================
-        let pendingChatImage = null;
+        let pendingChatMedia = null;
         const chatImageFile = document.getElementById('chat-image-file');
         const chatImagePreview = document.getElementById('chat-image-preview');
         const chatImageThumb = document.getElementById('chat-image-thumb');
+        const chatVideoThumb = document.getElementById('chat-video-thumb');
 
-        document.getElementById('close-img-preview').onclick = () => {
+        const clearPendingChatMedia = () => {
             chatImagePreview.classList.remove('active');
-            pendingChatImage = null;
+            if (chatImageThumb) {
+                chatImageThumb.style.display = 'none';
+                chatImageThumb.removeAttribute('src');
+            }
+            if (chatVideoThumb) {
+                chatVideoThumb.pause();
+                chatVideoThumb.style.display = 'none';
+                chatVideoThumb.removeAttribute('src');
+                chatVideoThumb.load();
+            }
+            pendingChatMedia = null;
             chatImageFile.value = '';
             updatePrimaryActionButton();
         };
 
+        document.getElementById('close-img-preview').onclick = clearPendingChatMedia;
+
         chatImageFile.onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
-            if (file.size > 3 * 1024 * 1024) { alert('Imagen muy grande (máx 3MB)'); return; }
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                pendingChatImage = ev.target.result;
-                chatImageThumb.src = pendingChatImage;
-                chatImagePreview.classList.add('active');
-                updatePrimaryActionButton();
-            };
-            reader.readAsDataURL(file);
+            const isVideo = file.type.startsWith('video/');
+            const maxSize = isVideo ? 20 * 1024 * 1024 : 3 * 1024 * 1024;
+            if (file.size > maxSize) {
+                alert(isVideo ? 'Vídeo muy grande (máx 20MB)' : 'Imagen muy grande (máx 3MB)');
+                return;
+            }
+            const objectUrl = URL.createObjectURL(file);
+            pendingChatMedia = { file, type: isVideo ? 'video' : 'image', previewUrl: objectUrl };
+            if (isVideo) {
+                chatImageThumb.style.display = 'none';
+                chatVideoThumb.src = objectUrl;
+                chatVideoThumb.style.display = 'block';
+            } else {
+                chatVideoThumb.pause();
+                chatVideoThumb.style.display = 'none';
+                chatVideoThumb.removeAttribute('src');
+                chatImageThumb.src = objectUrl;
+                chatImageThumb.style.display = 'block';
+            }
+            chatImagePreview.classList.add('active');
+            updatePrimaryActionButton();
         };
+
+        async function uploadChatMediaFile(file, folder = 'chat-media') {
+            const { ref: storageRef, uploadBytes, getDownloadURL, getStorage } =
+                await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js');
+            const { app } = await import('./view_global.js');
+            const storage = getStorage(app);
+            const safeName = (file.name || 'archivo').replace(/[^a-zA-Z0-9._-]/g, '_');
+            const fileRef = storageRef(storage, `${folder}/${currentUser.uid}/${Date.now()}_${safeName}`);
+            await uploadBytes(fileRef, file, { contentType: file.type || undefined });
+            return await getDownloadURL(fileRef);
+        }
 
         // =====================================================
         //  PANEL SELECTOR DE IMÁGENES ESTILO WHATSAPP
@@ -2307,16 +2348,20 @@
                 check.className = 'ipp-check';
                 item.appendChild(check);
 
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    const dataUrl = ev.target.result;
-                    const img = document.createElement('img');
-                    img.src = dataUrl;
-                    img.loading = 'lazy';
-                    item.insertBefore(img, check);
+                const objectUrl = URL.createObjectURL(file);
+                    const mediaEl = file.type.startsWith('video/')
+                        ? document.createElement('video')
+                        : document.createElement('img');
+                    mediaEl.src = objectUrl;
+                    mediaEl.loading = 'lazy';
+                    if (file.type.startsWith('video/')) {
+                        mediaEl.muted = true;
+                        mediaEl.playsInline = true;
+                    }
+                    item.insertBefore(mediaEl, check);
 
                     // Guardar referencia
-                    item._fileData = { file, dataUrl };
+                    item._fileData = { file, dataUrl: objectUrl };
 
                     // Si es video, mostrar badge de duración
                     if (file.type.startsWith('video/')) {
@@ -2325,8 +2370,6 @@
                         badge.innerHTML = '🎥 Video';
                         item.appendChild(badge);
                     }
-                };
-                reader.readAsDataURL(file);
 
                 // Toggle selección al tocar
                 item.onclick = () => {
@@ -2382,15 +2425,14 @@
         document.getElementById('ipp-close').onclick = closeIppPanel;
         ippOverlay.onclick = closeIppPanel;
 
-        // Enviar imágenes seleccionadas
+        // Enviar imágenes o vídeos seleccionados
         ippSendBtn.onclick = async () => {
             if (!currentUser) return;
             const toSend = [...ippSelectedFiles].sort((a, b) => a.order - b.order);
-            // Si no hay selección manual, enviar todas las imágenes del grid
             const allItems = Array.from(ippGrid.querySelectorAll('.ipp-item'));
             const finalSend = toSend.length > 0 ? toSend : allItems
                 .filter(el => el._fileData)
-                .map((el, i) => ({ dataUrl: el._fileData.dataUrl, order: i + 1 }));
+                .map((el, i) => ({ file: el._fileData.file, dataUrl: el._fileData.dataUrl, order: i + 1 }));
             if (!finalSend.length) { closeIppPanel(); return; }
 
             const captionInput = document.getElementById('ipp-caption-input');
@@ -2405,17 +2447,20 @@
 
             for (let i = 0; i < finalSend.length; i++) {
                 const item = finalSend[i];
+                const file = item.file;
+                const isVideo = !!file?.type?.startsWith('video/');
+                const mediaUrl = file ? await uploadChatMediaFile(file, isVideo ? 'chat-videos' : 'chat-images') : item.dataUrl;
                 const msgData = {
                     uid: currentUser.uid,
                     nick: localStorage.getItem('nick') || 'User',
                     perfil: localStorage.getItem('perfil') || '',
-                    // El caption solo se añade al último mensaje
                     text: (i === finalSend.length - 1 && caption) ? caption : '',
-                    image: item.dataUrl,
                     multi: getPlatformName(),
                     time: Date.now().toString(),
                     isVerificado: tieneCheck
                 };
+                if (isVideo) msgData.video = mediaUrl;
+                else msgData.image = mediaUrl;
                 await push(ref(db, currentGroupRef), msgData);
             }
         };
@@ -2689,6 +2734,10 @@
                     if (d.image) {
                         imageHTML = `<img class="chat-image" src="${d.image}" alt="Imagen" onclick="window.open(this.src,'_blank')">`;
                     }
+                    let videoHTML = '';
+                    if (d.video) {
+                        videoHTML = `<video class="chat-video" src="${d.video}" controls playsinline preload="metadata"></video>`;
+                    }
                     let audioHTML = '';
                     if (d.audio) {
                         const bars = Array.from({length: 28}, (_,i) => {
@@ -2711,6 +2760,7 @@
                                 ${d.replyText ? `<div class="reply-box"><b>${safeReplyNick}</b><div>${safeReplyText}</div></div>` : ""}
                                 <span class="msg-text">${safeText}</span>
                                 ${imageHTML}
+                                ${videoHTML}
                                 ${audioHTML}
                             </div>
                             <div class="info">
@@ -3038,12 +3088,12 @@
         function updatePrimaryActionButton() {
             if (!sendBtn) return;
             const hasText = !!(msgInput?.value || '').trim();
-            const hasImg  = !!pendingChatImage;
+            const hasMedia  = !!pendingChatMedia;
             if (isRecording) {
                 sendBtn.dataset.mode = 'stop';
                 sendBtn.innerHTML = STOP_ICON;
                 sendBtn.style.background = '#ff3b5c';
-            } else if (hasText || hasImg) {
+            } else if (hasText || hasMedia) {
                 sendBtn.dataset.mode = 'send';
                 sendBtn.innerHTML = SEND_ICON;
                 sendBtn.style.background = '#25d366';
@@ -3342,7 +3392,7 @@
             const send = async () => {
                 const text = msgInput.value
 .trim();
-                if(!text && !pendingChatImage) return;
+                if(!text && !pendingChatMedia) return;
 
                 const userRef = ref(db, `Users/${user.uid}`);
                 const userSnap = await get(userRef);
@@ -3366,7 +3416,14 @@
                         ...(destructMode ? { destructAfter: Date.now() + 30000 } : {})
                     };
                     if(reply) { msgData.replyNick = reply.replyNick; msgData.replyText = reply.replyText; }
-                    if(pendingChatImage) { msgData.image = pendingChatImage; }
+                    if (pendingChatMedia?.file) {
+                        const uploadedUrl = await uploadChatMediaFile(
+                            pendingChatMedia.file,
+                            pendingChatMedia.type === 'video' ? 'chat-direct-videos' : 'chat-direct-images'
+                        );
+                        if (pendingChatMedia.type === 'video') msgData.video = uploadedUrl;
+                        else msgData.image = uploadedUrl;
+                    }
 
                     await push(ref(db, currentGroupRef), msgData);
                     
@@ -3381,9 +3438,7 @@
                     msgInput.value = "";
                     replyPreview.style.display = "none";
                     clearReplyData();
-                    pendingChatImage = null;
-                    chatImagePreview.classList.remove('active');
-                    chatImageFile.value = '';
+                    clearPendingChatMedia();
                     updateTypingStatus(false);
                     updatePrimaryActionButton();
                 } else {

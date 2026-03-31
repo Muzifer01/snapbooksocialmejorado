@@ -232,7 +232,7 @@
             font-size: 12px;
         }
 
-        #post-image { display: none; }
+        #post-image, #post-video { display: none; }
 
         /* PREVIEW DE IMAGEN */
         .image-preview-container {
@@ -640,6 +640,10 @@
                     <span class="type-icon">🖼️</span>
                     Imagen
                 </button>
+                <button class="type-btn" onclick="setPostType('video')" id="btn-video">
+                    <span class="type-icon">🎥</span>
+                    Vídeo
+                </button>
                 <button class="type-btn" onclick="setPostType('poll')" id="btn-poll">
                     <span class="type-icon">📊</span>
                     Encuesta
@@ -661,6 +665,19 @@
                 <div class="image-preview-container" id="image-preview-container">
                     <img id="image-preview" class="image-preview" alt="Preview">
                     <button type="button" class="image-remove-btn" onclick="removeImage()">✕</button>
+                </div>
+            </div>
+
+            <div id="video-group" class="hidden">
+                <div class="image-upload-zone" id="video-upload-zone" onclick="document.getElementById('post-video').click()">
+                    <div class="upload-icon">🎥</div>
+                    <div class="upload-text">Toca para seleccionar un vídeo corto</div>
+                    <div class="upload-subtext">MP4/WebM/MOV · recomendado menos de 20 MB</div>
+                </div>
+                <input type="file" id="post-video" accept="video/*">
+                <div class="image-preview-container" id="video-preview-container">
+                    <video id="video-preview" class="image-preview" controls playsinline preload="metadata"></video>
+                    <button type="button" class="image-remove-btn" onclick="removeVideo()">✕</button>
                 </div>
             </div>
 
@@ -802,22 +819,24 @@
             currentPostType = type;
             document.getElementById('btn-text').classList.remove('active');
             document.getElementById('btn-image').classList.remove('active');
+            document.getElementById('btn-video').classList.remove('active');
             document.getElementById('btn-poll').classList.remove('active');
             document.getElementById(`btn-${type}`).classList.add('active');
 
-            // Mostrar/ocultar secciones
             const imageGroup = document.getElementById('image-group');
+            const videoGroup = document.getElementById('video-group');
             const pollSection = document.getElementById('poll-section');
+
+            imageGroup.classList.add('hidden');
+            videoGroup.classList.add('hidden');
+            pollSection.classList.add('hidden');
 
             if (type === 'image') {
                 imageGroup.classList.remove('hidden');
-                pollSection.classList.add('hidden');
+            } else if (type === 'video') {
+                videoGroup.classList.remove('hidden');
             } else if (type === 'poll') {
-                imageGroup.classList.add('hidden');
                 pollSection.classList.remove('hidden');
-            } else {
-                imageGroup.classList.add('hidden');
-                pollSection.classList.add('hidden');
             }
         };
 
@@ -836,31 +855,61 @@
             }
         });
 
-        // DRAG & DROP
-        const uploadZone = document.getElementById('upload-zone');
-        uploadZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadZone.classList.add('dragover');
-        });
-        uploadZone.addEventListener('dragleave', () => {
-            uploadZone.classList.remove('dragover');
-        });
-        uploadZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                document.getElementById('post-image').files = files;
-                const event = new Event('change', { bubbles: true });
-                document.getElementById('post-image').dispatchEvent(event);
+        // VÍDEO
+        document.getElementById('post-video').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const preview = document.getElementById('video-preview');
+                preview.src = URL.createObjectURL(file);
+                preview.load();
+                document.getElementById('video-preview-container').classList.add('show');
+                document.getElementById('video-upload-zone').style.display = 'none';
             }
         });
+
+        function attachMediaDropZone(zoneId, inputId) {
+            const zone = document.getElementById(zoneId);
+            const input = document.getElementById(inputId);
+            if (!zone || !input) return;
+            zone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                zone.classList.add('dragover');
+            });
+            zone.addEventListener('dragleave', () => {
+                zone.classList.remove('dragover');
+            });
+            zone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                zone.classList.remove('dragover');
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    input.files = files;
+                    const event = new Event('change', { bubbles: true });
+                    input.dispatchEvent(event);
+                }
+            });
+        }
+
+        attachMediaDropZone('upload-zone', 'post-image');
+        attachMediaDropZone('video-upload-zone', 'post-video');
 
         // REMOVER IMAGEN
         window.removeImage = () => {
             document.getElementById('post-image').value = '';
             document.getElementById('image-preview-container').classList.remove('show');
             document.getElementById('upload-zone').style.display = 'block';
+        };
+
+        window.removeVideo = () => {
+            const preview = document.getElementById('video-preview');
+            if (preview) {
+                preview.pause();
+                preview.removeAttribute('src');
+                preview.load();
+            }
+            document.getElementById('post-video').value = '';
+            document.getElementById('video-preview-container').classList.remove('show');
+            document.getElementById('video-upload-zone').style.display = 'block';
         };
 
         // ENCUESTAS
@@ -920,8 +969,26 @@
             }
 
             const postText = document.getElementById('post-text').value.trim();
-            if (!postText) {
+            const imageFile = document.getElementById('post-image').files[0] || null;
+            const videoFile = document.getElementById('post-video').files[0] || null;
+
+            if (currentPostType === 'text' && !postText) {
                 alert('Escribe algo para publicar');
+                return;
+            }
+
+            if (currentPostType === 'image' && !imageFile) {
+                alert('Selecciona una imagen para publicar');
+                return;
+            }
+
+            if (currentPostType === 'video' && !videoFile) {
+                alert('Selecciona un vídeo para publicar');
+                return;
+            }
+
+            if (currentPostType === 'poll' && !postText) {
+                alert('Escribe el texto o pregunta principal de la encuesta');
                 return;
             }
 
@@ -932,15 +999,20 @@
                 const newPostRef = push(ref(db, 'ListPosts'));
                 const postId = newPostRef.key;
                 let imageUrl = '';
+                let videoUrl = '';
 
-                if (currentPostType === 'image') {
-                    const imageFile = document.getElementById('post-image').files[0];
-                    if (imageFile) {
-                        const storagePath = `posts/${currentUser.uid}/${Date.now()}`;
-                        const fileRef = storageRef(storage, storagePath);
-                        await uploadBytes(fileRef, imageFile);
-                        imageUrl = await getDownloadURL(fileRef);
-                    }
+                if (currentPostType === 'image' && imageFile) {
+                    const storagePath = `posts/${currentUser.uid}/images/${Date.now()}_${imageFile.name}`;
+                    const fileRef = storageRef(storage, storagePath);
+                    await uploadBytes(fileRef, imageFile);
+                    imageUrl = await getDownloadURL(fileRef);
+                }
+
+                if (currentPostType === 'video' && videoFile) {
+                    const storagePath = `posts/${currentUser.uid}/videos/${Date.now()}_${videoFile.name}`;
+                    const fileRef = storageRef(storage, storagePath);
+                    await uploadBytes(fileRef, videoFile);
+                    videoUrl = await getDownloadURL(fileRef);
                 }
 
                 const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -966,7 +1038,8 @@
                     post_id: postId,
                     likes: {},
                     comments: {},
-                    commentCount: 0
+                    commentCount: 0,
+                    postType: currentPostType
                 };
 
                 if (selectedCountdown) {
@@ -978,6 +1051,11 @@
 
                 if (imageUrl) {
                     postData.image = imageUrl;
+                }
+
+                if (videoUrl) {
+                    postData.video = videoUrl;
+                    postData.isShortVideo = true;
                 }
 
                 if (currentPostType === 'poll') {
@@ -1013,6 +1091,17 @@
                 alert('¡Publicación creada exitosamente!');
                 document.getElementById('post-text').value = '';
                 document.getElementById('image-preview-container').classList.remove('show');
+                document.getElementById('video-preview-container').classList.remove('show');
+                document.getElementById('upload-zone').style.display = 'block';
+                document.getElementById('video-upload-zone').style.display = 'block';
+                document.getElementById('post-image').value = '';
+                document.getElementById('post-video').value = '';
+                const videoPreview = document.getElementById('video-preview');
+                if (videoPreview) {
+                    videoPreview.pause();
+                    videoPreview.removeAttribute('src');
+                    videoPreview.load();
+                }
                 window.location.href = 'Home.html';
 
             } catch (error) {
