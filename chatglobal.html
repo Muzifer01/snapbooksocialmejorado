@@ -1292,7 +1292,7 @@
         <div class="paywall-card">
             <span style="font-size: 60px;">🚀</span>
             <h2>SnapBook Premium</h2>
-            <p style="color: #8e8e93;">Has agotado tus 20 mensajes gratuitos. Ve a la tienda para comprar más mensajes o suscríbete.</p>
+            <p style="color: #8e8e93;">Has agotado tus 150 mensajes gratuitos. Ve a la tienda para comprar más mensajes o suscríbete.</p>
             <div class="price-tag">$50 <span>MXN / Mes</span></div>
             <button class="btn-premium" onclick="window.location.href='tienda.html'">Ir a la Tienda 💰</button>
             <button class="btn-premium" style="background:#333; color:white;" onclick="window.location.href='payment.html'">Ver Planes VIP</button>
@@ -2651,7 +2651,7 @@
                 const mHoy = userData.mensajesHoy || 0;
                 const mExtra = userData.mensajesExtra || 0;
 
-                if (esVIP || mHoy < 20 || mExtra > 0) {
+                if (esVIP || mHoy < 150 || mExtra > 0) {
                     const reply = getReplyData();
                     const msgData = {
                         uid: user.uid,
@@ -2668,7 +2668,7 @@
                     await push(ref(db, currentGroupRef), msgData);
                     
                     if (!esVIP) {
-                        if (mHoy < 20) {
+                        if (mHoy < 150) {
                             await update(userRef, { mensajesHoy: mHoy + 1 });
                         } else {
                             await update(userRef, { mensajesExtra: mExtra - 1 });
