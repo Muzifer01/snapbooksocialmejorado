@@ -1326,7 +1326,7 @@
             line-height: 1;
         }
         .input-right-btns button:active { color: white; }
-        /* Botón enviar verde circular fuera del campo */
+        /* Botón enviar / micrófono estilo WhatsApp */
         #send-btn {
             background: #25d366;
             border: none;
@@ -1341,7 +1341,12 @@
             transition: transform 0.15s, background 0.2s;
             box-shadow: 0 2px 8px rgba(37,211,102,0.4);
         }
+        #send-btn svg { width: 20px; height: 20px; }
+        #send-btn[data-mode="mic"] { background: #25d366; }
+        #send-btn[data-mode="send"] { background: #25d366; }
+        #send-btn.recording { background: #ff3b5c; box-shadow: 0 2px 8px rgba(255,59,92,0.35); }
         #send-btn:active { transform: scale(0.92); background: #1ebe5d; }
+        #voice-record-btn { display: none !important; }
         #scroll-bottom-btn {
             position: fixed; right: 16px; bottom: 105px; width: 42px; height: 42px;
             border-radius: 50%; border: none; background: rgba(28, 28, 30, 0.95);
@@ -1852,8 +1857,8 @@
             </div>
             <input type="file" id="chat-image-file" accept="image/*" style="display:none">
             <!-- Botón enviar verde circular -->
-            <button id="send-btn" title="Enviar">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            <button id="send-btn" title="Nota de voz" data-mode="mic" aria-label="Micrófono">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 1 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
             </button>
         </div>
     </div>
@@ -1917,12 +1922,13 @@
                 document.getElementById("reply-title").innerText = data.replyNick;
                 document.getElementById("reply-text").innerText = data.replyText;
                 replyPreview.style.display = "block";
+                updatePrimaryActionButton();
                 msgInput.focus();
                 if (navigator.vibrate) navigator.vibrate(10);
             }
         };
 
-        document.getElementById("close-reply").onclick = () => { clearReplyData(); replyPreview.style.display = "none"; };
+        document.getElementById("close-reply").onclick = () => { clearReplyData(); replyPreview.style.display = "none"; updatePrimaryActionButton(); };
 
         const updateScrollButton = () => {
             const distance = container.scrollHeight - container.scrollTop - container.clientHeight;
@@ -2144,6 +2150,7 @@
             updateTypingStatus(true);
             clearTimeout(typingTimeout);
             typingTimeout = setTimeout(() => updateTypingStatus(false), 2000);
+            updatePrimaryActionButton();
         });
 
         // Escuchar typing de otros
@@ -2174,6 +2181,7 @@
             chatImagePreview.classList.remove('active');
             pendingChatImage = null;
             chatImageFile.value = '';
+            updatePrimaryActionButton();
         };
 
         chatImageFile.onchange = (e) => {
@@ -2185,6 +2193,7 @@
                 pendingChatImage = ev.target.result;
                 chatImageThumb.src = pendingChatImage;
                 chatImagePreview.classList.add('active');
+                updatePrimaryActionButton();
             };
             reader.readAsDataURL(file);
         };
@@ -2886,6 +2895,21 @@
         const voiceRecTime = document.getElementById('voice-rec-time');
         const voiceRecCancel = document.getElementById('voice-rec-cancel');
         const voiceRecSend = document.getElementById('voice-rec-send');
+        const sendBtn = document.getElementById('send-btn');
+        const SEND_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>';
+        const MIC_ICON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 1 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>';
+
+        function updatePrimaryActionButton() {
+            if (!sendBtn) return;
+            const hasText = !!(msgInput?.value || '').trim();
+            const hasAttachment = !!pendingChatImage;
+            const mode = (hasText || hasAttachment) ? 'send' : 'mic';
+            sendBtn.dataset.mode = mode;
+            sendBtn.title = mode === 'send' ? 'Enviar' : 'Nota de voz';
+            sendBtn.setAttribute('aria-label', mode === 'send' ? 'Enviar mensaje' : 'Grabar nota de voz');
+            sendBtn.innerHTML = mode === 'send' ? SEND_ICON : MIC_ICON;
+            sendBtn.classList.toggle('recording', isRecording);
+        }
 
         function startRecording() {
             if (isRecording) return;
@@ -2899,6 +2923,7 @@
                 voiceRecordBtn.classList.add('recording');
                 voiceRecordingBar.classList.add('active');
                 voiceRecTime.textContent = '0:00';
+                updatePrimaryActionButton();
 
                 voiceTimer = setInterval(() => {
                     voiceSeconds++;
@@ -2916,6 +2941,7 @@
             clearInterval(voiceTimer);
             voiceRecordBtn.classList.remove('recording');
             voiceRecordingBar.classList.remove('active');
+            updatePrimaryActionButton();
             if (mediaRecorder) {
                 mediaRecorder.stream.getTracks().forEach(t => t.stop());
                 mediaRecorder.stop();
@@ -2954,6 +2980,7 @@
                         };
                         await push(ref(db, currentGroupRef), msgData);
                         showToast('🎤 Nota de voz enviada');
+                        updatePrimaryActionButton();
                         resolve();
                     };
                     reader.readAsDataURL(blob);
@@ -3071,12 +3098,23 @@
                     chatImagePreview.classList.remove('active');
                     chatImageFile.value = '';
                     updateTypingStatus(false);
+                    updatePrimaryActionButton();
                 } else {
                     paywall.style.display = "flex";
                 }
             };
 
-            document.getElementById("send-btn").onclick = send;
+            sendBtn.onclick = async () => {
+                if (sendBtn.dataset.mode === 'send') {
+                    await send();
+                } else if (!isRecording) {
+                    startRecording();
+                } else {
+                    await stopAndSendVoice();
+                }
+                updatePrimaryActionButton();
+            };
+            updatePrimaryActionButton();
             msgInput.onkeypress = (e) => { if(e.key === 'Enter') send(); };
         });
 
@@ -4250,6 +4288,7 @@
         }, true);
 
     </script>
+<script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 </body>
 </html>
