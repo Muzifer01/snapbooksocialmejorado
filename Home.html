@@ -1557,7 +1557,7 @@
         // ── Render video feed con IntersectionObserver (lazy + autoplay) ──
         let videoObserver = null;
 
-        let globalMuted = true; // empieza silenciado, el usuario activa con el botón
+        let globalMuted = false; // audio siempre activo por defecto
 
         const renderVideoFeed = (postsMap = {}) => {
             if (!videoFeed) return;
