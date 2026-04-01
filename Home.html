@@ -1410,23 +1410,75 @@
             }
         };
 
+        // ── Sistema de detección y auto-eliminación de contenido 18+ ──
+        const NSFW_WORDS = [
+            // Inglés
+            'nude', 'naked', 'sex', 'sexy', 'porn', 'porno', 'pornography', 'xxx', 'hentai', 'gore',
+            'nsfw', 'onlyfans', 'lewd', 'erotic', 'fetish', 'boobs', 'pussy', 'cock', 'dick',
+            'ass', 'butt', 'nipple', 'orgasm', 'masturbat', 'horny', '18+', 'adult content',
+            // Español
+            'desnudo', 'desnuda', 'sexo', 'sexual', 'puta', 'puto', 'putita', 'pene', 'vagina',
+            'culo', 'tetas', 'porno', 'polla', 'coño', 'verga', 'cojiendo', 'cogiendo', 'culito',
+            'masturbacion', 'masturbación', 'erótico', 'erotico', 'lenceria', 'lencería', 'follando',
+            'desnudos', 'adulto', 'contenido adulto', 'mayores de edad', '+18',
+        ];
+
         const checkNSFW = (post) => {
-            const nsfwWords = ['nude', 'desnudo', 'sex', '18+', 'xxx', 'porn', 'hentai', 'gore', 'sexo', 'puta', 'porno', 'pene', 'vagina', 'culo'];
-            const content = (post.text || '').toLowerCase();
-            const hasNSFWWord = nsfwWords.some(word => content.includes(word));
-            return post.nsfw === true || hasNSFWWord;
+            if (post.nsfw === true) return true;
+            const content = ((post.text || '') + ' ' + (post.nick || '')).toLowerCase();
+            return NSFW_WORDS.some(word => content.includes(word));
         };
 
+        // Registro para evitar eliminar el mismo post varias veces seguidas
+        const nsfwDeletedPosts = new Set();
+
         const autoDeleteNSFW = async (postId, post, source = 'ListPosts') => {
-            if (checkNSFW(post)) {
-                console.warn(`Eliminando contenido prohibido detectado en ${postId}`);
-                try {
-                    await remove(ref(db, `${source}/${postId}`));
-                    showNotification("Se ha eliminado automáticamente un contenido que viola nuestras normas (18+).");
-                    return true;
-                } catch (error) {
-                    console.error("Error al auto-eliminar:", error);
+            if (!checkNSFW(post)) return false;
+            if (nsfwDeletedPosts.has(postId)) return true;
+            nsfwDeletedPosts.add(postId);
+
+            console.warn(`🚫 Contenido 18+ detectado en ${source}/${postId} — eliminando automáticamente`);
+            try {
+                await remove(ref(db, `${source}/${postId}`));
+
+                // Notificación especial con más visibilidad
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+                    background: linear-gradient(135deg, #ff4b2b, #ff416c);
+                    color: white; padding: 14px 20px; border-radius: 16px;
+                    font-size: 13px; font-weight: 700; z-index: 9999;
+                    box-shadow: 0 8px 24px rgba(255,75,43,0.4);
+                    text-align: center; max-width: 320px; line-height: 1.4;
+                    animation: slideUp 0.4s ease;
+                `;
+                toast.innerHTML = '🚫 <strong>Contenido eliminado</strong><br>Se detectó contenido 18+ que viola nuestras normas de comunidad.';
+                document.body.appendChild(toast);
+                setTimeout(() => toast.remove(), 4500);
+
+                // Si el post es del usuario actual, notificarle específicamente
+                if (currentUser && post.uid === currentUser.uid) {
+                    setTimeout(() => {
+                        const warnToast = document.createElement('div');
+                        warnToast.style.cssText = `
+                            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+                            background: rgba(30,30,40,0.97); color: white;
+                            padding: 14px 20px; border-radius: 16px;
+                            font-size: 13px; font-weight: 600; z-index: 9999;
+                            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+                            text-align: center; max-width: 320px; line-height: 1.5;
+                            border: 1px solid rgba(255,75,43,0.5);
+                        `;
+                        warnToast.innerHTML = '⚠️ Tu publicación fue eliminada automáticamente por contener lenguaje o contenido no permitido (+18). Por favor revisa las normas de la comunidad.';
+                        document.body.appendChild(warnToast);
+                        setTimeout(() => warnToast.remove(), 6000);
+                    }, 1000);
                 }
+
+                return true;
+            } catch (error) {
+                console.error("Error al auto-eliminar contenido 18+:", error);
+                nsfwDeletedPosts.delete(postId); // permitir reintento
             }
             return false;
         };
@@ -1658,18 +1710,28 @@
 
         let globalMuted = true; // Empezamos silenciados para que el navegador permita el autoplay
 
-        // Función para desbloquear el sonido globalmente al primer toque del usuario
+        // Desbloquear audio al primer gesto del usuario (requerido por los navegadores)
+        let audioUnlocked = false;
         const unlockAudio = () => {
+            if (audioUnlocked) return;
+            audioUnlocked = true;
             globalMuted = false;
-            // Actualizar todos los videos que ya estén en el DOM
+
+            // Activar sonido en todos los videos visibles
             document.querySelectorAll('#video-feed video').forEach(v => {
                 v.muted = false;
                 if (!v.paused) v.play().catch(() => {});
             });
-            // Actualizar iconos de la interfaz
-            window.toggleGlobalSound(false); 
-            
-            // Eliminar los listeners después de la primera interacción
+
+            // Actualizar iconos sin tocar globalMuted de nuevo
+            document.querySelectorAll('[id^="snd-"]').forEach(btn => {
+                btn.textContent = '🔊';
+                const lbl = btn.closest('.vsb')?.querySelector('.vsb-label');
+                if (lbl) lbl.textContent = 'Silencio';
+            });
+            const gBtn = document.getElementById('global-sound-btn');
+            if (gBtn) gBtn.textContent = '🔊';
+
             document.removeEventListener('click', unlockAudio);
             document.removeEventListener('touchstart', unlockAudio);
             document.removeEventListener('keydown', unlockAudio);
@@ -1702,20 +1764,26 @@
                     const bar = entry.target.querySelector('.video-progress-bar');
                     if (!vid) return;
 
-                    if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
-                        // Lazy: cargar src solo al entrar en pantalla
+                    if (entry.isIntersecting && entry.intersectionRatio >= 0.75) {
+                        // Lazy load: cargar src solo al entrar en pantalla
                         if (!vid.src && vid.dataset.src) {
                             vid.src = vid.dataset.src;
                             vid.load();
                         }
                         vid.muted = globalMuted;
-                        // ✅ AUTO-PLAY: se reproduce automáticamente cuando el usuario lo está viendo
+                        // ▶ AUTO-PLAY respetando el estado de sonido actual
                         vid.play().catch(() => {
-                            // Si falla por sonido bloqueado, silenciamos y reintentamos
+                            // Si el navegador bloquea por políticas de autoplay,
+                            // silenciamos SOLO para este intento y reintentamos.
+                            // No cambiamos globalMuted para no perder el sonido del usuario.
+                            const wasMuted = vid.muted;
                             vid.muted = true;
                             vid.play().catch(() => {});
+                            // Restaurar el estado de sonido correcto cuando sea posible
+                            vid.addEventListener('playing', () => {
+                                vid.muted = globalMuted;
+                            }, { once: true });
                         });
-
                         // Barra de progreso
                         if (bar) {
                             vid.ontimeupdate = () => {
@@ -1724,11 +1792,15 @@
                             };
                         }
                     } else {
+                        // ⏸ AUTO-PAUSE: pausa cuando el usuario desliza al siguiente video
                         vid.pause();
                         if (bar) bar.style.width = '0%';
                     }
                 });
-            }, { threshold: 0.7 });
+            }, {
+                threshold: [0, 0.5, 0.75, 1.0],   // múltiples umbrales para mayor precisión
+                rootMargin: '0px'                   // sin margen extra — solo lo visible
+            });
 
             videos.forEach(([postId, post]) => {
                 const likeCount    = post.likes ? Object.keys(post.likes).length : 0;
@@ -1783,11 +1855,7 @@
                                 onclick="event.stopPropagation(); openComments('${postId}', 'VideosViews')">💬</button>
                             <span class="vsb-label" id="vcmt-${postId}">${commentCount}</span>
                         </div>
-                        <div class="vsb">
-                            <button class="vsb-icon" style="color:#ff9800;"
-                                onclick="event.stopPropagation(); reportContent('${postId}', 'VideosViews')">⚠️</button>
-                            <span class="vsb-label">Reportar</span>
-                        </div>
+
                         <div class="vsb">
                             <button class="vsb-icon" id="snd-${postId}"
                                 onclick="event.stopPropagation(); toggleGlobalSound()">${globalMuted ? '🔇' : '🔊'}</button>
@@ -2109,7 +2177,7 @@
                         html += '<div class="post-footer">';
                         html += '<button class="action-btn ' + (userLiked ? 'liked' : '') + '" onclick="toggleLike(\'' + postId + '\')"><img src="' + (userLiked ? 'https://img.icons8.com/ios-filled/50/FF0000/like.png' : 'https://img.icons8.com/ios/50/65676b/like.png') + '"><span>' + likeCount + '</span></button>';
                         html += '<button class="action-btn ' + (userCommented ? 'commented' : '') + '" onclick="openComments(\'' + postId + '\')"><img src="' + (userCommented ? 'https://img.icons8.com/ios-filled/50/007AFF/comments.png' : 'https://img.icons8.com/ios/50/65676b/comments.png') + '"><span>' + commentCount + '</span></button>';
-                        html += '<button class="action-btn report-btn" onclick="reportContent(\'' + postId + '\')">⚠️ Reportar</button>';
+
                         html += '</div>';
                         html += '<div class="reactions-container">' + reactionsHtml + '</div>';
                         card.innerHTML = html;
