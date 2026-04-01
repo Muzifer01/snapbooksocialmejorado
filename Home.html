@@ -207,11 +207,12 @@
             padding: 20px 15px 120px;
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 24px;
         }
 
         /* ESTILOS DE LA TARJETA GLASSMORPHISM ULTRA */
         .post-card {
+            margin-bottom: 0;
             background: rgba(255, 255, 255, 0.12); /* Mucho más transparente */
             backdrop-filter: blur(25px) saturate(180%);
             -webkit-backdrop-filter: blur(25px) saturate(180%);
@@ -368,6 +369,7 @@
             border: 1px solid rgba(255,255,255,0.14);
             box-shadow: 0 12px 32px rgba(0,0,0,0.35);
             scroll-snap-align: start;
+            scroll-snap-stop: normal;
         }
         .short-video {
             width: 100%;
@@ -876,37 +878,7 @@
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
         .shake-animation { animation: shake 0.5s; }
 
-        /* ===== TABS: PUBLICACIONES / VIDEOS ===== */
-        .feed-tabs {
-            display: flex;
-            gap: 0;
-            margin: 12px 15px 0;
-            background: rgba(255,255,255,0.08);
-            border-radius: 16px;
-            padding: 4px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-        .feed-tab {
-            flex: 1;
-            background: none;
-            border: none;
-            color: rgba(255,255,255,0.55);
-            font-size: 14px;
-            font-weight: 700;
-            padding: 10px 8px;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-        .feed-tab.active {
-            background: rgba(255,255,255,0.15);
-            color: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        }
+
 
         /* ===== FEED DE VIDEOS ESTILO TIKTOK ===== */
         #video-feed {
@@ -916,12 +888,12 @@
             background: #000;
             z-index: 500;
             overflow-y: scroll;
-            scroll-snap-type: y mandatory;
+            scroll-snap-type: y proximity;
             -webkit-overflow-scrolling: touch;
         }
         #video-feed::-webkit-scrollbar { display: none; }
         #video-feed.active { display: block; }
-        #post-feed.active { display: block; }
+        #post-feed.active { display: flex; flex-direction: column; gap: 28px; padding: 0 15px 120px; }
         #post-feed { display: none; }
 
         /* Cada item ocupa pantalla completa */
@@ -930,6 +902,7 @@
             width: 100%;
             height: 100dvh;
             scroll-snap-align: start;
+            scroll-snap-stop: normal;
             background: #000;
             overflow: hidden;
             display: flex;
@@ -1168,10 +1141,16 @@
         <button class="sort-btn" onclick="setSortOrder('oldest')">📅 Antiguos</button>
     </div>
 
-    <!-- TABS -->
-    <div class="feed-tabs">
-        <button class="feed-tab active" id="tab-posts" onclick="switchTab('posts')">📝 Publicaciones</button>
-        <button class="feed-tab" id="tab-videos" onclick="switchTab('videos')">🎬 Videos</button>
+    <!-- TABS PUBLICACIONES / VIDEOS -->
+    <div style="display:flex;margin:0 15px 14px;background:rgba(255,255,255,0.07);border-radius:14px;padding:4px;border:1px solid rgba(255,255,255,0.1);">
+        <button id="tab-posts" onclick="switchTab('posts')"
+            style="flex:1;background:rgba(255,255,255,0.15);border:none;color:white;font-size:14px;font-weight:700;padding:10px 8px;border-radius:10px;cursor:pointer;">
+            📝 Publicaciones
+        </button>
+        <button id="tab-videos" onclick="switchTab('videos')"
+            style="flex:1;background:none;border:none;color:rgba(255,255,255,0.5);font-size:14px;font-weight:700;padding:10px 8px;border-radius:10px;cursor:pointer;">
+            🎬 Videos
+        </button>
     </div>
 
     <!-- FEED DE PUBLICACIONES -->
@@ -1815,7 +1794,6 @@
             const vFeed      = document.getElementById('video-feed');
             const tabPosts   = document.getElementById('tab-posts');
             const tabVideos  = document.getElementById('tab-videos');
-            const feedTabs   = document.querySelector('.feed-tabs');
             const sortCont   = document.querySelector('.sort-container');
             const gSoundBtn  = document.getElementById('global-sound-btn');
 
@@ -1824,8 +1802,9 @@
                 vFeed?.classList.add('active');
                 tabPosts?.classList.remove('active');
                 tabVideos?.classList.add('active');
+                if (tabPosts) { tabPosts.style.background = 'none'; tabPosts.style.color = 'rgba(255,255,255,0.5)'; }
+                if (tabVideos) { tabVideos.style.background = 'rgba(255,255,255,0.15)'; tabVideos.style.color = 'white'; }
                 // Ocultar tabs y sort mientras está en modo video (pantalla completa)
-                if (feedTabs) feedTabs.style.display = 'none';
                 if (sortCont) sortCont.style.display = 'none';
                 // Mostrar botón de sonido global
                 if (gSoundBtn) gSoundBtn.style.display = 'flex';
@@ -1844,7 +1823,8 @@
                 postFeed?.classList.add('active');
                 tabVideos?.classList.remove('active');
                 tabPosts?.classList.add('active');
-                if (feedTabs) feedTabs.style.display = '';
+                if (tabVideos) { tabVideos.style.background = 'none'; tabVideos.style.color = 'rgba(255,255,255,0.5)'; }
+                if (tabPosts) { tabPosts.style.background = 'rgba(255,255,255,0.15)'; tabPosts.style.color = 'white'; }
                 if (sortCont) sortCont.style.display = '';
                 if (gSoundBtn) gSoundBtn.style.display = 'none';
                 const backBtn2 = document.getElementById('video-back-btn');
@@ -1938,20 +1918,7 @@
                             html += `<img src="${post.image}" class="post-published-image">`;
                         }
 
-                        if (post.video) {
-                            // En publicaciones solo mostrar un thumb con botón para ir a Videos
-                            html += `
-                                <div style="position:relative;border-radius:18px;overflow:hidden;background:#111;margin-bottom:12px;cursor:pointer;"
-                                     onclick="switchTab('videos')" title="Ver en Videos">
-                                    <video src="${post.video}" class="post-published-video"
-                                        preload="none" playsinline muted
-                                        style="margin-bottom:0;pointer-events:none;"></video>
-                                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);">
-                                        <div style="background:rgba(0,0,0,0.6);border:2px solid white;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:22px;">▶</div>
-                                    </div>
-                                    <div style="position:absolute;bottom:10px;left:12px;font-size:11px;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:3px 8px;border-radius:8px;">Ver en Videos 🎬</div>
-                                </div>`;
-                        }
+                        // Posts con video: no mostrar video en publicaciones
 
                         // Reacciones
                         const postReactions = JSON.parse(localStorage.getItem('postReactions')) || {};
