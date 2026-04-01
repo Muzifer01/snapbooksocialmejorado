@@ -1422,18 +1422,7 @@
 </head>
 <body>
 
-    <!-- PAYWALL REINCORPORADO (SIN ERRORES) -->
-    <div id="paywall" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(25px); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
-        <div class="paywall-card" style="background: rgba(28, 28, 30, 0.8); padding: 40px 30px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.1); width: 85%; max-width: 350px;">
-            <span style="font-size: 60px;">🚀</span>
-            <h2 style="color: white; margin-top: 20px;">SnapBook Premium</h2>
-            <p style="color: #8e8e93; font-size: 14px; margin: 15px 0;">Has agotado tus 20 mensajes gratuitos. Ve a la tienda para comprar más mensajes o suscríbete para chatear sin límites.</p>
-            <div class="price-tag" style="font-size: 28px; font-weight: 800; margin: 15px 0; color: #FFD700;">$50 <span style="font-size: 14px; color: #888;">MXN / Mes</span></div>
-            <button class="btn-premium" style="width: 100%; background: #fff; color: #000; border: none; padding: 16px; border-radius: 20px; font-weight: 700; cursor: pointer; margin-bottom: 10px;" onclick="window.location.href='tienda.html'">Ir a la Tienda 💰</button>
-            <button class="btn-premium" style="width: 100%; background: #333; color: white; border: none; padding: 16px; border-radius: 20px; font-weight: 700; cursor: pointer;" onclick="window.location.href='payment.html'">Ver Planes VIP</button>
-            <button class="ios-btn" style="margin-top: 15px; color: #8e8e93; background: none; border: none; cursor: pointer; font-size: 15px;" onclick="document.getElementById('paywall').style.display='none'">Cerrar</button>
-        </div>
-    </div>
+<!-- Paywall eliminado definitivamente por solicitud del usuario -->
 
     <header class="header">
         <button class="ios-btn" id="back-nav">‹ Atrás</button>
@@ -2021,22 +2010,6 @@
 
         let currentStoryId = null;
         let currentUser = null;
-        let currentUserData = {}; // Perfil siempre sincronizado con Firebase
-
-        // Escuchar perfil en tiempo real → siempre detecta la cuenta real
-        const listenUserProfile = (uid) => {
-            onValue(ref(db, `Users/${uid}`), (snap) => {
-                if (snap.exists()) {
-                    currentUserData = snap.val();
-                    if (currentUserData.nick)   localStorage.setItem('nick',   currentUserData.nick);
-                    if (currentUserData.perfil) localStorage.setItem('perfil', currentUserData.perfil);
-                }
-            });
-        };
-
-        // Helpers: siempre leer del perfil real, localStorage como fallback
-        const getMyNick   = () => currentUserData.nick   || localStorage.getItem('nick')   || 'User';
-        const getMyPerfil = () => currentUserData.perfil || localStorage.getItem('perfil') || '';
 
         const storyViewerModal = document.getElementById('story-viewer-modal');
         const viewsPanel = document.getElementById('views-panel');
@@ -2115,17 +2088,30 @@
                 const viewRef = ref(db, `stories/${storyId}/views/${currentUser.uid}`);
                 const existingView = await get(viewRef);
 
-                // Usar perfil ya sincronizado en tiempo real (listenUserProfile)
-                const nickReal   = getMyNick();
-                const perfilReal = getMyPerfil();
+                // Obtener datos reales del usuario desde Firebase (no solo localStorage)
+                let nickReal = localStorage.getItem('nick') || 'Usuario';
+                let perfilReal = localStorage.getItem('perfil') || '';
+                try {
+                    const userSnap = await get(ref(db, `Users/${currentUser.uid}`));
+                    if (userSnap.exists()) {
+                        const ud = userSnap.val();
+                        nickReal = ud.nick || ud.nombre || ud.displayName || nickReal;
+                        perfilReal = ud.perfil || ud.photoURL || ud.foto || perfilReal;
+                        // Sincronizar localStorage con los datos más recientes de Firebase
+                        if (nickReal) localStorage.setItem('nick', nickReal);
+                        if (perfilReal) localStorage.setItem('perfil', perfilReal);
+                    }
+                } catch(e) { console.warn('No se pudo leer Users/', e); }
 
                 if (!existingView.exists()) {
+                    // Primera vista: guardar con datos completos
                     await set(viewRef, {
                         nick: nickReal,
                         perfil: perfilReal,
                         time: Date.now().toString()
                     });
                 } else {
+                    // Vista ya existente: actualizar si le faltan nick o perfil
                     const existingData = existingView.val();
                     if (!existingData.nick || !existingData.perfil) {
                         await set(viewRef, {
@@ -2236,7 +2222,7 @@
             if (!currentUser) return;
             const typingRef = ref(db, `typing/${currentUser.uid}`);
             if (isTyping) {
-                set(typingRef, { nick: getMyNick(), time: Date.now() });
+                set(typingRef, { nick: localStorage.getItem('nick') || 'User', time: Date.now() });
             } else {
                 remove(typingRef);
             }
@@ -2477,8 +2463,8 @@
                 const mediaUrl = file ? await uploadChatMediaFile(file, isVideo ? 'chat-videos' : 'chat-images') : item.dataUrl;
                 const msgData = {
                     uid: currentUser.uid,
-                    nick: getMyNick(),
-                    perfil: getMyPerfil(),
+                    nick: localStorage.getItem('nick') || 'User',
+                    perfil: localStorage.getItem('perfil') || '',
                     text: (i === finalSend.length - 1 && caption) ? caption : '',
                     multi: getPlatformName(),
                     time: Date.now().toString(),
@@ -2554,8 +2540,8 @@
 
             const msgData = {
                 uid: currentUser.uid,
-                nick: getMyNick(),
-                perfil: getMyPerfil(),
+                nick: localStorage.getItem('nick') || "User",
+                perfil: localStorage.getItem('perfil') || "",
                 text: `[GIF]`,
                 image: gifUrl,
                 multi: getPlatformName(),
@@ -2661,8 +2647,8 @@
             const chatId = [currentUser.uid, dmTargetUid].sort().join('_');
             await push(ref(db, `dms/${chatId}`), {
                 uid: currentUser.uid,
-                nick: getMyNick(),
-                perfil: getMyPerfil(),
+                nick: localStorage.getItem('nick') || 'User',
+                perfil: localStorage.getItem('perfil') || '',
                 text: text,
                 time: Date.now().toString()
             });
@@ -3044,8 +3030,8 @@
             if (currentUser) {
                 set(ref(db, `status/${currentUser.uid}`), {
                     estado: status,
-                    nick: getMyNick(),
-                    perfil: getMyPerfil(),
+                    nick: localStorage.getItem('nick') || 'User',
+                    perfil: localStorage.getItem('perfil') || '',
                     time: Date.now()
                 });
             }
@@ -3268,8 +3254,8 @@
 
                     await push(ref(db, currentGroupRef), {
                         uid:          currentUser.uid,
-                        nick:         getMyNick(),
-                        perfil:       getMyPerfil(),
+                        nick:         localStorage.getItem('nick') || 'User',
+                        perfil:       localStorage.getItem('perfil') || '',
                         text:         '',
                         audio:        url,
                         audioDuration: duracion,
@@ -3392,7 +3378,6 @@
         auth.onAuthStateChanged((user) => {
             if (!user) return;
             currentUser = user;
-            listenUserProfile(user.uid);  // ← Siempre sincronizar perfil real
             requestNotificationPermission();
             applyStatus(myStatus);   // Registrar estado en Firebase al loguearse
             listenToStatuses();
@@ -3424,64 +3409,41 @@
                 const userSnap = await get(userRef);
                 const userData = userSnap.val() || {};
 
-                // LÓGICA DE PAYWALL REINCORPORADA Y CORREGIDA
+                // Lógica de envío simplificada (Sin Paywall)
                 const esVIP = (userData && userData.premium === 'verificado');
-                const mHoy = (userData && Number(userData.mensajesHoy)) || 0;
-                const mExtra = (userData && Number(userData.mensajesExtra)) || 0;
+                const reply = getReplyData();
+                const msgData = {
+                    uid: user.uid,
+                    nick: localStorage.getItem('nick') || "User",
+                    perfil: localStorage.getItem('perfil') || "",
+                    text: text,
+                    multi: getPlatformName(),
+                    time: Date.now().toString(),
+                    isVerificado: esVIP, // El check dorado depende de 'verificado'
+                    ...(destructMode ? { destructAfter: Date.now() + 30000 } : {})
+                };
 
-                // Debug para el dueño
-                console.log("Sistema Paywall:", { esVIP, mHoy, mExtra });
-
-                if (esVIP || mHoy < 20 || mExtra > 0) {
-                    // Ocultar paywall si por alguna razón estaba abierto
-                    paywall.style.display = "none";
-
-                    const reply = getReplyData();
-                    const msgData = {
-                        uid: user.uid,
-                        nick: getMyNick(),
-                        perfil: getMyPerfil(),
-                        text: text,
-                        multi: getPlatformName(),
-                        time: Date.now().toString(),
-                        isVerificado: esVIP,
-                        ...(destructMode ? { destructAfter: Date.now() + 30000 } : {})
-                    };
-
-                    if(reply) { msgData.replyNick = reply.replyNick; msgData.replyText = reply.replyText; }
-                    
-                    if (pendingChatMedia?.file) {
-                        const uploadedUrl = await uploadChatMediaFile(
-                            pendingChatMedia.file,
-                            pendingChatMedia.type === 'video' ? 'chat-direct-videos' : 'chat-direct-images'
-                        );
-                        if (pendingChatMedia.type === 'video') msgData.video = uploadedUrl;
-                        else msgData.image = uploadedUrl;
-                    }
-
-                    // Enviar mensaje
-                    await push(ref(db, currentGroupRef), msgData);
-
-                    // Actualizar contadores si NO es VIP
-                    if (!esVIP) {
-                        if (mHoy < 20) {
-                            await update(userRef, { mensajesHoy: mHoy + 1 });
-                        } else if (mExtra > 0) {
-                            await update(userRef, { mensajesExtra: mExtra - 1 });
-                        }
-                    }
-
-                    // Limpiar interfaz
-                    msgInput.value = "";
-                    replyPreview.style.display = "none";
-                    clearReplyData();
-                    clearPendingChatMedia();
-                    updateTypingStatus(false);
-                    updatePrimaryActionButton();
-                } else {
-                    // Mostrar Paywall si no cumple ninguna condición
-                    paywall.style.display = "flex";
+                if(reply) { msgData.replyNick = reply.replyNick; msgData.replyText = reply.replyText; }
+                
+                if (pendingChatMedia?.file) {
+                    const uploadedUrl = await uploadChatMediaFile(
+                        pendingChatMedia.file,
+                        pendingChatMedia.type === 'video' ? 'chat-direct-videos' : 'chat-direct-images'
+                    );
+                    if (pendingChatMedia.type === 'video') msgData.video = uploadedUrl;
+                    else msgData.image = uploadedUrl;
                 }
+
+                // Enviar mensaje sin restricciones
+                await push(ref(db, currentGroupRef), msgData);
+
+                // Limpiar interfaz
+                msgInput.value = "";
+                replyPreview.style.display = "none";
+                clearReplyData();
+                clearPendingChatMedia();
+                updateTypingStatus(false);
+                updatePrimaryActionButton();
             };
 
             sendBtn.onclick = async () => {
@@ -4388,8 +4350,8 @@
             const tieneCheck = (userData.premium === 'verificado');
             const msgData = {
                 uid: currentUser.uid,
-                nick: getMyNick(),
-                perfil: getMyPerfil(),
+                nick: localStorage.getItem('nick') || 'User',
+                perfil: localStorage.getItem('perfil') || '',
                 text: '[Sticker]',
                 image: stickerUrl,
                 multi: getPlatformName(),
