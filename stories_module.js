@@ -54,8 +54,24 @@ export function initStories() {
     const hasSeenStory = (storyId) => getSeenStories().includes(storyId);
     const isValidStoryFile = (file) => {
         if (!file) return false;
-        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
-        if (!validTypes.includes(file.type)) {
+        const validImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+        const validVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-m4v'];
+        const isVideo = file.type.startsWith('video/');
+        
+        if (isVideo) {
+            if (!validVideoTypes.includes(file.type)) {
+                alert('Selecciona un video MP4, WEBM o MOV');
+                return false;
+            }
+            const maxSize = 30 * 1024 * 1024; // 30 MB para videos
+            if (file.size > maxSize) {
+                alert('El video es demasiado grande. Máximo 30 MB.');
+                return false;
+            }
+            return true;
+        }
+        
+        if (!validImageTypes.includes(file.type)) {
             alert('Selecciona una imagen JPG, PNG o WEBP');
             return false;
         }
@@ -516,8 +532,42 @@ export function initStories() {
         reactionsCommentsPanel.classList.remove('open');
         shareModal.style.display = "none";
 
-        // Detectar si es una historia de texto o de imagen
-        if (s.isTextStory && s.backgroundColor) {
+        // Detectar si es una historia de texto, imagen o VIDEO
+        if (s.isVideo && s.video) {
+            // --- HISTORIA DE VIDEO ---
+            const storyImgDisplay = document.getElementById("story-img-display");
+            const storyVideoDisplay = document.getElementById("story-video-display");
+            const textOnlyElement = document.getElementById("story-text-only-display");
+            if (storyImgDisplay) storyImgDisplay.style.display = "none";
+            if (textOnlyElement) textOnlyElement.style.display = "none";
+            if (storyVideoDisplay) {
+                storyVideoDisplay.src = s.video;
+                storyVideoDisplay.style.display = "block";
+                storyVideoDisplay.currentTime = 0;
+                storyVideoDisplay.play().catch(() => {});
+                // Ajustar duración del timer al video
+                storyVideoDisplay.onloadedmetadata = () => {
+                    const dur = storyVideoDisplay.duration;
+                    if (isFinite(dur) && dur > 0) {
+                        // Reajustar el timer de progreso a la duración del video
+                        if (storyTimer) clearInterval(storyTimer);
+                        elapsedTime = 0;
+                        const videoDurationMs = dur * 1000;
+                        storyTimer = setInterval(() => {
+                            if (!isPaused && !storyVideoDisplay.paused) {
+                                elapsedTime += 50;
+                                const progress = (elapsedTime / videoDurationMs) * 100;
+                                updateProgressBars(currentStoryIndex, Math.min(progress, 100));
+                                if (elapsedTime >= videoDurationMs) {
+                                    clearInterval(storyTimer);
+                                    showStoryAtIndex(currentStoryIndex + 1);
+                                }
+                            }
+                        }, 50);
+                    }
+                };
+            }
+        } else if (s.isTextStory && s.backgroundColor) {
             const storyImgDisplay = document.getElementById("story-img-display");
             storyImgDisplay.style.display = "none";
             
@@ -640,6 +690,9 @@ export function initStories() {
         shareModal.style.display = "none";
         currentStoryId = null;
         currentStoryData = null;
+        // Detener video si estaba reproduciéndose
+        const storyVideoDisplay = document.getElementById('story-video-display');
+        if (storyVideoDisplay) { storyVideoDisplay.pause(); storyVideoDisplay.src = ''; storyVideoDisplay.style.display = 'none'; }
     }
 
     // Función para iniciar el temporizador
@@ -812,16 +865,38 @@ export function initStories() {
     storyFile.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            if (window.validateStoryFile && !window.validateStoryFile(file)) {
+            if (!isValidStoryFile(file)) {
                 storyFile.value = '';
                 previewContainer.classList.remove('active');
                 fileInputLabel.classList.remove('has-image');
                 backgroundSelector.classList.remove('active');
                 return;
             }
+            const isVideo = file.type.startsWith('video/');
             const reader = new FileReader();
             reader.onload = (event) => {
-                document.getElementById("preview-image").src = event.target.result;
+                const previewImage = document.getElementById("preview-image");
+                const previewVideo = document.getElementById("preview-video");
+                if (isVideo) {
+                    if (previewImage) { previewImage.style.display = 'none'; previewImage.src = ''; }
+                    if (previewVideo) { previewVideo.src = event.target.result; previewVideo.style.display = 'block'; }
+                    // Ocultar herramientas de imagen para video
+                    const btnFilter = document.getElementById('btn-tool-filter');
+                    const btnDraw = document.getElementById('btn-tool-draw');
+                    if (btnFilter) btnFilter.style.display = 'none';
+                    if (btnDraw) btnDraw.style.display = 'none';
+                    const iconEl = document.getElementById('file-input-icon');
+                    if (iconEl) iconEl.textContent = '🎥';
+                } else {
+                    if (previewVideo) { previewVideo.style.display = 'none'; previewVideo.src = ''; }
+                    if (previewImage) { previewImage.style.display = 'block'; previewImage.src = event.target.result; }
+                    const btnFilter = document.getElementById('btn-tool-filter');
+                    const btnDraw = document.getElementById('btn-tool-draw');
+                    if (btnFilter) btnFilter.style.display = '';
+                    if (btnDraw) btnDraw.style.display = '';
+                    const iconEl = document.getElementById('file-input-icon');
+                    if (iconEl) iconEl.textContent = '📸';
+                }
                 previewContainer.classList.add('active');
                 fileInputLabel.classList.add('has-image');
                 backgroundSelector.classList.remove('active');
@@ -920,6 +995,7 @@ export function initStories() {
             
             item.innerHTML = `
                 <span class="story-count-badge">${group.stories.length}</span>
+                ${group.stories.some(s => s.data.isVideo) ? '<span style="position:absolute;top:0;left:0;background:rgba(0,0,0,0.6);border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:10px;z-index:3;">🎥</span>' : ''}
                 <div class="story-avatar-wrapper">
                     <div class="story-avatar-inner">
                         <img src="${group.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
@@ -938,6 +1014,18 @@ export function initStories() {
         });
     });
 
+    // Subir video a Firebase Storage
+    async function uploadVideoToStorage(file, uid) {
+        const { ref: storageRef, uploadBytes, getDownloadURL, getStorage } =
+            await import('https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js');
+        const { app } = await import('./view_global.js');
+        const storage = getStorage(app);
+        const safeName = (file.name || 'video').replace(/[^a-zA-Z0-9._-]/g, '_');
+        const fileRef = storageRef(storage, `story-videos/${uid}/${Date.now()}_${safeName}`);
+        await uploadBytes(fileRef, file, { contentType: file.type || 'video/mp4' });
+        return await getDownloadURL(fileRef);
+    }
+
     // Subir Historia
     if (btnUpload) {
         btnUpload.onclick = async () => {
@@ -946,8 +1034,9 @@ export function initStories() {
             
             const file = storyFile.files[0];
             const text = storyTextInput ? storyTextInput.value.trim() : "";
+            const isVideo = file && file.type.startsWith('video/');
 
-            if (!file && !text) return alert("Selecciona una imagen o escribe un texto");
+            if (!file && !text) return alert("Selecciona una imagen, video o escribe un texto");
             if (file && !isValidStoryFile(file)) return;
 
             const mentions = detectMentions(text);
@@ -956,10 +1045,79 @@ export function initStories() {
             const editorData = window.getEditorData ? window.getEditorData() : {};
 
             const originalText = btnUpload.innerText;
-            btnUpload.innerText = "Publicando...";
+            btnUpload.innerText = isVideo ? "Subiendo video..." : "Publicando...";
             btnUpload.disabled = true;
 
-            if (file) {
+            if (file && isVideo) {
+                // --- FLUJO DE VIDEO ---
+                try {
+                    btnUpload.innerText = "Subiendo video... ⏳";
+                    const videoUrl = await uploadVideoToStorage(file, user.uid);
+                    
+                    // Obtener duración del video
+                    let videoDuration = null;
+                    try {
+                        const previewVideo = document.getElementById('preview-video');
+                        if (previewVideo && previewVideo.duration && isFinite(previewVideo.duration)) {
+                            videoDuration = Math.round(previewVideo.duration * 1000); // ms
+                        }
+                    } catch(e) {}
+
+                    const storyData = {
+                        uid: user.uid,
+                        nick: localStorage.getItem('nick') || "User",
+                        perfil: localStorage.getItem('perfil') || "",
+                        video: videoUrl,
+                        image: '', // thumbnail vacío para videos
+                        text: text,
+                        time: Date.now().toString(),
+                        views: {},
+                        reactions: {},
+                        comments: {},
+                        isTextStory: false,
+                        isVideo: true,
+                        videoDuration: videoDuration,
+                        poll: editorData.poll,
+                        countdown: editorData.countdown,
+                        askme: editorData.askme,
+                        highlighted: false
+                    };
+
+                    await push(ref(db, 'stories'), storyData);
+                    await cleanExpiredStories();
+
+                    const nick = localStorage.getItem('nick') || "User";
+                    for (const mention of mentions) {
+                        const mentionedNick = mention.substring(1);
+                        await sendMentionNotification(mentionedNick, nick, null, false);
+                    }
+
+                    uploadModal.style.display = "none";
+                    storyFile.value = "";
+                    if (storyTextInput) storyTextInput.value = "";
+                    previewContainer.classList.remove('active');
+                    fileInputLabel.classList.remove('has-image');
+                    backgroundSelector.classList.remove('active');
+                    textPreviewContainer.style.display = "none";
+                    selectedBackground = null;
+                    bgColorButtons.forEach(b => b.classList.remove('selected'));
+                    // Restaurar icono
+                    const iconEl = document.getElementById('file-input-icon');
+                    if (iconEl) iconEl.textContent = '📸';
+                    const btnFilter = document.getElementById('btn-tool-filter');
+                    const btnDraw = document.getElementById('btn-tool-draw');
+                    if (btnFilter) btnFilter.style.display = '';
+                    if (btnDraw) btnDraw.style.display = '';
+                    alert("¡Video publicado como historia! 🎥");
+                    btnUpload.innerText = originalText;
+                    btnUpload.disabled = false;
+                } catch (err) {
+                    console.error("Error al subir video:", err);
+                    alert("Error al publicar el video: " + (err.message || ''));
+                    btnUpload.innerText = originalText;
+                    btnUpload.disabled = false;
+                }
+            } else if (file) {
                 const reader = new FileReader();
                 reader.onload = async (e) => {
                     let imageData = e.target.result;

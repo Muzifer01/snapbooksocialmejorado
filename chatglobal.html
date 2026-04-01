@@ -1481,6 +1481,7 @@
             </button>
         </div>
         <img src="" class="story-img-full" id="story-img-display">
+        <video id="story-video-display" class="story-img-full" style="display:none;max-height:80vh;object-fit:contain;" autoplay loop muted playsinline controls></video>
         <div class="story-text-overlay" id="story-text-display"></div>
         <!-- Overlays interactivos -->
         <div class="story-poll-overlay" id="story-poll-overlay" style="display:none;"></div>
@@ -1599,16 +1600,17 @@
             <p class="upload-card-subtitle">Comparte un momento especial con todos</p>
             <div class="file-input-wrapper">
                 <label class="file-input-label" id="file-input-label" for="story-file">
-                    <div class="file-input-icon">📸</div>
-                    <div class="file-input-text">Toca para seleccionar una imagen</div>
-                    <div class="file-input-subtext">PNG/JPG · máximo 3 MB</div>
+                    <div class="file-input-icon" id="file-input-icon">📸</div>
+                    <div class="file-input-text">Toca para seleccionar imagen o video</div>
+                    <div class="file-input-subtext">Imagen (PNG/JPG · máx 3 MB) · Video (MP4 · máx 30 MB)</div>
                 </label>
-                <input type="file" id="story-file" accept="image/*">
+                <input type="file" id="story-file" accept="image/*,video/*">
             </div>
             <div class="preview-container" id="preview-container">
                 <img id="preview-image" class="preview-image" src="" alt="Vista previa">
+                <video id="preview-video" class="preview-image" style="display:none;max-height:280px;border-radius:20px;width:100%;background:#000;" controls muted playsinline></video>
                 <div class="preview-actions">
-                    <button class="btn-change-image" id="btn-change-image">Cambiar imagen</button>
+                    <button class="btn-change-image" id="btn-change-image">Cambiar archivo</button>
                 </div>
             </div>
 
@@ -2053,6 +2055,22 @@
             currentStoryId = storyId;
 
             document.getElementById('story-img-display').src = storyData.image || '';
+            // Mostrar video si la historia es un video
+            const storyVideoDisplay = document.getElementById('story-video-display');
+            const storyImgDisplay = document.getElementById('story-img-display');
+            if (storyData.video) {
+                storyImgDisplay.style.display = 'none';
+                storyImgDisplay.src = '';
+                storyVideoDisplay.src = storyData.video;
+                storyVideoDisplay.style.display = 'block';
+                storyVideoDisplay.play().catch(() => {});
+            } else {
+                storyVideoDisplay.style.display = 'none';
+                storyVideoDisplay.src = '';
+                storyVideoDisplay.pause();
+                storyImgDisplay.style.display = '';
+                storyImgDisplay.src = storyData.image || '';
+            }
             document.getElementById('story-viewer-nick').textContent = storyData.nick || 'Usuario';
             document.getElementById('story-viewer-time').textContent = formatTimeAgo(storyData.time);
             document.getElementById('story-viewer-avatar').src = storyData.perfil || '';
@@ -2197,6 +2215,9 @@
             if (trustScoreContainer) trustScoreContainer.classList.remove('active');
             currentStoryId = null;
             window.currentStoryId = null;
+            // Detener video si estaba reproduciéndose
+            const storyVideoDisplay = document.getElementById('story-video-display');
+            if (storyVideoDisplay) { storyVideoDisplay.pause(); storyVideoDisplay.src = ''; }
         };
 
         window.openStoryWithViews = openStoryWithViews;
@@ -3485,27 +3506,7 @@
         btnChangeImage.onclick = () => storyFile.click();
 
         storyFile.onchange = (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                if (window.validateStoryFile && !window.validateStoryFile(file)) {
-                    storyFile.value = '';
-                    previewContainer.classList.remove('active');
-                    fileInputLabel.classList.remove('has-image');
-                    editorTools.classList.remove('active');
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    previewImage.src = event.target.result;
-                    originalImageData = event.target.result;
-                    previewContainer.classList.add('active');
-                    fileInputLabel.classList.add('has-image');
-                    editorTools.classList.add('active');
-                    generateFilterThumbs(event.target.result);
-                    setupDrawCanvas(event.target.result);
-                };
-                reader.readAsDataURL(file);
-            }
+            // Manejado por stories_module.js
         };
 
         // Filtros
