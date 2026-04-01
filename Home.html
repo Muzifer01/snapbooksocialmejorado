@@ -1645,7 +1645,27 @@
         // ── Render video feed con IntersectionObserver (lazy + autoplay) ──
         let videoObserver = null;
 
-        let globalMuted = true; // empieza silenciado, el usuario activa con el botón
+        let globalMuted = true; // Empezamos silenciados para que el navegador permita el autoplay
+
+        // Función para desbloquear el sonido globalmente al primer toque del usuario
+        const unlockAudio = () => {
+            globalMuted = false;
+            // Actualizar todos los videos que ya estén en el DOM
+            document.querySelectorAll('#video-feed video').forEach(v => {
+                v.muted = false;
+                if (!v.paused) v.play().catch(() => {});
+            });
+            // Actualizar iconos de la interfaz
+            window.toggleGlobalSound(false); 
+            
+            // Eliminar los listeners después de la primera interacción
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('keydown', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
 
         const renderVideoFeed = (postsMap = {}) => {
             if (!videoFeed) return;
@@ -1672,15 +1692,20 @@
                     if (!vid) return;
 
                     if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
-                        // Lazy: cargar src solo al entrar en pantalla (NO autoplay)
+                        // Lazy: cargar src solo al entrar en pantalla
                         if (!vid.src && vid.dataset.src) {
                             vid.src = vid.dataset.src;
                             vid.load();
                         }
                         vid.muted = globalMuted;
-                        // ⛔ SIN auto-play: el usuario toca para reproducir
+                        // ✅ AUTO-PLAY: se reproduce automáticamente cuando el usuario lo está viendo
+                        vid.play().catch(() => {
+                            // Si falla por sonido bloqueado, silenciamos y reintentamos
+                            vid.muted = true;
+                            vid.play().catch(() => {});
+                        });
 
-                        // Barra de progreso solo si ya está reproduciendo
+                        // Barra de progreso
                         if (bar) {
                             vid.ontimeupdate = () => {
                                 const pct = vid.duration ? (vid.currentTime / vid.duration) * 100 : 0;
@@ -1801,13 +1826,17 @@
         };
 
         // ── Sonido global para todos los videos ──
-        window.toggleGlobalSound = function() {
-            globalMuted = !globalMuted;
+        window.toggleGlobalSound = function(forceState) {
+            if (typeof forceState === 'boolean') {
+                globalMuted = forceState;
+            } else {
+                globalMuted = !globalMuted;
+            }
             document.querySelectorAll('#video-feed video').forEach(v => { v.muted = globalMuted; });
             document.querySelectorAll('[id^="snd-"]').forEach(btn => {
                 btn.textContent = globalMuted ? '🔇' : '🔊';
                 const lbl = btn.closest('.vsb')?.querySelector('.vsb-label');
-                if (lbl) lbl.textContent = globalMuted ? 'Sonido' : 'Silencio';
+                if (lbl) lbl.textContent = globalMuted ? 'Silencio' : 'Sonido';
             });
             // Botón global superior
             const gBtn = document.getElementById('global-sound-btn');
