@@ -29,10 +29,7 @@
         .header h1 { font-size: 17px; font-weight: 600; position: absolute; left: 50%; transform: translateX(-50%); margin: 0; }
         .ios-btn { color: #007aff; background: none; border: none; font-size: 17px; cursor: pointer; font-weight: 500; }
         
-        #paywall { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); backdrop-filter: blur(25px); z-index: 1000; display: none; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
-        .paywall-card { background: rgba(28, 28, 30, 0.8); padding: 40px 30px; border-radius: 40px; border: 1px solid rgba(255,255,255,0.1); width: 85%; max-width: 350px; }
-        .price-tag { font-size: 28px; font-weight: 800; margin: 15px 0; color: var(--premium-gold); }
-        .btn-premium { width: 100%; background: #fff; color: #000; border: none; padding: 16px; border-radius: 20px; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+
 
         /* --- ESTILOS DE HISTORIAS (MODULARES) --- */
         .stories-container {
@@ -1422,7 +1419,6 @@
 </head>
 <body>
 
-<!-- Paywall eliminado definitivamente por solicitud del usuario -->
 
     <header class="header">
         <button class="ios-btn" id="back-nav">‹ Atrás</button>
@@ -1937,7 +1933,7 @@
         const container = document.getElementById("chat-container");
         const msgInput = document.getElementById("msg-input");
         const replyPreview = document.getElementById("reply-preview");
-        const paywall = document.getElementById("paywall");
+
         const scrollBottomBtn = document.getElementById('scroll-bottom-btn');
 
         const formatTime = (ts) => ts ? new Date(parseInt(ts)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : "";
@@ -2010,6 +2006,22 @@
 
         let currentStoryId = null;
         let currentUser = null;
+        let currentUserData = {}; // Perfil siempre sincronizado con Firebase
+
+        // Escuchar perfil en tiempo real → siempre detecta la cuenta real
+        const listenUserProfile = (uid) => {
+            onValue(ref(db, `Users/${uid}`), (snap) => {
+                if (snap.exists()) {
+                    currentUserData = snap.val();
+                    if (currentUserData.nick)   localStorage.setItem('nick',   currentUserData.nick);
+                    if (currentUserData.perfil) localStorage.setItem('perfil', currentUserData.perfil);
+                }
+            });
+        };
+
+        // Helpers: siempre leer del perfil real, localStorage como fallback
+        const getMyNick   = () => currentUserData.nick   || localStorage.getItem('nick')   || 'User';
+        const getMyPerfil = () => currentUserData.perfil || localStorage.getItem('perfil') || '';
 
         const storyViewerModal = document.getElementById('story-viewer-modal');
         const viewsPanel = document.getElementById('views-panel');
@@ -2088,30 +2100,17 @@
                 const viewRef = ref(db, `stories/${storyId}/views/${currentUser.uid}`);
                 const existingView = await get(viewRef);
 
-                // Obtener datos reales del usuario desde Firebase (no solo localStorage)
-                let nickReal = localStorage.getItem('nick') || 'Usuario';
-                let perfilReal = localStorage.getItem('perfil') || '';
-                try {
-                    const userSnap = await get(ref(db, `Users/${currentUser.uid}`));
-                    if (userSnap.exists()) {
-                        const ud = userSnap.val();
-                        nickReal = ud.nick || ud.nombre || ud.displayName || nickReal;
-                        perfilReal = ud.perfil || ud.photoURL || ud.foto || perfilReal;
-                        // Sincronizar localStorage con los datos más recientes de Firebase
-                        if (nickReal) localStorage.setItem('nick', nickReal);
-                        if (perfilReal) localStorage.setItem('perfil', perfilReal);
-                    }
-                } catch(e) { console.warn('No se pudo leer Users/', e); }
+                // Usar perfil ya sincronizado en tiempo real (listenUserProfile)
+                const nickReal   = getMyNick();
+                const perfilReal = getMyPerfil();
 
                 if (!existingView.exists()) {
-                    // Primera vista: guardar con datos completos
                     await set(viewRef, {
                         nick: nickReal,
                         perfil: perfilReal,
                         time: Date.now().toString()
                     });
                 } else {
-                    // Vista ya existente: actualizar si le faltan nick o perfil
                     const existingData = existingView.val();
                     if (!existingData.nick || !existingData.perfil) {
                         await set(viewRef, {
@@ -2222,7 +2221,7 @@
             if (!currentUser) return;
             const typingRef = ref(db, `typing/${currentUser.uid}`);
             if (isTyping) {
-                set(typingRef, { nick: localStorage.getItem('nick') || 'User', time: Date.now() });
+                set(typingRef, { nick: getMyNick(), time: Date.now() });
             } else {
                 remove(typingRef);
             }
@@ -2463,8 +2462,8 @@
                 const mediaUrl = file ? await uploadChatMediaFile(file, isVideo ? 'chat-videos' : 'chat-images') : item.dataUrl;
                 const msgData = {
                     uid: currentUser.uid,
-                    nick: localStorage.getItem('nick') || 'User',
-                    perfil: localStorage.getItem('perfil') || '',
+                    nick: getMyNick(),
+                    perfil: getMyPerfil(),
                     text: (i === finalSend.length - 1 && caption) ? caption : '',
                     multi: getPlatformName(),
                     time: Date.now().toString(),
@@ -2540,8 +2539,8 @@
 
             const msgData = {
                 uid: currentUser.uid,
-                nick: localStorage.getItem('nick') || "User",
-                perfil: localStorage.getItem('perfil') || "",
+                nick: getMyNick(),
+                perfil: getMyPerfil(),
                 text: `[GIF]`,
                 image: gifUrl,
                 multi: getPlatformName(),
@@ -2647,8 +2646,8 @@
             const chatId = [currentUser.uid, dmTargetUid].sort().join('_');
             await push(ref(db, `dms/${chatId}`), {
                 uid: currentUser.uid,
-                nick: localStorage.getItem('nick') || 'User',
-                perfil: localStorage.getItem('perfil') || '',
+                nick: getMyNick(),
+                perfil: getMyPerfil(),
                 text: text,
                 time: Date.now().toString()
             });
@@ -3030,8 +3029,8 @@
             if (currentUser) {
                 set(ref(db, `status/${currentUser.uid}`), {
                     estado: status,
-                    nick: localStorage.getItem('nick') || 'User',
-                    perfil: localStorage.getItem('perfil') || '',
+                    nick: getMyNick(),
+                    perfil: getMyPerfil(),
                     time: Date.now()
                 });
             }
@@ -3254,8 +3253,8 @@
 
                     await push(ref(db, currentGroupRef), {
                         uid:          currentUser.uid,
-                        nick:         localStorage.getItem('nick') || 'User',
-                        perfil:       localStorage.getItem('perfil') || '',
+                        nick:         getMyNick(),
+                        perfil:       getMyPerfil(),
                         text:         '',
                         audio:        url,
                         audioDuration: duracion,
@@ -3378,6 +3377,7 @@
         auth.onAuthStateChanged((user) => {
             if (!user) return;
             currentUser = user;
+            listenUserProfile(user.uid);  // ← Siempre sincronizar perfil real
             requestNotificationPermission();
             applyStatus(myStatus);   // Registrar estado en Firebase al loguearse
             listenToStatuses();
@@ -3399,32 +3399,26 @@
                 }
             });
 
-            // ENVÍO CON LÓGICA DE 20 + EXTRAS (ORIGINAL)
+            // ENVÍO LIBRE — sin límite de mensajes
             const send = async () => {
-                const text = msgInput.value
-.trim();
-                if(!text && !pendingChatMedia) return;
+                const text = msgInput.value.trim();
+                if (!text && !pendingChatMedia) return;
 
-                const userRef = ref(db, `Users/${user.uid}`);
-                const userSnap = await get(userRef);
-                const userData = userSnap.val() || {};
-
-                // Lógica de envío simplificada (Sin Paywall)
-                const esVIP = (userData && userData.premium === 'verificado');
+                const esVIP = (currentUserData && currentUserData.premium === 'verificado');
                 const reply = getReplyData();
                 const msgData = {
                     uid: user.uid,
-                    nick: localStorage.getItem('nick') || "User",
-                    perfil: localStorage.getItem('perfil') || "",
+                    nick: getMyNick(),
+                    perfil: getMyPerfil(),
                     text: text,
                     multi: getPlatformName(),
                     time: Date.now().toString(),
-                    isVerificado: esVIP, // El check dorado depende de 'verificado'
+                    isVerificado: esVIP,
                     ...(destructMode ? { destructAfter: Date.now() + 30000 } : {})
                 };
 
-                if(reply) { msgData.replyNick = reply.replyNick; msgData.replyText = reply.replyText; }
-                
+                if (reply) { msgData.replyNick = reply.replyNick; msgData.replyText = reply.replyText; }
+
                 if (pendingChatMedia?.file) {
                     const uploadedUrl = await uploadChatMediaFile(
                         pendingChatMedia.file,
@@ -3434,10 +3428,8 @@
                     else msgData.image = uploadedUrl;
                 }
 
-                // Enviar mensaje sin restricciones
                 await push(ref(db, currentGroupRef), msgData);
 
-                // Limpiar interfaz
                 msgInput.value = "";
                 replyPreview.style.display = "none";
                 clearReplyData();
@@ -4350,8 +4342,8 @@
             const tieneCheck = (userData.premium === 'verificado');
             const msgData = {
                 uid: currentUser.uid,
-                nick: localStorage.getItem('nick') || 'User',
-                perfil: localStorage.getItem('perfil') || '',
+                nick: getMyNick(),
+                perfil: getMyPerfil(),
                 text: '[Sticker]',
                 image: stickerUrl,
                 multi: getPlatformName(),
