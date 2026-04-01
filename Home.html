@@ -297,6 +297,38 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+        .nsfw-container { position: relative; width: 100%; margin-bottom: 12px; }
+        .nsfw-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(50px);
+            -webkit-backdrop-filter: blur(50px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            border-radius: 16px;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            border: 1px solid rgba(255, 75, 43, 0.3);
+        }
+        .nsfw-overlay h4 { margin: 0 0 8px 0; color: #ff4b2b; font-size: 16px; font-weight: 800; }
+        .nsfw-overlay p { font-size: 11px; margin-bottom: 15px; opacity: 0.8; line-height: 1.4; }
+        .nsfw-btn {
+            background: white;
+            color: black;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .nsfw-btn:hover { transform: scale(1.05); background: #f0f0f0; }
 
         .post-published-video {
             width: 100%;
@@ -914,13 +946,17 @@
             inset: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* Por defecto llena la pantalla (vertical/TikTok style) */
+            object-fit: cover; /* default vertical */
             background: #000;
-            transition: object-fit 0.3s ease;
         }
-        /* Video horizontal: se ajusta para mostrar todo el contenido sin recortar */
+        /* Video horizontal: se muestra contenido completo con barras negras */
+        .video-feed-item.is-horizontal {
+            background: #000;
+        }
         .video-feed-item.is-horizontal video {
-            object-fit: contain; /* Muestra el video completo con barras negras si es necesario */
+            object-fit: contain;
+            width: 100%;
+            height: 100%;
         }
         /* Gradiente más suave en horizontal para no tapar el video */
         .video-feed-item.is-horizontal::after {
@@ -1339,6 +1375,58 @@
             return expiresAt !== null && expiresAt <= Date.now();
         };
 
+        // LÓGICA DE MODERACIÓN Y REPORTE
+        window.reportContent = async (postId, source = 'ListPosts') => {
+            if (!currentUser) return;
+            const confirmReport = confirm("¿Deseas reportar este contenido por ser inapropiado (18+, desnudos, etc.)?");
+            if (!confirmReport) return;
+
+            try {
+                const reportRef = ref(db, `Reports/${postId}`);
+                await runTransaction(reportRef, (currentData) => {
+                    if (currentData === null) {
+                        return {
+                            count: 1,
+                            source: source,
+                            reporters: { [currentUser.uid]: true },
+                            lastReport: Date.now()
+                        };
+                    } else {
+                        if (currentData.reporters && currentData.reporters[currentUser.uid]) return; // Ya reportó
+                        currentData.count = (currentData.count || 0) + 1;
+                        if (!currentData.reporters) currentData.reporters = {};
+                        currentData.reporters[currentUser.uid] = true;
+                        currentData.lastReport = Date.now();
+                        return currentData;
+                    }
+                });
+                showNotification("Contenido reportado. Gracias por ayudar a mantener la comunidad segura.");
+            } catch (error) {
+                console.error("Error al reportar:", error);
+            }
+        };
+
+        const checkNSFW = (post) => {
+            const nsfwWords = ['nude', 'desnudo', 'sex', '18+', 'xxx', 'porn', 'hentai', 'gore', 'sexo', 'puta', 'porno', 'pene', 'vagina', 'culo'];
+            const content = (post.text || '').toLowerCase();
+            const hasNSFWWord = nsfwWords.some(word => content.includes(word));
+            return post.nsfw === true || hasNSFWWord;
+        };
+
+        const autoDeleteNSFW = async (postId, post, source = 'ListPosts') => {
+            if (checkNSFW(post)) {
+                console.warn(`Eliminando contenido prohibido detectado en ${postId}`);
+                try {
+                    await remove(ref(db, `${source}/${postId}`));
+                    showNotification("Se ha eliminado automáticamente un contenido que viola nuestras normas (18+).");
+                    return true;
+                } catch (error) {
+                    console.error("Error al auto-eliminar:", error);
+                }
+            }
+            return false;
+        };
+
         const deleteExpiredPost = async (postId) => {
             if (!postId || deletingExpiredPosts.has(postId)) return;
             deletingExpiredPosts.add(postId);
@@ -1466,17 +1554,6 @@
             shortViewerVideo.muted = previousMuted;
             shortViewerVideo.load();
             shortViewerVideo.play().catch(() => {});
-            
-            // Adaptar orientación en el visor
-            const checkShortOrientation = () => {
-                if (shortViewerVideo.videoWidth > 0 && shortViewerVideo.videoHeight > 0) {
-                    const isHorizontal = shortViewerVideo.videoWidth > shortViewerVideo.videoHeight;
-                    shortViewerVideo.style.objectFit = isHorizontal ? 'contain' : 'cover';
-                }
-            };
-            shortViewerVideo.onloadedmetadata = checkShortOrientation;
-            if (shortViewerVideo.readyState >= 1) checkShortOrientation();
-
             updateShortViewerSoundButton();
             updateShortViewerNavButtons();
         };
@@ -1568,27 +1645,7 @@
         // ── Render video feed con IntersectionObserver (lazy + autoplay) ──
         let videoObserver = null;
 
-        let globalMuted = true; // Empezamos silenciados para que el navegador permita el autoplay
-
-        // Función para desbloquear el sonido globalmente al primer toque del usuario
-        const unlockAudio = () => {
-            globalMuted = false;
-            // Actualizar todos los videos que ya estén en el DOM
-            document.querySelectorAll('#video-feed video').forEach(v => {
-                v.muted = false;
-                if (!v.paused) v.play().catch(() => {});
-            });
-            // Actualizar iconos de la interfaz
-            window.toggleGlobalSound(false); // Llamamos con false para forzar estado "con sonido"
-            
-            // Eliminar los listeners después de la primera interacción
-            document.removeEventListener('click', unlockAudio);
-            document.removeEventListener('touchstart', unlockAudio);
-            document.removeEventListener('keydown', unlockAudio);
-        };
-        document.addEventListener('click', unlockAudio);
-        document.addEventListener('touchstart', unlockAudio);
-        document.addEventListener('keydown', unlockAudio);
+        let globalMuted = true; // empieza silenciado, el usuario activa con el botón
 
         const renderVideoFeed = (postsMap = {}) => {
             if (!videoFeed) return;
@@ -1615,20 +1672,15 @@
                     if (!vid) return;
 
                     if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
-                        // Lazy: cargar src solo al entrar en pantalla
+                        // Lazy: cargar src solo al entrar en pantalla (NO autoplay)
                         if (!vid.src && vid.dataset.src) {
                             vid.src = vid.dataset.src;
                             vid.load();
                         }
                         vid.muted = globalMuted;
-                        // ✅ AUTO-PLAY: se reproduce automáticamente cuando el usuario lo está viendo
-                        vid.play().catch(() => {
-                            // Si falla por sonido bloqueado, silenciamos y reintentamos
-                            vid.muted = true;
-                            vid.play().catch(() => {});
-                        });
+                        // ⛔ SIN auto-play: el usuario toca para reproducir
 
-                        // Barra de progreso
+                        // Barra de progreso solo si ya está reproduciendo
                         if (bar) {
                             vid.ontimeupdate = () => {
                                 const pct = vid.duration ? (vid.currentTime / vid.duration) * 100 : 0;
@@ -1649,11 +1701,20 @@
 
                 const item = document.createElement('div');
                 item.className = 'video-feed-item';
+                const isNSFW = checkNSFW(post);
                 item.innerHTML = `
+                    ${isNSFW ? `
+                        <div class="nsfw-overlay" id="vnsfw-${postId}" style="border-radius:0; z-index:100;">
+                            <h4>Video Sensible</h4>
+                            <p>Este video ha sido marcado como inapropiado o 18+.</p>
+                            <button class="nsfw-btn" onclick="document.getElementById('vnsfw-${postId}').style.display='none'">Ver Video</button>
+                        </div>
+                    ` : ''}
                     <video
                         data-src="${post.video}"
                         playsinline loop preload="none"
                         id="vid-${postId}"
+                        ${isNSFW ? 'style="filter: blur(50px);"' : ''}
                     ></video>
 
                     <div class="video-play-indicator" id="vpi-${postId}"></div>
@@ -1687,9 +1748,14 @@
                             <span class="vsb-label" id="vcmt-${postId}">${commentCount}</span>
                         </div>
                         <div class="vsb">
+                            <button class="vsb-icon" style="color:#ff9800;"
+                                onclick="event.stopPropagation(); reportContent('${postId}', 'VideosViews')">⚠️</button>
+                            <span class="vsb-label">Reportar</span>
+                        </div>
+                        <div class="vsb">
                             <button class="vsb-icon" id="snd-${postId}"
                                 onclick="event.stopPropagation(); toggleGlobalSound()">${globalMuted ? '🔇' : '🔊'}</button>
-                            <span class="vsb-label">${globalMuted ? 'Silencio' : 'Sonido'}</span>
+                            <span class="vsb-label">${globalMuted ? 'Sonido' : 'Silencio'}</span>
                         </div>
                     </div>
                 `;
@@ -1712,16 +1778,12 @@
                     }
                 });
 
-                // Detectar orientación del video
-                const checkOrientation = () => {
-                    if (vid.videoWidth > 0 && vid.videoHeight > 0) {
-                        const isHorizontal = vid.videoWidth > vid.videoHeight;
-                        item.classList.toggle('is-horizontal', isHorizontal);
-                    }
-                };
-                vid.addEventListener('loadedmetadata', checkOrientation);
-                // Por si ya cargó (caché)
-                if (vid.readyState >= 1) checkOrientation();
+                // Al tocar el video activa el sonido si estaba silenciado
+                // Detectar orientación del video al cargar metadatos
+                vid.addEventListener('loadedmetadata', () => {
+                    const isHorizontal = vid.videoWidth > vid.videoHeight;
+                    item.classList.toggle('is-horizontal', isHorizontal);
+                });
 
                 vid.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1739,17 +1801,13 @@
         };
 
         // ── Sonido global para todos los videos ──
-        window.toggleGlobalSound = function(forceState) {
-            if (typeof forceState === 'boolean') {
-                globalMuted = forceState;
-            } else {
-                globalMuted = !globalMuted;
-            }
+        window.toggleGlobalSound = function() {
+            globalMuted = !globalMuted;
             document.querySelectorAll('#video-feed video').forEach(v => { v.muted = globalMuted; });
             document.querySelectorAll('[id^="snd-"]').forEach(btn => {
                 btn.textContent = globalMuted ? '🔇' : '🔊';
                 const lbl = btn.closest('.vsb')?.querySelector('.vsb-label');
-                if (lbl) lbl.textContent = globalMuted ? 'Silencio' : 'Sonido';
+                if (lbl) lbl.textContent = globalMuted ? 'Sonido' : 'Silencio';
             });
             // Botón global superior
             const gBtn = document.getElementById('global-sound-btn');
@@ -1916,6 +1974,12 @@
                             return;
                         }
 
+                        // Auto-eliminación de contenido prohibido
+                        if (checkNSFW(post)) {
+                            autoDeleteNSFW(postId, post, 'ListPosts');
+                            return;
+                        }
+
                         const postMood = (post.mood || "").toLowerCase();
                         const matchesMood = currentMood === 'all' || postMood === currentMood;
                         if (!matchesMood) return;
@@ -1962,7 +2026,21 @@
                         }
 
                         if (post.image) {
-                            html += `<img src="${post.image}" class="post-published-image">`;
+                            const isNSFW = checkNSFW(post);
+                            if (isNSFW) {
+                                html += `
+                                    <div class="nsfw-container">
+                                        <div class="nsfw-overlay" id="nsfw-${postId}">
+                                            <h4>Contenido Sensible</h4>
+                                            <p>Este post ha sido marcado como inapropiado o 18+.</p>
+                                            <button class="nsfw-btn" onclick="document.getElementById('nsfw-${postId}').style.display='none'">Ver Contenido</button>
+                                        </div>
+                                        <img src="${post.image}" class="post-published-image" style="filter: blur(30px);">
+                                    </div>
+                                `;
+                            } else {
+                                html += `<img src="${post.image}" class="post-published-image">`;
+                            }
                         }
 
                         // Posts con video: no mostrar video en publicaciones
@@ -1991,6 +2069,7 @@
                         html += '<div class="post-footer">';
                         html += '<button class="action-btn ' + (userLiked ? 'liked' : '') + '" onclick="toggleLike(\'' + postId + '\')"><img src="' + (userLiked ? 'https://img.icons8.com/ios-filled/50/FF0000/like.png' : 'https://img.icons8.com/ios/50/65676b/like.png') + '"><span>' + likeCount + '</span></button>';
                         html += '<button class="action-btn ' + (userCommented ? 'commented' : '') + '" onclick="openComments(\'' + postId + '\')"><img src="' + (userCommented ? 'https://img.icons8.com/ios-filled/50/007AFF/comments.png' : 'https://img.icons8.com/ios/50/65676b/comments.png') + '"><span>' + commentCount + '</span></button>';
+                        html += '<button class="action-btn report-btn" onclick="reportContent(\'' + postId + '\')">⚠️ Reportar</button>';
                         html += '</div>';
                         html += '<div class="reactions-container">' + reactionsHtml + '</div>';
                         card.innerHTML = html;
@@ -2046,6 +2125,17 @@
             const videosRef = ref(db, "VideosViews");
             videosUnsubscribe = onValue(videosRef, (snapshot) => {
                 const newData = snapshot.exists() ? snapshot.val() || {} : {};
+                
+                // Verificar auto-eliminación de videos NSFW
+                let hasNSFW = false;
+                Object.entries(newData).forEach(([vidId, vidPost]) => {
+                    if (checkNSFW(vidPost)) {
+                        autoDeleteNSFW(vidId, vidPost, 'VideosViews');
+                        hasNSFW = true;
+                    }
+                });
+                if (hasNSFW) return; // Esperar a la siguiente actualización tras la eliminación
+
                 const oldIds  = JSON.stringify(Object.keys(lastVideosData).sort());
                 const newIds  = JSON.stringify(Object.keys(newData).sort());
                 lastVideosData = newData;
