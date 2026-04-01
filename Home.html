@@ -1277,9 +1277,15 @@
         let currentUser = null;
         let currentUserProfile = null;
         let activePostId = null;
+        let activePostSource = 'ListPosts'; // 'ListPosts' o 'VideosViews'
         let currentMood = 'all';
         let lastPostsData = {};
         const deletingExpiredPosts = new Set();
+
+        // Devuelve la ruta correcta según el origen del post
+        const getPostPath = (postId) => activePostSource === 'VideosViews'
+            ? `VideosViews/${postId}`
+            : `ListPosts/${postId}`;
 
         onAuthStateChanged(auth, async (user) => {
             console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
@@ -1352,19 +1358,30 @@
             }
         };
 
-        window.toggleLike = async (postId) => {
+        const likingInProgress = new Set();
+
+        window.toggleLike = async (postId, source = 'ListPosts') => {
             if (!currentUser) return;
-            const likeRef = ref(db, `ListPosts/${postId}/likes/${currentUser.uid}`);
-            const snapshot = await get(likeRef);
-            if (snapshot.exists()) {
-                await set(likeRef, null);
-            } else {
-                await set(likeRef, true);
+            if (likingInProgress.has(postId)) return;
+            likingInProgress.add(postId);
+
+            activePostSource = source;
+            const likeRef = ref(db, `${getPostPath(postId)}/likes/${currentUser.uid}`);
+            try {
+                const snapshot = await get(likeRef);
+                if (snapshot.exists()) {
+                    await set(likeRef, null);
+                } else {
+                    await set(likeRef, true);
+                }
+            } finally {
+                likingInProgress.delete(postId);
             }
         };
 
-        window.openComments = (postId) => {
+        window.openComments = (postId, source = 'ListPosts') => {
             activePostId = postId;
+            activePostSource = source;
             document.getElementById('comments-modal').classList.add('open');
             loadComments(postId);
             listenTyping(postId);
@@ -1372,7 +1389,7 @@
 
         window.closeComments = () => {
             if (activePostId && currentUser) {
-                set(ref(db, `ListPosts/${activePostId}/typing/${currentUser.uid}`), null);
+                set(ref(db, `${getPostPath(activePostId)}/typing/${currentUser.uid}`), null);
             }
             document.getElementById('comments-modal').classList.remove('open');
             activePostId = null;
@@ -1384,12 +1401,12 @@
         commentInput.oninput = () => {
             if (activePostId && currentUser) {
                 const isTyping = commentInput.value.trim().length > 0;
-                set(ref(db, `ListPosts/${activePostId}/typing/${currentUser.uid}`), isTyping ? true : null);
+                set(ref(db, `${getPostPath(activePostId)}/typing/${currentUser.uid}`), isTyping ? true : null);
             }
         };
 
         const listenTyping = (postId) => {
-            const typingRef = ref(db, `ListPosts/${postId}/typing`);
+            const typingRef = ref(db, `${getPostPath(postId)}/typing`);
             onValue(typingRef, (snap) => {
                 if (snap.exists()) {
                     const typers = snap.val();
@@ -1452,11 +1469,11 @@
             shortViewerCommentsBtn.textContent = `💬 ${commentCount}`;
             shortViewerLikeBtn.onclick = async (event) => {
                 event.stopPropagation();
-                await window.toggleLike(postId);
+                await window.toggleLike(postId, 'VideosViews');
             };
             shortViewerCommentsBtn.onclick = (event) => {
                 event.stopPropagation();
-                window.openComments(postId);
+                window.openComments(postId, 'VideosViews');
             };
 
             shortViewerVideo.pause();
@@ -1644,12 +1661,12 @@
                         <div class="vsb">
                             <button class="vsb-icon ${userLiked ? 'liked' : ''}"
                                 id="vlike-${postId}"
-                                onclick="event.stopPropagation(); toggleLike('${postId}')">❤️</button>
+                                onclick="event.stopPropagation(); toggleLike('${postId}', 'VideosViews')">❤️</button>
                             <span class="vsb-label" id="vlabel-${postId}">${likeCount}</span>
                         </div>
                         <div class="vsb">
                             <button class="vsb-icon"
-                                onclick="event.stopPropagation(); openComments('${postId}')">💬</button>
+                                onclick="event.stopPropagation(); openComments('${postId}', 'VideosViews')">💬</button>
                             <span class="vsb-label">${commentCount}</span>
                         </div>
                         <div class="vsb">
@@ -1697,7 +1714,24 @@
 
                 videoFeed.appendChild(item);
                 videoObserver.observe(item);
-            });
+
+                // Listener en tiempo real para likes y comentarios
+                onValue(ref(db, `VideosViews/${postId}/likes`), (snap) => {
+                    const likes = snap.exists() ? Object.keys(snap.val()).length : 0;
+                    const lbl = document.getElementById(`vlabel-${postId}`);
+                    if (lbl) lbl.textContent = likes;
+                    const btn = document.getElementById(`vlike-${postId}`);
+                    if (btn) btn.classList.toggle('liked', !!(currentUser && snap.exists() && snap.val()[currentUser.uid]));
+                });
+
+                onValue(ref(db, `VideosViews/${postId}/commentCount`), (snap) => {
+                    const count = snap.exists() ? snap.val() : 0;
+                    const vsbs = item.querySelectorAll('.vsb');
+                    if (vsbs[1]) {
+                        const lbl = vsbs[1].querySelector('.vsb-label');
+                        if (lbl) lbl.textContent = count;
+                    }
+                });
         };
 
         // ── Sonido global para todos los videos ──
@@ -1720,7 +1754,7 @@
         };
 
         const loadComments = (postId) => {
-            const commentsRef = ref(db, `ListPosts/${postId}/comments`);
+            const commentsRef = ref(db, `${getPostPath(postId)}/comments`);
             const list = document.getElementById('comments-list');
             onValue(commentsRef, (snap) => {
                 list.innerHTML = "";
@@ -1743,30 +1777,38 @@
             });
         };
 
+        let sendingComment = false;
         document.getElementById('send-comment-btn').onclick = async () => {
+            if (sendingComment) return;
             const input = document.getElementById('comment-input');
             const text = input.value.trim();
             if (!text || !activePostId || !currentUser) return;
 
-            const userRef = ref(db, `Users/${currentUser.uid}`);
-            const userSnap = await get(userRef);
-            const userData = userSnap.exists() ? userSnap.val() : { nick: "Usuario" };
-
-            const newCommentRef = push(ref(db, `ListPosts/${activePostId}/comments`));
-            await set(newCommentRef, {
-                uid: currentUser.uid,
-                nick: userData.nick || "Usuario",
-                perfil: userData.perfil || "https://www.w3schools.com/howto/img_avatar.png",
-                text: text,
-                time: Date.now()
-            });
-
-            const postRef = ref(db, `ListPosts/${activePostId}`);
-            runTransaction(postRef, (post) => {
-                if (post) post.commentCount = (post.commentCount || 0) + 1;
-                return post;
-            });
+            sendingComment = true;
             input.value = "";
+
+            try {
+                const userRef = ref(db, `Users/${currentUser.uid}`);
+                const userSnap = await get(userRef);
+                const userData = userSnap.exists() ? userSnap.val() : { nick: "Usuario" };
+
+                const newCommentRef = push(ref(db, `${getPostPath(activePostId)}/comments`));
+                await set(newCommentRef, {
+                    uid: currentUser.uid,
+                    nick: userData.nick || "Usuario",
+                    perfil: userData.perfil || "https://www.w3schools.com/howto/img_avatar.png",
+                    text: text,
+                    time: Date.now()
+                });
+
+                const postRef = ref(db, getPostPath(activePostId));
+                runTransaction(postRef, (post) => {
+                    if (post) post.commentCount = (post.commentCount || 0) + 1;
+                    return post;
+                });
+            } finally {
+                sendingComment = false;
+            }
         };
 
         window.votePoll = async (postId, optionKey) => {
