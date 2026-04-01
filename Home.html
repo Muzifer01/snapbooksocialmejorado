@@ -888,8 +888,9 @@
             background: #000;
             z-index: 500;
             overflow-y: scroll;
-            scroll-snap-type: y proximity;
+            scroll-snap-type: y mandatory;
             -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: contain;
         }
         #video-feed::-webkit-scrollbar { display: none; }
         #video-feed.active { display: block; }
@@ -902,7 +903,7 @@
             width: 100%;
             height: 100dvh;
             scroll-snap-align: start;
-            scroll-snap-stop: normal;
+            scroll-snap-stop: always;
             background: #000;
             overflow: hidden;
             display: flex;
@@ -1582,7 +1583,7 @@
                     const bar = entry.target.querySelector('.video-progress-bar');
                     if (!vid) return;
 
-                    if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
+                    if (entry.isIntersecting && entry.intersectionRatio >= 0.9) {
                         // Lazy: cargar src solo al entrar en pantalla
                         if (!vid.src && vid.dataset.src) {
                             vid.src = vid.dataset.src;
@@ -1599,11 +1600,13 @@
                             };
                         }
                     } else {
+                        // Pausar y resetear cualquier video fuera de pantalla
                         vid.pause();
+                        vid.ontimeupdate = null;
                         if (bar) bar.style.width = '0%';
                     }
                 });
-            }, { threshold: 0.7 });
+            }, { threshold: [0.9] });
 
             videos.forEach(([postId, post]) => {
                 const likeCount    = post.likes ? Object.keys(post.likes).length : 0;
