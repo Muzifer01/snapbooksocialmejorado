@@ -888,9 +888,8 @@
             background: #000;
             z-index: 500;
             overflow-y: scroll;
-            scroll-snap-type: y mandatory;
+            scroll-snap-type: y proximity;
             -webkit-overflow-scrolling: touch;
-            overscroll-behavior-y: contain;
         }
         #video-feed::-webkit-scrollbar { display: none; }
         #video-feed.active { display: block; }
@@ -903,7 +902,7 @@
             width: 100%;
             height: 100dvh;
             scroll-snap-align: start;
-            scroll-snap-stop: always;
+            scroll-snap-stop: normal;
             background: #000;
             overflow: hidden;
             display: flex;
@@ -1280,12 +1279,8 @@
         let activePostSource = 'ListPosts'; // 'ListPosts' o 'VideosViews'
         let currentMood = 'all';
         let lastPostsData = {};
+        let lastVideosData = {};
         const deletingExpiredPosts = new Set();
-
-        // Devuelve la ruta correcta según el origen del post
-        const getPostPath = (postId) => activePostSource === 'VideosViews'
-            ? `VideosViews/${postId}`
-            : `ListPosts/${postId}`;
 
         onAuthStateChanged(auth, async (user) => {
             console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
@@ -1299,6 +1294,7 @@
                     console.warn('No se pudo cargar el perfil del usuario para los retos semanales', error);
                 }
                 loadPosts();
+                loadVideos();
             } else {
                 window.location.href = "login.html";
             }
@@ -1317,6 +1313,7 @@
                 body.className = mood === 'all' ? '' : `mood-active mood-${mood}`;
                 currentMood = mood;
                 loadPosts();
+                renderVideoFeed(lastVideosData);
             });
         });
 
@@ -1358,24 +1355,14 @@
             }
         };
 
-        const likingInProgress = new Set();
-
         window.toggleLike = async (postId, source = 'ListPosts') => {
             if (!currentUser) return;
-            if (likingInProgress.has(postId)) return;
-            likingInProgress.add(postId);
-
-            activePostSource = source;
-            const likeRef = ref(db, `${getPostPath(postId)}/likes/${currentUser.uid}`);
-            try {
-                const snapshot = await get(likeRef);
-                if (snapshot.exists()) {
-                    await set(likeRef, null);
-                } else {
-                    await set(likeRef, true);
-                }
-            } finally {
-                likingInProgress.delete(postId);
+            const likeRef = ref(db, `${source}/${postId}/likes/${currentUser.uid}`);
+            const snapshot = await get(likeRef);
+            if (snapshot.exists()) {
+                await set(likeRef, null);
+            } else {
+                await set(likeRef, true);
             }
         };
 
@@ -1383,13 +1370,13 @@
             activePostId = postId;
             activePostSource = source;
             document.getElementById('comments-modal').classList.add('open');
-            loadComments(postId);
-            listenTyping(postId);
+            loadComments(postId, source);
+            listenTyping(postId, source);
         };
 
         window.closeComments = () => {
             if (activePostId && currentUser) {
-                set(ref(db, `${getPostPath(activePostId)}/typing/${currentUser.uid}`), null);
+                set(ref(db, `${activePostSource}/${activePostId}/typing/${currentUser.uid}`), null);
             }
             document.getElementById('comments-modal').classList.remove('open');
             activePostId = null;
@@ -1401,12 +1388,12 @@
         commentInput.oninput = () => {
             if (activePostId && currentUser) {
                 const isTyping = commentInput.value.trim().length > 0;
-                set(ref(db, `${getPostPath(activePostId)}/typing/${currentUser.uid}`), isTyping ? true : null);
+                set(ref(db, `${activePostSource}/${activePostId}/typing/${currentUser.uid}`), isTyping ? true : null);
             }
         };
 
-        const listenTyping = (postId) => {
-            const typingRef = ref(db, `${getPostPath(postId)}/typing`);
+        const listenTyping = (postId, source = 'ListPosts') => {
+            const typingRef = ref(db, `${source}/${postId}/typing`);
             onValue(typingRef, (snap) => {
                 if (snap.exists()) {
                     const typers = snap.val();
@@ -1488,7 +1475,7 @@
         };
 
         window.openShortViewer = (postId) => {
-            currentShortVideos = getShortVideos(lastPostsData).slice(0, 20);
+            currentShortVideos = getShortVideos(lastVideosData).slice(0, 20);
             const index = currentShortVideos.findIndex(([id]) => id === postId);
             if (index < 0 || !shortViewerModal) return;
             shortViewerModal.classList.add('open');
@@ -1511,7 +1498,7 @@
         };
 
         const syncShortViewer = () => {
-            currentShortVideos = getShortVideos(lastPostsData).slice(0, 20);
+            currentShortVideos = getShortVideos(lastVideosData).slice(0, 20);
             if (!shortViewerModal?.classList.contains('open')) return;
             if (!currentShortVideos.length) {
                 window.closeShortViewer();
@@ -1574,7 +1561,7 @@
         // ── Render video feed con IntersectionObserver (lazy + autoplay) ──
         let videoObserver = null;
 
-        let globalMuted = false; // audio siempre activo por defecto
+        let globalMuted = true; // empieza silenciado, el usuario activa con el botón
 
         const renderVideoFeed = (postsMap = {}) => {
             if (!videoFeed) return;
@@ -1600,7 +1587,7 @@
                     const bar = entry.target.querySelector('.video-progress-bar');
                     if (!vid) return;
 
-                    if (entry.isIntersecting && entry.intersectionRatio >= 0.9) {
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
                         // Lazy: cargar src solo al entrar en pantalla
                         if (!vid.src && vid.dataset.src) {
                             vid.src = vid.dataset.src;
@@ -1617,13 +1604,11 @@
                             };
                         }
                     } else {
-                        // Pausar y resetear cualquier video fuera de pantalla
                         vid.pause();
-                        vid.ontimeupdate = null;
                         if (bar) bar.style.width = '0%';
                     }
                 });
-            }, { threshold: [0.9] });
+            }, { threshold: 0.7 });
 
             videos.forEach(([postId, post]) => {
                 const likeCount    = post.likes ? Object.keys(post.likes).length : 0;
@@ -1714,24 +1699,7 @@
 
                 videoFeed.appendChild(item);
                 videoObserver.observe(item);
-
-                // Listener en tiempo real para likes y comentarios
-                onValue(ref(db, `VideosViews/${postId}/likes`), (snap) => {
-                    const likes = snap.exists() ? Object.keys(snap.val()).length : 0;
-                    const lbl = document.getElementById(`vlabel-${postId}`);
-                    if (lbl) lbl.textContent = likes;
-                    const btn = document.getElementById(`vlike-${postId}`);
-                    if (btn) btn.classList.toggle('liked', !!(currentUser && snap.exists() && snap.val()[currentUser.uid]));
-                });
-
-                onValue(ref(db, `VideosViews/${postId}/commentCount`), (snap) => {
-                    const count = snap.exists() ? snap.val() : 0;
-                    const vsbs = item.querySelectorAll('.vsb');
-                    if (vsbs[1]) {
-                        const lbl = vsbs[1].querySelector('.vsb-label');
-                        if (lbl) lbl.textContent = count;
-                    }
-                });
+            });
         };
 
         // ── Sonido global para todos los videos ──
@@ -1753,8 +1721,8 @@
             renderVideoFeed(postsMap);
         };
 
-        const loadComments = (postId) => {
-            const commentsRef = ref(db, `${getPostPath(postId)}/comments`);
+        const loadComments = (postId, source = 'ListPosts') => {
+            const commentsRef = ref(db, `${source}/${postId}/comments`);
             const list = document.getElementById('comments-list');
             onValue(commentsRef, (snap) => {
                 list.innerHTML = "";
@@ -1777,38 +1745,30 @@
             });
         };
 
-        let sendingComment = false;
         document.getElementById('send-comment-btn').onclick = async () => {
-            if (sendingComment) return;
             const input = document.getElementById('comment-input');
             const text = input.value.trim();
             if (!text || !activePostId || !currentUser) return;
 
-            sendingComment = true;
+            const userRef = ref(db, `Users/${currentUser.uid}`);
+            const userSnap = await get(userRef);
+            const userData = userSnap.exists() ? userSnap.val() : { nick: "Usuario" };
+
+            const newCommentRef = push(ref(db, `${activePostSource}/${activePostId}/comments`));
+            await set(newCommentRef, {
+                uid: currentUser.uid,
+                nick: userData.nick || "Usuario",
+                perfil: userData.perfil || "https://www.w3schools.com/howto/img_avatar.png",
+                text: text,
+                time: Date.now()
+            });
+
+            const postRef = ref(db, `${activePostSource}/${activePostId}`);
+            runTransaction(postRef, (post) => {
+                if (post) post.commentCount = (post.commentCount || 0) + 1;
+                return post;
+            });
             input.value = "";
-
-            try {
-                const userRef = ref(db, `Users/${currentUser.uid}`);
-                const userSnap = await get(userRef);
-                const userData = userSnap.exists() ? userSnap.val() : { nick: "Usuario" };
-
-                const newCommentRef = push(ref(db, `${getPostPath(activePostId)}/comments`));
-                await set(newCommentRef, {
-                    uid: currentUser.uid,
-                    nick: userData.nick || "Usuario",
-                    perfil: userData.perfil || "https://www.w3schools.com/howto/img_avatar.png",
-                    text: text,
-                    time: Date.now()
-                });
-
-                const postRef = ref(db, getPostPath(activePostId));
-                runTransaction(postRef, (post) => {
-                    if (post) post.commentCount = (post.commentCount || 0) + 1;
-                    return post;
-                });
-            } finally {
-                sendingComment = false;
-            }
         };
 
         window.votePoll = async (postId, optionKey) => {
@@ -1880,26 +1840,18 @@
         };
 
         let postsUnsubscribe = null;
-        let videosUnsubscribe = null;
         const loadPosts = () => {
             console.log("Iniciando carga de posts...");
-            if (postsUnsubscribe) postsUnsubscribe();
-            if (videosUnsubscribe) videosUnsubscribe();
-
-            // Cargar videos desde VideosViews de forma independiente
-            const videosViewRef = ref(db, "VideosViews");
-            videosUnsubscribe = onValue(videosViewRef, (videoSnap) => {
-                const videosData = videoSnap.exists() ? videoSnap.val() : {};
-                renderVideoFeed(videosData);
-            });
-
+            // Desuscribir del listener anterior si existe
+            if (postsUnsubscribe) {
+                postsUnsubscribe();
+            }
             const postsRef = ref(db, "ListPosts");
             postsUnsubscribe = onValue(postsRef, (snapshot) => {
                 container.innerHTML = "";
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     lastPostsData = data || {};
-                    // renderShortVideos ya no se llama aquí (ahora usa VideosViews)
                     let postIds = Object.keys(data);
                     
                     // Ordenar posts según el criterio seleccionado
@@ -2015,13 +1967,30 @@
                     }
                 } else {
                     lastPostsData = {};
-                    renderShortVideos({});
                     container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones aún.</p>";
                 }
                 // Actualizar desaf\u00edo semanal
                 if (typeof updateWeeklyChallenge === 'function') {
                     try { updateWeeklyChallenge(lastPostsData); } catch(e) {}
                 }
+            });
+        };
+
+        // ===== CARGA DE VIDEOS DESDE VideosViews =====
+        let videosUnsubscribe = null;
+        const loadVideos = () => {
+            if (videosUnsubscribe) {
+                videosUnsubscribe();
+            }
+            const videosRef = ref(db, "VideosViews");
+            videosUnsubscribe = onValue(videosRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    lastVideosData = snapshot.val() || {};
+                } else {
+                    lastVideosData = {};
+                }
+                renderVideoFeed(lastVideosData);
+                syncShortViewer();
             });
         };
 
@@ -2112,6 +2081,7 @@
                 btn.classList.toggle('active', isActive);
             });
             loadPosts();
+            renderVideoFeed(lastVideosData);
         };
 
         const WEEKLY_CHALLENGES = [
