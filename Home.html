@@ -875,6 +875,129 @@
         /* SHAKE ANIMATION */
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
         .shake-animation { animation: shake 0.5s; }
+
+        /* ===== TABS: PUBLICACIONES / VIDEOS ===== */
+        .feed-tabs {
+            display: flex;
+            gap: 0;
+            margin: 12px 15px 0;
+            background: rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 4px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .feed-tab {
+            flex: 1;
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.55);
+            font-size: 14px;
+            font-weight: 700;
+            padding: 10px 8px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+        .feed-tab.active {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* ===== FEED DE VIDEOS (TikTok style) ===== */
+        #video-feed {
+            display: none;
+            flex-direction: column;
+            gap: 0;
+            padding-bottom: 80px;
+        }
+        #video-feed.active { display: flex; }
+        #post-feed.active { display: block; }
+        #post-feed { display: none; }
+
+        .video-feed-item {
+            position: relative;
+            width: 100%;
+            background: #000;
+            min-height: 75vh;
+            max-height: 85vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            overflow: hidden;
+        }
+        .video-feed-item video {
+            width: 100%;
+            height: 100%;
+            max-height: 85vh;
+            object-fit: contain;
+            background: #000;
+            display: block;
+        }
+        .video-feed-overlay {
+            position: absolute;
+            inset: auto 0 0 0;
+            padding: 16px;
+            background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 2;
+        }
+        .video-feed-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .video-feed-user img {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .video-feed-nick { font-size: 14px; font-weight: 700; }
+        .video-feed-time { font-size: 11px; color: rgba(255,255,255,0.65); }
+        .video-feed-caption {
+            font-size: 14px;
+            color: rgba(255,255,255,0.9);
+            line-height: 1.4;
+        }
+        .video-feed-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .video-feed-btn {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 20px;
+            padding: 7px 14px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+        }
+        .video-feed-btn.liked { background: rgba(255,59,92,0.3); border-color: rgba(255,59,92,0.5); }
+        .video-play-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%,-50%);
+            font-size: 52px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s;
+            z-index: 3;
+            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+        }
+        .video-play-indicator.show { opacity: 1; }
     </style>
 </head>
 <body>
@@ -926,20 +1049,21 @@
         <button class="sort-btn" onclick="setSortOrder('oldest')">📅 Antiguos</button>
     </div>
 
-    <section class="shorts-section" id="shorts-section" style="display:none;">
-        <div class="shorts-header">
-            <div>
-                <h2>🎬 Videos cortos</h2>
-                <p class="shorts-subtitle">Dales like, comenta y en comentarios verás el perfil de cada usuario.</p>
-            </div>
-            <span class="shorts-count" id="shorts-count">0</span>
-        </div>
-        <div class="shorts-container" id="shorts-container"></div>
-    </section>
+    <!-- TABS -->
+    <div class="feed-tabs">
+        <button class="feed-tab active" id="tab-posts" onclick="switchTab('posts')">📝 Publicaciones</button>
+        <button class="feed-tab" id="tab-videos" onclick="switchTab('videos')">🎬 Videos</button>
+    </div>
 
-    <main id="feed-container">
-        <!-- Los posts se cargarán aquí -->
+    <!-- FEED DE PUBLICACIONES -->
+    <main id="post-feed" class="active">
+        <!-- posts se cargan aquí -->
     </main>
+
+    <!-- FEED DE VIDEOS (vertical, lazy) -->
+    <div id="video-feed">
+        <!-- videos se cargan aquí -->
+    </div>
 
     <nav class="nav-bar">
         <a href="home.html" class="nav-item active">
@@ -1025,10 +1149,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-        const container = document.getElementById('feed-container');
-        const shortsSection = document.getElementById('shorts-section');
-        const shortsContainer = document.getElementById('shorts-container');
-        const shortsCount = document.getElementById('shorts-count');
+        const container = document.getElementById('post-feed');
+        const videoFeed = document.getElementById('video-feed');
         const shortViewerModal = document.getElementById('short-viewer-modal');
         const shortViewerStage = document.getElementById('short-viewer-stage');
         const shortViewerVideo = document.getElementById('short-viewer-video');
@@ -1323,67 +1445,98 @@
             if (event.key === 'ArrowDown' || event.key === 'ArrowRight') moveShortViewer(1);
         });
 
-        const renderShortVideos = (postsMap = {}) => {
-            if (!shortsSection || !shortsContainer || !shortsCount) return;
+        // ── Render video feed con IntersectionObserver (lazy + autoplay) ──
+        let videoObserver = null;
+
+        const renderVideoFeed = (postsMap = {}) => {
+            if (!videoFeed) return;
 
             const videos = getShortVideos(postsMap);
-            currentShortVideos = videos.slice(0, 20);
-            shortsCount.textContent = String(videos.length);
+            currentShortVideos = videos;
+
+            videoFeed.innerHTML = '';
 
             if (!videos.length) {
-                shortsSection.style.display = 'none';
-                shortsContainer.innerHTML = '';
-                syncShortViewer();
+                videoFeed.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.5);padding:60px 20px;">No hay videos aún 🎬</p>';
                 return;
             }
 
-            shortsSection.style.display = 'block';
-            shortsContainer.innerHTML = '';
+            // Desconectar observer anterior
+            if (videoObserver) videoObserver.disconnect();
 
-            currentShortVideos.forEach(([postId, post], index) => {
+            // Crear observer para autoplay al entrar en vista
+            videoObserver = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const vid = entry.target.querySelector('video');
+                    if (!vid) return;
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
+                        // Cargar src solo cuando sea visible (lazy)
+                        if (!vid.src && vid.dataset.src) {
+                            vid.src = vid.dataset.src;
+                        }
+                        vid.play().catch(() => {});
+                    } else {
+                        vid.pause();
+                    }
+                });
+            }, { threshold: 0.6 });
+
+            videos.forEach(([postId, post]) => {
                 const likeCount = post.likes ? Object.keys(post.likes).length : 0;
                 const commentCount = post.commentCount || 0;
                 const userLiked = currentUser && post.likes && post.likes[currentUser.uid];
-                const card = document.createElement('article');
-                card.className = 'short-card';
-                card.setAttribute('role', 'button');
-                card.tabIndex = 0;
-                card.innerHTML = `
-                    <span class="short-open-hint">Abrir</span>
-                    <video class="short-video" src="${post.video}" playsinline muted loop preload="metadata"></video>
-                    <div class="short-gradient"></div>
-                    <div class="short-content">
-                        <div class="short-user">
+
+                const item = document.createElement('div');
+                item.className = 'video-feed-item';
+                item.innerHTML = `
+                    <div class="video-play-indicator" id="vpi-${postId}">▶</div>
+                    <video
+                        data-src="${post.video}"
+                        playsinline
+                        muted
+                        loop
+                        preload="none"
+                    ></video>
+                    <div class="video-feed-overlay">
+                        <div class="video-feed-user">
                             <img src="${post.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
-                            <div class="short-user-meta">
-                                <strong>${post.nick || 'Usuario'}</strong>
-                                <span>${formatTime(post.time)}</span>
+                            <div>
+                                <div class="video-feed-nick">${post.nick || 'Usuario'}</div>
+                                <div class="video-feed-time">${formatTime(post.time)}</div>
                             </div>
                         </div>
-                        <div class="short-caption">${post.text || 'Vídeo corto sin descripción.'}</div>
-                        <div class="short-actions">
-                            <button class="short-action-btn ${userLiked ? 'liked' : ''}" onclick="event.stopPropagation(); toggleLike('${postId}')">❤️ ${likeCount}</button>
-                            <button class="short-action-btn" onclick="event.stopPropagation(); openComments('${postId}')">💬 ${commentCount}</button>
+                        <div class="video-feed-caption">${post.text || ''}</div>
+                        <div class="video-feed-actions">
+                            <button class="video-feed-btn ${userLiked ? 'liked' : ''}" id="vlike-${postId}" onclick="toggleLike('${postId}')">❤️ ${likeCount}</button>
+                            <button class="video-feed-btn" onclick="openComments('${postId}')">💬 ${commentCount}</button>
                         </div>
-                        <div class="short-profile-note">Toca la tarjeta para abrir el vídeo en pantalla completa.</div>
                     </div>
                 `;
-                card.addEventListener('click', () => window.openShortViewer(postId));
-                card.addEventListener('keydown', (event) => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        window.openShortViewer(postId);
+
+                // Toggle play/pause al tocar
+                const vid = item.querySelector('video');
+                const indicator = item.querySelector('.video-play-indicator');
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('button')) return;
+                    if (vid.paused) {
+                        vid.play().catch(() => {});
+                        indicator.textContent = '▶';
+                    } else {
+                        vid.pause();
+                        indicator.classList.add('show');
+                        indicator.textContent = '⏸';
+                        setTimeout(() => indicator.classList.remove('show'), 800);
                     }
                 });
-                const previewVideo = card.querySelector('.short-video');
-                if (previewVideo) {
-                    previewVideo.currentTime = 0.01;
-                    previewVideo.play().catch(() => {});
-                }
-                shortsContainer.appendChild(card);
-            });
 
-            syncShortViewer();
+                videoFeed.appendChild(item);
+                videoObserver.observe(item);
+            });
+        };
+
+        // Compatibilidad: renderShortVideos ahora llama a renderVideoFeed
+        const renderShortVideos = (postsMap = {}) => {
+            renderVideoFeed(postsMap);
         };
 
         const loadComments = (postId) => {
@@ -1454,6 +1607,37 @@
                 }
                 return poll;
             });
+        };
+
+        // ── Tab switcher ──
+        let currentTab = 'posts';
+        window.switchTab = function(tab) {
+            currentTab = tab;
+            const postFeed  = document.getElementById('post-feed');
+            const vFeed     = document.getElementById('video-feed');
+            const tabPosts  = document.getElementById('tab-posts');
+            const tabVideos = document.getElementById('tab-videos');
+
+            if (tab === 'videos') {
+                postFeed?.classList.remove('active');
+                vFeed?.classList.add('active');
+                tabPosts?.classList.remove('active');
+                tabVideos?.classList.add('active');
+                // Reproducir el primer video
+                const firstItem = vFeed?.querySelector('.video-feed-item');
+                const firstVid  = firstItem?.querySelector('video');
+                if (firstVid && !firstVid.src && firstVid.dataset.src) {
+                    firstVid.src = firstVid.dataset.src;
+                }
+                if (firstVid) firstVid.play().catch(() => {});
+            } else {
+                vFeed?.classList.remove('active');
+                postFeed?.classList.add('active');
+                tabVideos?.classList.remove('active');
+                tabPosts?.classList.add('active');
+                // Pausar todos los videos del feed
+                vFeed?.querySelectorAll('video').forEach(v => v.pause());
+            }
         };
 
         let postsUnsubscribe = null;
@@ -1541,7 +1725,18 @@
                         }
 
                         if (post.video) {
-                            html += `<video src="${post.video}" class="post-published-video" controls playsinline preload="metadata"></video>`;
+                            // En publicaciones solo mostrar un thumb con botón para ir a Videos
+                            html += `
+                                <div style="position:relative;border-radius:18px;overflow:hidden;background:#111;margin-bottom:12px;cursor:pointer;"
+                                     onclick="switchTab('videos')" title="Ver en Videos">
+                                    <video src="${post.video}" class="post-published-video"
+                                        preload="none" playsinline muted
+                                        style="margin-bottom:0;pointer-events:none;"></video>
+                                    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.35);">
+                                        <div style="background:rgba(0,0,0,0.6);border:2px solid white;border-radius:50%;width:52px;height:52px;display:flex;align-items:center;justify-content:center;font-size:22px;">▶</div>
+                                    </div>
+                                    <div style="position:absolute;bottom:10px;left:12px;font-size:11px;color:rgba(255,255,255,0.8);background:rgba(0,0,0,0.5);padding:3px 8px;border-radius:8px;">Ver en Videos 🎬</div>
+                                </div>`;
                         }
 
                         // Reacciones
@@ -1588,7 +1783,7 @@
                 } else {
                     lastPostsData = {};
                     renderShortVideos({});
-                    container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones a\u00fan.</p>";
+                    container.innerHTML = "<p style='text-align:center; color:#888;'>No hay publicaciones aún.</p>";
                 }
                 // Actualizar desaf\u00edo semanal
                 if (typeof updateWeeklyChallenge === 'function') {
@@ -1836,7 +2031,7 @@
 
         // ===== SKELETON LOADING =====
         const showSkeletonLoading = () => {
-            const container = document.getElementById('feed-container');
+            const container = document.getElementById('post-feed');
             container.innerHTML = '';
             for (let i = 0; i < 3; i++) {
                 const skeleton = document.createElement('div');
@@ -1903,7 +2098,7 @@
         });
 
         window.showRandomPost = () => {
-            const container = document.getElementById('feed-container');
+            const container = document.getElementById('post-feed');
             const posts = container.querySelectorAll('.post-card');
             
             if (posts.length === 0) {
