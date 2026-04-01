@@ -914,17 +914,13 @@
             inset: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* default vertical */
+            object-fit: cover; /* Por defecto llena la pantalla (vertical/TikTok style) */
             background: #000;
+            transition: object-fit 0.3s ease;
         }
-        /* Video horizontal: se muestra contenido completo con barras negras */
-        .video-feed-item.is-horizontal {
-            background: #000;
-        }
+        /* Video horizontal: se ajusta para mostrar todo el contenido sin recortar */
         .video-feed-item.is-horizontal video {
-            object-fit: contain;
-            width: 100%;
-            height: 100%;
+            object-fit: contain; /* Muestra el video completo con barras negras si es necesario */
         }
         /* Gradiente más suave en horizontal para no tapar el video */
         .video-feed-item.is-horizontal::after {
@@ -1470,6 +1466,17 @@
             shortViewerVideo.muted = previousMuted;
             shortViewerVideo.load();
             shortViewerVideo.play().catch(() => {});
+            
+            // Adaptar orientación en el visor
+            const checkShortOrientation = () => {
+                if (shortViewerVideo.videoWidth > 0 && shortViewerVideo.videoHeight > 0) {
+                    const isHorizontal = shortViewerVideo.videoWidth > shortViewerVideo.videoHeight;
+                    shortViewerVideo.style.objectFit = isHorizontal ? 'contain' : 'cover';
+                }
+            };
+            shortViewerVideo.onloadedmetadata = checkShortOrientation;
+            if (shortViewerVideo.readyState >= 1) checkShortOrientation();
+
             updateShortViewerSoundButton();
             updateShortViewerNavButtons();
         };
@@ -1561,7 +1568,27 @@
         // ── Render video feed con IntersectionObserver (lazy + autoplay) ──
         let videoObserver = null;
 
-        let globalMuted = true; // empieza silenciado, el usuario activa con el botón
+        let globalMuted = true; // Empezamos silenciados para que el navegador permita el autoplay
+
+        // Función para desbloquear el sonido globalmente al primer toque del usuario
+        const unlockAudio = () => {
+            globalMuted = false;
+            // Actualizar todos los videos que ya estén en el DOM
+            document.querySelectorAll('#video-feed video').forEach(v => {
+                v.muted = false;
+                if (!v.paused) v.play().catch(() => {});
+            });
+            // Actualizar iconos de la interfaz
+            window.toggleGlobalSound(false); // Llamamos con false para forzar estado "con sonido"
+            
+            // Eliminar los listeners después de la primera interacción
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+            document.removeEventListener('keydown', unlockAudio);
+        };
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+        document.addEventListener('keydown', unlockAudio);
 
         const renderVideoFeed = (postsMap = {}) => {
             if (!videoFeed) return;
@@ -1588,15 +1615,20 @@
                     if (!vid) return;
 
                     if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
-                        // Lazy: cargar src solo al entrar en pantalla (NO autoplay)
+                        // Lazy: cargar src solo al entrar en pantalla
                         if (!vid.src && vid.dataset.src) {
                             vid.src = vid.dataset.src;
                             vid.load();
                         }
                         vid.muted = globalMuted;
-                        // ⛔ SIN auto-play: el usuario toca para reproducir
+                        // ✅ AUTO-PLAY: se reproduce automáticamente cuando el usuario lo está viendo
+                        vid.play().catch(() => {
+                            // Si falla por sonido bloqueado, silenciamos y reintentamos
+                            vid.muted = true;
+                            vid.play().catch(() => {});
+                        });
 
-                        // Barra de progreso solo si ya está reproduciendo
+                        // Barra de progreso
                         if (bar) {
                             vid.ontimeupdate = () => {
                                 const pct = vid.duration ? (vid.currentTime / vid.duration) * 100 : 0;
@@ -1657,7 +1689,7 @@
                         <div class="vsb">
                             <button class="vsb-icon" id="snd-${postId}"
                                 onclick="event.stopPropagation(); toggleGlobalSound()">${globalMuted ? '🔇' : '🔊'}</button>
-                            <span class="vsb-label">${globalMuted ? 'Sonido' : 'Silencio'}</span>
+                            <span class="vsb-label">${globalMuted ? 'Silencio' : 'Sonido'}</span>
                         </div>
                     </div>
                 `;
@@ -1680,12 +1712,16 @@
                     }
                 });
 
-                // Al tocar el video activa el sonido si estaba silenciado
-                // Detectar orientación del video al cargar metadatos
-                vid.addEventListener('loadedmetadata', () => {
-                    const isHorizontal = vid.videoWidth > vid.videoHeight;
-                    item.classList.toggle('is-horizontal', isHorizontal);
-                });
+                // Detectar orientación del video
+                const checkOrientation = () => {
+                    if (vid.videoWidth > 0 && vid.videoHeight > 0) {
+                        const isHorizontal = vid.videoWidth > vid.videoHeight;
+                        item.classList.toggle('is-horizontal', isHorizontal);
+                    }
+                };
+                vid.addEventListener('loadedmetadata', checkOrientation);
+                // Por si ya cargó (caché)
+                if (vid.readyState >= 1) checkOrientation();
 
                 vid.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1703,13 +1739,17 @@
         };
 
         // ── Sonido global para todos los videos ──
-        window.toggleGlobalSound = function() {
-            globalMuted = !globalMuted;
+        window.toggleGlobalSound = function(forceState) {
+            if (typeof forceState === 'boolean') {
+                globalMuted = forceState;
+            } else {
+                globalMuted = !globalMuted;
+            }
             document.querySelectorAll('#video-feed video').forEach(v => { v.muted = globalMuted; });
             document.querySelectorAll('[id^="snd-"]').forEach(btn => {
                 btn.textContent = globalMuted ? '🔇' : '🔊';
                 const lbl = btn.closest('.vsb')?.querySelector('.vsb-label');
-                if (lbl) lbl.textContent = globalMuted ? 'Sonido' : 'Silencio';
+                if (lbl) lbl.textContent = globalMuted ? 'Silencio' : 'Sonido';
             });
             // Botón global superior
             const gBtn = document.getElementById('global-sound-btn');
