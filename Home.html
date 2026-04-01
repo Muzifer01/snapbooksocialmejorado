@@ -1318,17 +1318,25 @@
         let lastVideosData = {};
         const deletingExpiredPosts = new Set();
 
+        // Escuchar perfil en tiempo real y mantener localStorage sincronizado
+        const listenUserProfile = (uid) => {
+            onValue(ref(db, `Users/${uid}`), (snap) => {
+                if (snap.exists()) {
+                    const data = snap.val();
+                    currentUserProfile = data;
+                    // Sincronizar localStorage como caché
+                    if (data.nick)   localStorage.setItem('nick',   data.nick);
+                    if (data.perfil) localStorage.setItem('perfil', data.perfil);
+                }
+            });
+        };
+
         onAuthStateChanged(auth, async (user) => {
             console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
             if (user) {
                 currentUser = user;
                 currentUserProfile = null;
-                try {
-                    const profileSnap = await get(ref(db, `Users/${user.uid}`));
-                    currentUserProfile = profileSnap.exists() ? profileSnap.val() : null;
-                } catch (error) {
-                    console.warn('No se pudo cargar el perfil del usuario para los retos semanales', error);
-                }
+                listenUserProfile(user.uid);
                 loadPosts();
                 loadVideos();
             } else {
