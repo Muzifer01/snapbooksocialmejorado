@@ -908,96 +908,215 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.2);
         }
 
-        /* ===== FEED DE VIDEOS (TikTok style) ===== */
+        /* ===== FEED DE VIDEOS ESTILO TIKTOK ===== */
         #video-feed {
             display: none;
-            flex-direction: column;
-            gap: 0;
-            padding-bottom: 80px;
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 500;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            -webkit-overflow-scrolling: touch;
         }
-        #video-feed.active { display: flex; }
+        #video-feed::-webkit-scrollbar { display: none; }
+        #video-feed.active { display: block; }
         #post-feed.active { display: block; }
         #post-feed { display: none; }
 
+        /* Cada item ocupa pantalla completa */
         .video-feed-item {
             position: relative;
             width: 100%;
+            height: 100dvh;
+            scroll-snap-align: start;
             background: #000;
-            min-height: 75vh;
-            max-height: 85vh;
+            overflow: hidden;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            overflow: hidden;
         }
         .video-feed-item video {
+            position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
-            max-height: 85vh;
-            object-fit: contain;
+            object-fit: cover; /* default vertical */
             background: #000;
-            display: block;
         }
-        .video-feed-overlay {
+        /* Video horizontal: se muestra contenido completo con barras negras */
+        .video-feed-item.is-horizontal {
+            background: #000;
+        }
+        .video-feed-item.is-horizontal video {
+            object-fit: contain;
+            width: 100%;
+            height: 100%;
+        }
+        /* Gradiente más suave en horizontal para no tapar el video */
+        .video-feed-item.is-horizontal::after {
+            background: linear-gradient(
+                to top,
+                rgba(0,0,0,0.85) 0%,
+                rgba(0,0,0,0.1) 30%,
+                transparent 50%
+            );
+        }
+
+        /* Gradiente inferior */
+        .video-feed-item::after {
+            content: '';
             position: absolute;
-            inset: auto 0 0 0;
-            padding: 16px;
-            background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, transparent 100%);
+            inset: 0;
+            background: linear-gradient(
+                to top,
+                rgba(0,0,0,0.75) 0%,
+                rgba(0,0,0,0.2) 40%,
+                transparent 70%
+            );
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Info usuario + caption (izquierda abajo) */
+        .video-feed-info {
+            position: absolute;
+            bottom: 90px;
+            left: 14px;
+            right: 80px;
+            z-index: 2;
             display: flex;
             flex-direction: column;
             gap: 8px;
-            z-index: 2;
         }
         .video-feed-user {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 9px;
         }
         .video-feed-user img {
-            width: 38px;
-            height: 38px;
+            width: 40px;
+            height: 40px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid rgba(255,255,255,0.5);
+            border: 2px solid white;
+            flex-shrink: 0;
         }
-        .video-feed-nick { font-size: 14px; font-weight: 700; }
-        .video-feed-time { font-size: 11px; color: rgba(255,255,255,0.65); }
+        .video-feed-nick {
+            font-size: 15px;
+            font-weight: 800;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
         .video-feed-caption {
-            font-size: 14px;
+            font-size: 13px;
             color: rgba(255,255,255,0.9);
             line-height: 1.4;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
         }
-        .video-feed-actions {
+
+        /* Botones laterales (derecha) estilo TikTok */
+        .video-side-btns {
+            position: absolute;
+            right: 12px;
+            bottom: 90px;
+            z-index: 2;
             display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
         }
-        .video-feed-btn {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.2);
-            color: white;
-            border-radius: 20px;
-            padding: 7px 14px;
-            font-size: 13px;
-            font-weight: 700;
+        .vsb {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
             cursor: pointer;
-            backdrop-filter: blur(8px);
         }
-        .video-feed-btn.liked { background: rgba(255,59,92,0.3); border-color: rgba(255,59,92,0.5); }
+        .vsb-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(6px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            cursor: pointer;
+            border: none;
+            color: white;
+            transition: transform 0.15s, background 0.15s;
+        }
+        .vsb-icon:active { transform: scale(0.88); }
+        .vsb-icon.liked { background: rgba(255,59,92,0.4); }
+        .vsb-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.6);
+        }
+
+        /* Indicador play/pause */
         .video-play-indicator {
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%,-50%);
-            font-size: 52px;
+            transform: translate(-50%,-50%) scale(0.8);
+            font-size: 64px;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.25s;
+            transition: opacity 0.2s, transform 0.2s;
             z-index: 3;
-            filter: drop-shadow(0 2px 8px rgba(0,0,0,0.5));
+            filter: drop-shadow(0 2px 12px rgba(0,0,0,0.6));
         }
-        .video-play-indicator.show { opacity: 1; }
+        .video-play-indicator.show {
+            opacity: 1;
+            transform: translate(-50%,-50%) scale(1);
+        }
+
+        /* Botón de sonido (esquina superior derecha) */
+        .video-sound-global {
+            position: fixed;
+            top: 60px;
+            right: 14px;
+            z-index: 600;
+            background: rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.25);
+            color: white;
+            border-radius: 50%;
+            width: 42px;
+            height: 42px;
+            font-size: 20px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(8px);
+        }
+        #video-feed.active ~ .video-sound-global,
+        .video-sound-global.visible { display: flex; }
+
+        /* Barra de progreso del video */
+        .video-progress {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            z-index: 3;
+        }
+        .video-progress-bar {
+            height: 100%;
+            background: white;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
     </style>
 </head>
 <body>
@@ -1130,6 +1249,16 @@
             </div>
         </div>
     </div>
+
+    <!-- Botón volver (visible en tab videos) -->
+    <button id="video-back-btn"
+        style="position:fixed;top:14px;left:14px;z-index:600;background:rgba(0,0,0,0.65);border:1.5px solid rgba(255,255,255,0.3);color:white;border-radius:22px;padding:8px 14px;font-size:14px;font-weight:700;display:none;align-items:center;gap:6px;cursor:pointer;backdrop-filter:blur(8px);"
+        onclick="switchTab('posts')">‹ Volver</button>
+
+    <!-- Botón sonido global (visible cuando está en tab videos) -->
+    <button id="global-sound-btn"
+        style="position:fixed;top:14px;right:14px;z-index:600;background:rgba(0,0,0,0.65);border:1.5px solid rgba(255,255,255,0.3);color:white;border-radius:50%;width:44px;height:44px;font-size:22px;display:none;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);"
+        onclick="toggleGlobalSound()">🔇</button>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -1448,90 +1577,159 @@
         // ── Render video feed con IntersectionObserver (lazy + autoplay) ──
         let videoObserver = null;
 
+        let globalMuted = true; // empieza silenciado, el usuario activa con el botón
+
         const renderVideoFeed = (postsMap = {}) => {
             if (!videoFeed) return;
 
             const videos = getShortVideos(postsMap);
             currentShortVideos = videos;
-
             videoFeed.innerHTML = '';
 
             if (!videos.length) {
-                videoFeed.innerHTML = '<p style="text-align:center;color:rgba(255,255,255,0.5);padding:60px 20px;">No hay videos aún 🎬</p>';
+                videoFeed.innerHTML = `
+                    <div style="height:100dvh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:rgba(255,255,255,0.5);">
+                        <div style="font-size:48px;">🎬</div>
+                        <div style="font-size:15px;">No hay videos aún</div>
+                    </div>`;
                 return;
             }
 
-            // Desconectar observer anterior
             if (videoObserver) videoObserver.disconnect();
 
-            // Crear observer para autoplay al entrar en vista
             videoObserver = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     const vid = entry.target.querySelector('video');
+                    const bar = entry.target.querySelector('.video-progress-bar');
                     if (!vid) return;
-                    if (entry.isIntersecting && entry.intersectionRatio > 0.6) {
-                        // Cargar src solo cuando sea visible (lazy)
+
+                    if (entry.isIntersecting && entry.intersectionRatio > 0.7) {
+                        // Lazy: cargar src solo al entrar en pantalla
                         if (!vid.src && vid.dataset.src) {
                             vid.src = vid.dataset.src;
+                            vid.load();
                         }
+                        vid.muted = globalMuted;
                         vid.play().catch(() => {});
+
+                        // Barra de progreso
+                        if (bar) {
+                            vid.ontimeupdate = () => {
+                                const pct = vid.duration ? (vid.currentTime / vid.duration) * 100 : 0;
+                                bar.style.width = pct + '%';
+                            };
+                        }
                     } else {
                         vid.pause();
+                        if (bar) bar.style.width = '0%';
                     }
                 });
-            }, { threshold: 0.6 });
+            }, { threshold: 0.7 });
 
             videos.forEach(([postId, post]) => {
-                const likeCount = post.likes ? Object.keys(post.likes).length : 0;
+                const likeCount    = post.likes ? Object.keys(post.likes).length : 0;
                 const commentCount = post.commentCount || 0;
-                const userLiked = currentUser && post.likes && post.likes[currentUser.uid];
+                const userLiked    = currentUser && post.likes && post.likes[currentUser.uid];
 
                 const item = document.createElement('div');
                 item.className = 'video-feed-item';
                 item.innerHTML = `
-                    <div class="video-play-indicator" id="vpi-${postId}">▶</div>
                     <video
                         data-src="${post.video}"
-                        playsinline
-                        muted
-                        loop
-                        preload="none"
+                        playsinline loop preload="none"
+                        id="vid-${postId}"
                     ></video>
-                    <div class="video-feed-overlay">
+
+                    <div class="video-play-indicator" id="vpi-${postId}"></div>
+
+                    <!-- Barra de progreso -->
+                    <div class="video-progress">
+                        <div class="video-progress-bar"></div>
+                    </div>
+
+                    <!-- Info izquierda abajo -->
+                    <div class="video-feed-info">
                         <div class="video-feed-user">
-                            <img src="${post.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
-                            <div>
-                                <div class="video-feed-nick">${post.nick || 'Usuario'}</div>
-                                <div class="video-feed-time">${formatTime(post.time)}</div>
-                            </div>
+                            <img src="${post.perfil || 'https://www.w3schools.com/howto/img_avatar.png'}"
+                                 onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+                            <div class="video-feed-nick">@${post.nick || 'usuario'}</div>
                         </div>
                         <div class="video-feed-caption">${post.text || ''}</div>
-                        <div class="video-feed-actions">
-                            <button class="video-feed-btn ${userLiked ? 'liked' : ''}" id="vlike-${postId}" onclick="toggleLike('${postId}')">❤️ ${likeCount}</button>
-                            <button class="video-feed-btn" onclick="openComments('${postId}')">💬 ${commentCount}</button>
+                    </div>
+
+                    <!-- Botones laterales derecha estilo TikTok -->
+                    <div class="video-side-btns">
+                        <div class="vsb">
+                            <button class="vsb-icon ${userLiked ? 'liked' : ''}"
+                                id="vlike-${postId}"
+                                onclick="event.stopPropagation(); toggleLike('${postId}')">❤️</button>
+                            <span class="vsb-label" id="vlabel-${postId}">${likeCount}</span>
+                        </div>
+                        <div class="vsb">
+                            <button class="vsb-icon"
+                                onclick="event.stopPropagation(); openComments('${postId}')">💬</button>
+                            <span class="vsb-label">${commentCount}</span>
+                        </div>
+                        <div class="vsb">
+                            <button class="vsb-icon" id="snd-${postId}"
+                                onclick="event.stopPropagation(); toggleGlobalSound()">${globalMuted ? '🔇' : '🔊'}</button>
+                            <span class="vsb-label">${globalMuted ? 'Sonido' : 'Silencio'}</span>
                         </div>
                     </div>
                 `;
 
-                // Toggle play/pause al tocar
                 const vid = item.querySelector('video');
                 const indicator = item.querySelector('.video-play-indicator');
+
+                // Tap para play/pause + mostrar indicador
                 item.addEventListener('click', (e) => {
-                    if (e.target.closest('button')) return;
+                    if (e.target.closest('.vsb-icon') || e.target.closest('button')) return;
                     if (vid.paused) {
                         vid.play().catch(() => {});
-                        indicator.textContent = '▶';
+                        indicator.textContent = '';
+                        indicator.classList.remove('show');
                     } else {
                         vid.pause();
-                        indicator.classList.add('show');
                         indicator.textContent = '⏸';
-                        setTimeout(() => indicator.classList.remove('show'), 800);
+                        indicator.classList.add('show');
+                        setTimeout(() => indicator.classList.remove('show'), 900);
+                    }
+                });
+
+                // Al tocar el video activa el sonido si estaba silenciado
+                // Detectar orientación del video al cargar metadatos
+                vid.addEventListener('loadedmetadata', () => {
+                    const isHorizontal = vid.videoWidth > vid.videoHeight;
+                    item.classList.toggle('is-horizontal', isHorizontal);
+                });
+
+                vid.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (globalMuted) {
+                        toggleGlobalSound();
+                    } else {
+                        if (vid.paused) vid.play().catch(() => {});
+                        else vid.pause();
                     }
                 });
 
                 videoFeed.appendChild(item);
                 videoObserver.observe(item);
             });
+        };
+
+        // ── Sonido global para todos los videos ──
+        window.toggleGlobalSound = function() {
+            globalMuted = !globalMuted;
+            document.querySelectorAll('#video-feed video').forEach(v => { v.muted = globalMuted; });
+            document.querySelectorAll('[id^="snd-"]').forEach(btn => {
+                btn.textContent = globalMuted ? '🔇' : '🔊';
+                const lbl = btn.closest('.vsb')?.querySelector('.vsb-label');
+                if (lbl) lbl.textContent = globalMuted ? 'Sonido' : 'Silencio';
+            });
+            // Botón global superior
+            const gBtn = document.getElementById('global-sound-btn');
+            if (gBtn) gBtn.textContent = globalMuted ? '🔇' : '🔊';
         };
 
         // Compatibilidad: renderShortVideos ahora llama a renderVideoFeed
@@ -1613,29 +1811,45 @@
         let currentTab = 'posts';
         window.switchTab = function(tab) {
             currentTab = tab;
-            const postFeed  = document.getElementById('post-feed');
-            const vFeed     = document.getElementById('video-feed');
-            const tabPosts  = document.getElementById('tab-posts');
-            const tabVideos = document.getElementById('tab-videos');
+            const postFeed   = document.getElementById('post-feed');
+            const vFeed      = document.getElementById('video-feed');
+            const tabPosts   = document.getElementById('tab-posts');
+            const tabVideos  = document.getElementById('tab-videos');
+            const feedTabs   = document.querySelector('.feed-tabs');
+            const sortCont   = document.querySelector('.sort-container');
+            const gSoundBtn  = document.getElementById('global-sound-btn');
 
             if (tab === 'videos') {
                 postFeed?.classList.remove('active');
                 vFeed?.classList.add('active');
                 tabPosts?.classList.remove('active');
                 tabVideos?.classList.add('active');
-                // Reproducir el primer video
+                // Ocultar tabs y sort mientras está en modo video (pantalla completa)
+                if (feedTabs) feedTabs.style.display = 'none';
+                if (sortCont) sortCont.style.display = 'none';
+                // Mostrar botón de sonido global
+                if (gSoundBtn) gSoundBtn.style.display = 'flex';
+                const backBtn = document.getElementById('video-back-btn');
+                if (backBtn) backBtn.style.display = 'flex';
+                // Iniciar primer video
                 const firstItem = vFeed?.querySelector('.video-feed-item');
                 const firstVid  = firstItem?.querySelector('video');
-                if (firstVid && !firstVid.src && firstVid.dataset.src) {
-                    firstVid.src = firstVid.dataset.src;
+                if (firstVid) {
+                    if (!firstVid.src && firstVid.dataset.src) firstVid.src = firstVid.dataset.src;
+                    firstVid.muted = globalMuted;
+                    firstVid.play().catch(() => {});
                 }
-                if (firstVid) firstVid.play().catch(() => {});
             } else {
                 vFeed?.classList.remove('active');
                 postFeed?.classList.add('active');
                 tabVideos?.classList.remove('active');
                 tabPosts?.classList.add('active');
-                // Pausar todos los videos del feed
+                if (feedTabs) feedTabs.style.display = '';
+                if (sortCont) sortCont.style.display = '';
+                if (gSoundBtn) gSoundBtn.style.display = 'none';
+                const backBtn2 = document.getElementById('video-back-btn');
+                if (backBtn2) backBtn2.style.display = 'none';
+                // Pausar todos los videos
                 vFeed?.querySelectorAll('video').forEach(v => v.pause());
             }
         };
