@@ -1835,19 +1835,26 @@
         };
 
         let postsUnsubscribe = null;
+        let videosUnsubscribe = null;
         const loadPosts = () => {
             console.log("Iniciando carga de posts...");
-            // Desuscribir del listener anterior si existe
-            if (postsUnsubscribe) {
-                postsUnsubscribe();
-            }
+            if (postsUnsubscribe) postsUnsubscribe();
+            if (videosUnsubscribe) videosUnsubscribe();
+
+            // Cargar videos desde VideosViews de forma independiente
+            const videosViewRef = ref(db, "VideosViews");
+            videosUnsubscribe = onValue(videosViewRef, (videoSnap) => {
+                const videosData = videoSnap.exists() ? videoSnap.val() : {};
+                renderVideoFeed(videosData);
+            });
+
             const postsRef = ref(db, "ListPosts");
             postsUnsubscribe = onValue(postsRef, (snapshot) => {
                 container.innerHTML = "";
                 if (snapshot.exists()) {
                     const data = snapshot.val();
                     lastPostsData = data || {};
-                    renderShortVideos(lastPostsData);
+                    // renderShortVideos ya no se llama aquí (ahora usa VideosViews)
                     let postIds = Object.keys(data);
                     
                     // Ordenar posts según el criterio seleccionado

@@ -1086,7 +1086,13 @@
                     };
                 }
 
-                await set(newPostRef, postData);
+                // Videos se guardan en VideosViews; el resto en ListPosts
+                if (videoUrl) {
+                    const videoViewRef = ref(db, `VideosViews/${postId}`);
+                    await set(videoViewRef, postData);
+                } else {
+                    await set(newPostRef, postData);
+                }
 
                 alert('¡Publicación creada exitosamente!');
                 document.getElementById('post-text').value = '';
