@@ -2196,11 +2196,8 @@
                 time: Date.now()
             });
 
-            const postRef = ref(db, `${activePostSource}/${activePostId}`);
-            runTransaction(postRef, (post) => {
-                if (post) post.commentCount = (post.commentCount || 0) + 1;
-                return post;
-            });
+            const countRef = ref(db, `${activePostSource}/${activePostId}/commentCount`);
+            runTransaction(countRef, (count) => (count || 0) + 1);
             input.value = "";
         };
 

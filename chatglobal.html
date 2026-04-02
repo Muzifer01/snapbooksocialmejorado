@@ -2275,7 +2275,7 @@
                     await set(viewRef, {
                         nick: nickReal,
                         perfil: perfilReal,
-                        time: Date.now().toString()
+                        time: Date.now()
                     });
                 } else {
                     const existingData = existingView.val();
@@ -2643,7 +2643,7 @@
                     perfil: getMyPerfil(),
                     text: (i === finalSend.length - 1 && caption) ? caption : '',
                     multi: getPlatformName(),
-                    time: Date.now().toString(),
+                    time: Date.now(),
                     isVerificado: tieneCheck
                 };
                 if (isVideo) msgData.video = mediaUrl;
@@ -2722,7 +2722,7 @@
                 text: `[GIF]`,
                 image: gifUrl,
                 multi: getPlatformName(),
-                time: Date.now().toString(),
+                time: Date.now(),
                 isVerificado: tieneCheck
             };
             await push(ref(db, 'chatglobar'), msgData);
@@ -2827,7 +2827,7 @@
                 nick: getMyNick(),
                 perfil: getMyPerfil(),
                 text: text,
-                time: Date.now().toString()
+                time: Date.now()
             });
             dmInput.value = '';
         }
@@ -3623,7 +3623,7 @@
                     perfil: getMyPerfil(),
                     text: text,
                     multi: getPlatformName(),
-                    time: Date.now().toString(),
+                    time: Date.now(),
                     isVerificado: esVIP,
                     ...(destructMode ? { destructAfter: Date.now() + 30000 } : {})
                 };
@@ -4559,7 +4559,7 @@
                 text: '[Sticker]',
                 image: stickerUrl,
                 multi: getPlatformName(),
-                time: Date.now().toString(),
+                time: Date.now(),
                 isVerificado: tieneCheck
             };
             await push(ref(db, 'chatglobar'), msgData);

@@ -228,7 +228,7 @@ export function initStories() {
                     perfil: localStorage.getItem('perfil') || '',
                     text: `🔔 ${notificationMessage}`,
                     multi: "WEB",
-                    time: Date.now().toString(),
+                    time: Date.now(),
                     isVerificado: false,
                     type: "mention_notification"
                 };
@@ -361,7 +361,7 @@ export function initStories() {
                             uid: auth.currentUser.uid,
                             nick: localStorage.getItem('nick') || 'Usuario',
                             text: text,
-                            time: Date.now().toString()
+                            time: Date.now()
                         }).then(() => loadReactionsAndComments(storyId));
                     };
                 });
@@ -380,7 +380,7 @@ export function initStories() {
             const reactionRef = ref(db, `stories/${currentStoryId}/reactions/${emoji}/${user.uid}`);
             await set(reactionRef, {
                 nick: localStorage.getItem('nick') || 'Usuario',
-                time: Date.now().toString()
+                time: Date.now()
             });
 
             reactionsPanel.classList.remove('active');
@@ -414,7 +414,7 @@ export function initStories() {
                 perfil: perfil,
                 text: text,
                 multi: multi,
-                time: Date.now().toString(),
+                time: Date.now(),
                 likes: {},
                 replies: {}
             };
@@ -428,7 +428,7 @@ export function initStories() {
                 perfil: perfil,
                 text: `💬 ${text} (comentario en historia)`,
                 multi: "WEB",
-                time: Date.now().toString(),
+                time: Date.now(),
                 isVerificado: false
             };
             await push(ref(db, 'chatglobar'), chatCommentData);
@@ -440,7 +440,7 @@ export function initStories() {
                     perfil: perfil,
                     text: `💬 ${text} (comentario en tu historia)`,
                     multi: "WEB",
-                    time: Date.now().toString(),
+                    time: Date.now(),
                     isVerificado: false,
                     recipientUid: currentStoryData.uid
                 };
@@ -476,7 +476,7 @@ export function initStories() {
                 perfil: perfil,
                 text: `📸 Compartió una historia: ${currentStoryData.text || 'Sin descripción'}`,
                 multi: "WEB",
-                time: Date.now().toString(),
+                time: Date.now(),
                 isVerificado: false,
                 storyImage: currentStoryData.image,
                 storyId: currentStoryId
@@ -1070,7 +1070,7 @@ export function initStories() {
                         video: videoUrl,
                         image: '', // thumbnail vacío para videos
                         text: text,
-                        time: Date.now().toString(),
+                        time: Date.now(),
                         views: {},
                         reactions: {},
                         comments: {},
@@ -1130,7 +1130,7 @@ export function initStories() {
                         perfil: localStorage.getItem('perfil') || "",
                         image: imageData,
                         text: text,
-                        time: Date.now().toString(),
+                        time: Date.now(),
                         views: {},
                         reactions: {},
                         comments: {},
@@ -1182,7 +1182,7 @@ export function initStories() {
                     perfil: localStorage.getItem('perfil') || "",
                     text: text,
                     backgroundColor: selectedBackground,
-                    time: Date.now().toString(),
+                    time: Date.now(),
                     views: {},
                     reactions: {},
                     comments: {},
@@ -1293,7 +1293,7 @@ window.sendAskmeAnswer = async (storyId) => {
         uid: auth.currentUser.uid,
         nick: localStorage.getItem('nick') || 'Usuario',
         text: input.value.trim(),
-        time: Date.now().toString()
+        time: Date.now()
     });
     input.value = '';
     alert('¡Respuesta enviada!');
@@ -1312,7 +1312,7 @@ if (btnHighlight) {
         } else {
             await set(highlightRef, {
                 uid: auth.currentUser.uid,
-                time: Date.now().toString()
+                time: Date.now()
             });
             btnHighlight.classList.add('saved');
         }
