@@ -1,5 +1,6 @@
 // view_global.js - El "Cerebro" de SnapBook (Firebase + Límites + Insignias)
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 import { getDatabase, ref, get, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
@@ -15,6 +16,16 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// App Check — bloquea bots, scripts y peticiones no autorizadas
+// try/catch por si ya fue inicializado desde firebase-config.js
+try {
+    initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider("6Le606IsAAAANIeRgiQmQwMhl3k55X61pAB1nOA"),
+        isTokenAutoRefreshEnabled: true
+    });
+} catch(e) { /* App Check ya inicializado */ }
+
 const db = getDatabase(app);
 const auth = getAuth(app);
 
@@ -108,4 +119,4 @@ export function getPlatformName() {
     return "WEB"; 
 }
 
-export { db, auth };
+export { db, auth, app };

@@ -797,6 +797,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
@@ -814,6 +815,10 @@
         };
 
         const app = initializeApp(firebaseConfig);
+        initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider("6Le606IsAAAANIeRgiQmQwMhl3k55X61pAB1nOA"),
+            isTokenAutoRefreshEnabled: true
+        });
         const db = getDatabase(app);
         const auth = getAuth(app);
         const storage = getStorage(app);

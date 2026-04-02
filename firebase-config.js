@@ -1,4 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
 import { getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
@@ -14,6 +15,14 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+
+// App Check — bloquea bots, scripts y peticiones no autorizadas
+initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider("6Le606IsAAAANIeRgiQmQwMhl3k55X61pAB1nOA"),
+  isTokenAutoRefreshEnabled: true
+});
+
 export const auth = getAuth(app);
 export const db = getDatabase(app);
 export const storage = getStorage(app);
+export { app };

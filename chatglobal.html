@@ -2073,8 +2073,17 @@
 
     <script type="module">
         // --- IMPORTACIÓN ORIGINAL DE VIEW_GLOBAL.JS ---
-        import { db, auth, getPlatformName, setReplyData, getReplyData, clearReplyData } from './view_global.js';
+        import { db, auth, app as firebaseApp, getPlatformName, setReplyData, getReplyData, clearReplyData } from './view_global.js';
+        import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app-check.js";
         import { ref, onValue, query, limitToLast, push, get, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // App Check — protección contra bots y spam
+        try {
+            initializeAppCheck(firebaseApp, {
+                provider: new ReCaptchaV3Provider("6Le606IsAAAANIeRgiQmQwMhl3k55X61pAB1nOA"),
+                isTokenAutoRefreshEnabled: true
+            });
+        } catch(e) { /* Ya inicializado en otra página */ }
         
         // --- IMPORTACIÓN DEL MÓDULO DE HISTORIAS ---
         import { initStories } from './stories_module.js';
