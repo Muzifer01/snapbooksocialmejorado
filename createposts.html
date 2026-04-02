@@ -654,6 +654,8 @@
         <div class="auth-spinner"></div>
         <div class="auth-spinner-text">Verificando sesión...</div>
     </div>
+        <div class="auth-spinner-text">Verificando sesión...</div>
+    </div>
 
     <header class="header">
         <h1>Crear Post</h1>
@@ -832,12 +834,12 @@
         // AUTH
         onAuthStateChanged(auth, (user) => {
             if (user) {
-            // Mostrar página solo si hay sesión válida
+            // Sesión verificada por Firebase Auth — mostrar página
             const overlay = document.getElementById('auth-guard-overlay');
             if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
                 currentUser = user;
                 const userRef = ref(db, `Users/${user.uid}`);
-                // Escuchar perfil en tiempo real — siempre detecta la cuenta real
+                // Escuchar perfil en tiempo real — datos siempre desde Firebase
                 onValue(userRef, (snapshot) => {
                     if (snapshot.exists()) {
                         const userData = snapshot.val();
@@ -845,16 +847,11 @@
                             nick:   userData.nick   || 'Usuario',
                             perfil: userData.perfil || 'https://www.w3schools.com/howto/img_avatar.png'
                         };
-                        // Sincronizar localStorage como caché de respaldo
-                        if (userData.nick)   localStorage.setItem('nick',   userData.nick);
-                        if (userData.perfil) localStorage.setItem('perfil', userData.perfil);
                         const avatarImg = document.querySelector('#current-user-avatar img');
                         if (avatarImg) avatarImg.src = userProfileData.perfil;
                     }
                 });
             } else {
-                localStorage.clear();
-                sessionStorage.clear();
                 window.location.replace('login.html');
             }
         });

@@ -1218,6 +1218,8 @@
         <div class="auth-spinner"></div>
         <div class="auth-spinner-text">Verificando sesión...</div>
     </div>
+        <div class="auth-spinner-text">Verificando sesión...</div>
+    </div>
     <!-- CONTENEDOR DE PARTÍCULAS FLOTANTES -->
     <div class="particles-container" id="particles-container"></div>
 
@@ -1431,9 +1433,8 @@
         };
 
         onAuthStateChanged(auth, async (user) => {
-            console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
             if (user) {
-            // Mostrar página solo si hay sesión válida
+            // Sesión verificada por Firebase Auth — mostrar página
             const overlay = document.getElementById('auth-guard-overlay');
             if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
                 currentUser = user;
@@ -1443,8 +1444,6 @@
                 loadPosts();
                 loadVideos();
             } else {
-                                localStorage.clear();
-                sessionStorage.clear();
                 window.location.replace('login.html');
             }
         });

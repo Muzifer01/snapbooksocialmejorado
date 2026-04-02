@@ -1565,6 +1565,8 @@
         <div class="auth-spinner"></div>
         <div class="auth-spinner-text">Verificando sesión...</div>
     </div>
+        <div class="auth-spinner-text">Verificando sesión...</div>
+    </div>
 
 
     <header class="header">
@@ -3548,14 +3550,13 @@
 
         auth.onAuthStateChanged((user) => {
             if (!user) {
-                localStorage.clear();
-                sessionStorage.clear();
                 window.location.replace('login.html');
                 return;
             }
-            // Mostrar página solo si hay sesión válida
+            // Sesión verificada por Firebase Auth — mostrar página
             const overlay = document.getElementById('auth-guard-overlay');
             if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
+
             currentUser = user;
             listenUserProfile(user.uid);  // ← Siempre sincronizar perfil real
             initUserLockListener(user.uid);  // ← Bloqueo global en tiempo real
