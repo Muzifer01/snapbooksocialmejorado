@@ -654,6 +654,8 @@
         <div class="auth-spinner"></div>
         <div class="auth-spinner-text">Verificando sesión...</div>
     </div>
+        <div class="auth-spinner-text">Verificando sesión...</div>
+    </div>
 
     <header class="header">
         <h1>Crear Post</h1>
@@ -776,7 +778,7 @@
             <div class="divider"></div>
 
             <!-- 7. PUBLICAR -->
-            <button type="button" class="btn-publish" id="btn-publish" onclick="publishPost()" disabled>📤 Publicar</button>
+            <button type="button" class="btn-publish" id="btn-publish" onclick="publishPost()">📤 Publicar</button>
             <div id="loading" class="loading">Publicando...</div>
         </div>
     </main>
@@ -836,8 +838,6 @@
             const overlay = document.getElementById('auth-guard-overlay');
             if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
                 currentUser = user;
-                const btnPublish = document.getElementById('btn-publish');
-                if (btnPublish) btnPublish.disabled = false;
                 const userRef = ref(db, `Users/${user.uid}`);
                 // Escuchar perfil en tiempo real — datos siempre desde Firebase
                 onValue(userRef, (snapshot) => {
@@ -1006,7 +1006,7 @@
         // PUBLICAR
         window.publishPost = async () => {
             if (!currentUser) {
-                window.location.replace('login.html');
+                alert('Debes estar autenticado');
                 return;
             }
 
@@ -1071,6 +1071,7 @@
 
                 const postData = {
                     uid: currentUser.uid,
+                    authorId: currentUser.uid, // alias para compatibilidad con reglas
                     nick: userProfileData.nick || 'Usuario',
                     perfil: userProfileData.perfil || 'https://www.w3schools.com/howto/img_avatar.png',
                     text: postText,
