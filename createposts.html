@@ -654,8 +654,6 @@
         <div class="auth-spinner"></div>
         <div class="auth-spinner-text">Verificando sesión...</div>
     </div>
-        <div class="auth-spinner-text">Verificando sesión...</div>
-    </div>
 
     <header class="header">
         <h1>Crear Post</h1>
@@ -778,7 +776,7 @@
             <div class="divider"></div>
 
             <!-- 7. PUBLICAR -->
-            <button type="button" class="btn-publish" id="btn-publish" onclick="publishPost()">📤 Publicar</button>
+            <button type="button" class="btn-publish" id="btn-publish" onclick="publishPost()" disabled>📤 Publicar</button>
             <div id="loading" class="loading">Publicando...</div>
         </div>
     </main>
@@ -838,6 +836,9 @@
             const overlay = document.getElementById('auth-guard-overlay');
             if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
                 currentUser = user;
+                // Habilitar el botón de publicar ahora que hay sesión confirmada
+                const btnPublish = document.getElementById('btn-publish');
+                if (btnPublish) btnPublish.disabled = false;
                 const userRef = ref(db, `Users/${user.uid}`);
                 // Escuchar perfil en tiempo real — datos siempre desde Firebase
                 onValue(userRef, (snapshot) => {
@@ -1006,7 +1007,8 @@
         // PUBLICAR
         window.publishPost = async () => {
             if (!currentUser) {
-                alert('Debes estar autenticado');
+                alert('⚠️ Debes iniciar sesión para publicar');
+                window.location.replace('login.html');
                 return;
             }
 

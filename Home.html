@@ -1245,8 +1245,47 @@
             transition: width 0.1s linear;
         }
     </style>
+
+    <!-- ===== AUTH GUARD — bloquea la página hasta verificar sesión ===== -->
+    <style>
+        #auth-guard-overlay {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            transition: opacity 0.35s ease;
+        }
+        #auth-guard-overlay.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .auth-spinner {
+            width: 42px; height: 42px;
+            border: 3px solid rgba(255,255,255,0.08);
+            border-top-color: #007AFF;
+            border-radius: 50%;
+            animation: authSpin 0.75s linear infinite;
+        }
+        @keyframes authSpin { to { transform: rotate(360deg); } }
+        .auth-spinner-text {
+            font-size: 13px;
+            color: rgba(255,255,255,0.35);
+            font-family: -apple-system, sans-serif;
+        }
+    </style>
 </head>
 <body>
+    <!-- ===== AUTH GUARD OVERLAY ===== -->
+    <div id="auth-guard-overlay">
+        <div class="auth-spinner"></div>
+        <div class="auth-spinner-text">Verificando sesión...</div>
+    </div>
+
     <!-- CONTENEDOR DE PARTÍCULAS FLOTANTES -->
     <div class="particles-container" id="particles-container"></div>
 
@@ -1323,7 +1362,7 @@
             <span>INICIO</span>
         </a>
 
-        <a href="createposts.html" class="btn-add">+</a>
+        <a href="createposts.html" class="btn-add" id="btn-crear-post" onclick="return checkAuthBeforePost(event)">+</a>
 
         <a href="menu.html" class="nav-item">
             <img src="https://img.icons8.com/m_rounded/512/FFFFFF/menu.png" alt="Menu">
@@ -1461,6 +1500,10 @@
 
         onAuthStateChanged(auth, async (user) => {
             console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
+            // Quitar el overlay de carga en cualquier caso
+            const overlay = document.getElementById('auth-guard-overlay');
+            if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
+
             if (user) {
                 currentUser = user;
                 currentUserProfile = null;
@@ -1469,9 +1512,20 @@
                 loadPosts();
                 loadVideos();
             } else {
-                window.location.href = "login.html";
+                window.location.replace("login.html");
             }
         });
+
+        // Verificar sesión antes de ir a crear post
+        window.checkAuthBeforePost = (e) => {
+            if (!currentUser) {
+                e.preventDefault();
+                showNotification('⚠️ Debes iniciar sesión para publicar');
+                setTimeout(() => { window.location.href = 'login.html'; }, 1200);
+                return false;
+            }
+            return true;
+        };
 
         // LÓGICA DE MOOD FEED
         const moodItems = document.querySelectorAll('.mood-item');
