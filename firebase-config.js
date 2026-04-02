@@ -5,13 +5,14 @@ import { getDatabase } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-
 import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDN89D9cljm0e8OzrPtloYOUcOY7XSXBqg",
+  apiKey: "AIzaSyAIBB2NTYRKnt1VzjIWYhM3B_m3r1-HUwk",
   authDomain: "socialtest-3d114.firebaseapp.com",
   databaseURL: "https://socialtest-3d114-default-rtdb.firebaseio.com",
   projectId: "socialtest-3d114",
   storageBucket: "socialtest-3d114.firebasestorage.app",
   messagingSenderId: "779140232754",
-  appId: "1:779140232754:android:8b1d492ce1970d98e26e2b"
+  appId: "1:779140232754:web:1951d5fd5e65f631e26e2b",
+  measurementId: "G-QQT4KZHDD6"
 };
 
 const app = initializeApp(firebaseConfig);
