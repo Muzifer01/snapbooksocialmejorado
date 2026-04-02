@@ -1180,8 +1180,44 @@
             transition: width 0.1s linear;
         }
     </style>
+    <style id="auth-guard-style">
+        #auth-guard-overlay {
+            display: flex;
+            position: fixed;
+            inset: 0;
+            z-index: 999999;
+            background: #000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+            transition: opacity 0.35s;
+        }
+        #auth-guard-overlay.hide {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .auth-spinner {
+            width: 42px; height: 42px;
+            border: 3px solid rgba(255,255,255,0.08);
+            border-top-color: #007AFF;
+            border-radius: 50%;
+            animation: authSpin 0.75s linear infinite;
+        }
+        @keyframes authSpin { to { transform: rotate(360deg); } }
+        .auth-spinner-text {
+            font-size: 13px;
+            color: rgba(255,255,255,0.35);
+            font-family: -apple-system, sans-serif;
+            letter-spacing: 0.3px;
+        }
+    </style>
 </head>
 <body>
+    <div id="auth-guard-overlay">
+        <div class="auth-spinner"></div>
+        <div class="auth-spinner-text">Verificando sesión...</div>
+    </div>
     <!-- CONTENEDOR DE PARTÍCULAS FLOTANTES -->
     <div class="particles-container" id="particles-container"></div>
 
@@ -1397,6 +1433,9 @@
         onAuthStateChanged(auth, async (user) => {
             console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
             if (user) {
+            // Mostrar página solo si hay sesión válida
+            const overlay = document.getElementById('auth-guard-overlay');
+            if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
                 currentUser = user;
                 currentUserProfile = null;
                 listenUserProfile(user.uid);
@@ -1404,7 +1443,9 @@
                 loadPosts();
                 loadVideos();
             } else {
-                window.location.href = "login.html";
+                                localStorage.clear();
+                sessionStorage.clear();
+                window.location.replace('login.html');
             }
         });
 
