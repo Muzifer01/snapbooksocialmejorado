@@ -37,8 +37,6 @@ export function createPostCard(post, postId) {
     const text = post.text || post.mensaje || "";
     const image = post.image || "";
     const multi = post.multi || "";
-    const currentUser = auth.currentUser;
-
     const card = document.createElement('div');
     card.className = 'post-card';
     
@@ -99,7 +97,8 @@ export function createPostCard(post, postId) {
         const totalLikes = Object.keys(likes).length;
         countLike.innerText = totalLikes > 0 ? totalLikes : "0";
 
-        if (currentUser && likes[currentUser.uid]) {
+        const me = auth.currentUser;
+        if (me && likes[me.uid]) {
             iconLike.src = "https://img.icons8.com/m_rounded/512/007AFF/like.png"; // Azul SnapBook
             countLike.style.color = "#007AFF";
         } else {
@@ -109,6 +108,7 @@ export function createPostCard(post, postId) {
     });
 
     btnLike.onclick = () => {
+        const currentUser = auth.currentUser;
         if (!currentUser) return alert("Debes iniciar sesión para reaccionar");
         const myLikeRef = ref(db, `Likes/${postId}/${currentUser.uid}`);
         onValue(myLikeRef, (snapshot) => {
