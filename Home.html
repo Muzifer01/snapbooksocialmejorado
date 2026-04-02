@@ -330,6 +330,77 @@
         }
         .nsfw-btn:hover { transform: scale(1.05); background: #f0f0f0; }
 
+        /* ===== SISTEMA TYPE:LOCK — BLOQUEO GLOBAL DE USUARIO ===== */
+        #user-lock-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: #000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 30px;
+        }
+        #user-lock-screen.active { display: flex; }
+        #user-lock-screen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 40%, rgba(255,59,48,0.18) 0%, transparent 65%),
+                        radial-gradient(ellipse at 80% 80%, rgba(255,149,0,0.10) 0%, transparent 50%);
+            animation: lockAura 6s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+        @keyframes lockAura {
+            from { opacity: 0.6; transform: scale(1); }
+            to   { opacity: 1;   transform: scale(1.08); }
+        }
+        .lock-screen-icon {
+            font-size: 72px;
+            margin-bottom: 24px;
+            position: relative;
+            z-index: 1;
+            animation: lockIconBounce 2.8s ease-in-out infinite;
+            filter: drop-shadow(0 0 24px rgba(255,59,48,0.6));
+        }
+        @keyframes lockIconBounce {
+            0%,100% { transform: translateY(0) scale(1); }
+            50%      { transform: translateY(-10px) scale(1.06); }
+        }
+        .lock-screen-title {
+            font-size: 26px;
+            font-weight: 900;
+            color: #fff;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 1;
+        }
+        .lock-screen-subtitle {
+            font-size: 15px;
+            color: rgba(255,255,255,0.5);
+            line-height: 1.6;
+            max-width: 300px;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 36px;
+        }
+        .lock-screen-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,59,48,0.3);
+            border-radius: 20px;
+            padding: 18px 28px;
+            font-size: 13px;
+            color: rgba(255,255,255,0.4);
+            position: relative;
+            z-index: 1;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+        .lock-screen-card strong { color: rgba(255,255,255,0.7); }
+
         .post-published-video {
             width: 100%;
             border-radius: 18px;
@@ -1337,6 +1408,7 @@
                 currentUser = user;
                 currentUserProfile = null;
                 listenUserProfile(user.uid);
+                initUserLockListener(user.uid);  // ← Bloqueo global en tiempo real
                 loadPosts();
                 loadVideos();
             } else {
@@ -2573,6 +2645,29 @@
             }
         });
 
+        // ===== SISTEMA TYPE:LOCK — CONTROL DE ACCESO GLOBAL =====
+        // Escucha en tiempo real el campo Users/{uid}/type en Firebase.
+        // Si vale "lock"   → muestra pantalla de bloqueo completa, usuario no puede hacer nada.
+        // Si vale "unlock" (o cualquier otro valor) → acceso normal.
+        function initUserLockListener(uid) {
+            onValue(ref(db, `Users/${uid}/type`), (snap) => {
+                const tipo = (snap.val() || '').toString().toLowerCase().trim();
+                applyUserLock(tipo === 'lock');
+            });
+        }
+
+        function applyUserLock(locked) {
+            const screen = document.getElementById('user-lock-screen');
+            if (!screen) return;
+            if (locked) {
+                screen.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                screen.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        }
+
         window.showRandomPost = () => {
             const container = document.getElementById('post-feed');
             const posts = container.querySelectorAll('.post-card');
@@ -2603,5 +2698,18 @@
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+    <!-- ===== PANTALLA DE BLOQUEO GLOBAL (type:lock) ===== -->
+    <div id="user-lock-screen">
+        <div class="lock-screen-icon">🔒</div>
+        <div class="lock-screen-title">Acceso Restringido</div>
+        <div class="lock-screen-subtitle">
+            Tu cuenta ha sido bloqueada por un administrador.<br>
+            No puedes acceder a esta página en este momento.
+        </div>
+        <div class="lock-screen-card">
+            Si crees que esto es un error, contacta al <strong>administrador</strong> para resolver tu situación.
+        </div>
+    </div>
+
 </body>
 </html>

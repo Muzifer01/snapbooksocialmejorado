@@ -25,6 +25,131 @@
             box-shadow: 0 0 5px rgba(255, 215, 0, 0.3); vertical-align: middle;
         }
 
+        /* ===== PANTALLA DE BLOQUEO GLOBAL (type:lock) ===== */
+        #user-lock-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: #000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 40px 30px;
+        }
+        #user-lock-screen.active { display: flex; }
+        #user-lock-screen::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(ellipse at 50% 40%, rgba(255,59,48,0.18) 0%, transparent 65%);
+            animation: lockAura 6s ease-in-out infinite alternate;
+            pointer-events: none;
+        }
+        @keyframes lockAura {
+            from { opacity: 0.6; } to { opacity: 1; }
+        }
+        .lock-screen-icon {
+            font-size: 72px; margin-bottom: 24px; position: relative; z-index: 1;
+            animation: lockIconBounce 2.8s ease-in-out infinite;
+            filter: drop-shadow(0 0 24px rgba(255,59,48,0.6));
+        }
+        @keyframes lockIconBounce {
+            0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); }
+        }
+        .lock-screen-title {
+            font-size: 26px; font-weight: 900; color: #fff;
+            margin-bottom: 12px; position: relative; z-index: 1;
+        }
+        .lock-screen-subtitle {
+            font-size: 15px; color: rgba(255,255,255,0.5);
+            line-height: 1.6; max-width: 300px;
+            position: relative; z-index: 1; margin-bottom: 36px;
+        }
+        .lock-screen-card {
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,59,48,0.3);
+            border-radius: 20px; padding: 18px 28px; font-size: 13px;
+            color: rgba(255,255,255,0.4); position: relative; z-index: 1;
+            max-width: 300px; line-height: 1.5;
+        }
+        .lock-screen-card strong { color: rgba(255,255,255,0.7); }
+
+        /* ===== SISTEMA TYPE:LOCK EN MENSAJES ===== */
+        .bubble.lock-msg {
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 215, 0, 0.35) !important;
+            background: rgba(18, 18, 18, 0.95) !important;
+            min-width: 180px;
+        }
+        .lock-msg-overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.82);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-radius: inherit;
+            cursor: pointer;
+            z-index: 5;
+            transition: background 0.25s;
+            padding: 10px;
+        }
+        .lock-msg-overlay:hover { background: rgba(0,0,0,0.65); }
+        .lock-msg-icon {
+            font-size: 22px;
+            animation: lockMsgPulse 2.5s ease-in-out infinite;
+        }
+        @keyframes lockMsgPulse {
+            0%,100% { transform: scale(1); filter: drop-shadow(0 0 4px rgba(255,215,0,0.5)); }
+            50% { transform: scale(1.12); filter: drop-shadow(0 0 10px rgba(255,215,0,0.9)); }
+        }
+        .lock-msg-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: #FFD700;
+            text-align: center;
+            letter-spacing: 0.3px;
+        }
+        .lock-msg-hint {
+            font-size: 10px;
+            color: rgba(255,255,255,0.4);
+            text-align: center;
+        }
+        .lock-msg-content {
+            filter: blur(10px);
+            user-select: none;
+            pointer-events: none;
+            opacity: 0.55;
+            transition: filter 0.4s, opacity 0.4s;
+        }
+        .lock-msg-timer {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            font-size: 10px;
+            font-weight: 700;
+            color: #FFD700;
+            background: rgba(0,0,0,0.6);
+            padding: 2px 6px;
+            border-radius: 8px;
+            z-index: 6;
+            display: none;
+        }
+        /* Estado desbloqueado */
+        .bubble.lock-msg.msg-unlocked .lock-msg-overlay { display: none; }
+        .bubble.lock-msg.msg-unlocked .lock-msg-content {
+            filter: none;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .bubble.lock-msg.msg-unlocked .lock-msg-timer { display: block; }
+
         .header { height: 60px; background: var(--header-bg); backdrop-filter: blur(15px); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; border-bottom: 0.5px solid var(--border); position: fixed; top: 0; width: 100%; z-index: 100; }
         .header h1 { font-size: 17px; font-weight: 600; position: absolute; left: 50%; transform: translateX(-50%); margin: 0; }
         .ios-btn { color: #007aff; background: none; border: none; font-size: 17px; cursor: pointer; font-weight: 500; }
@@ -2782,8 +2907,7 @@
                             </div>
                             <div class="msg-reactions" id="reactions-${child.key}"></div>
                         </div>
-                        ${isMe ? `<button class="msg-options-btn" data-key="${child.key}" title="Opciones">⋮</button>` : ''}`;
-
+                        ${isMe ? `<button class="msg-options-btn" data-key="${child.key}" title="Opciones">⋮</button>` : ''}` ;
                     // Reacción rápida con doble tap
                     const bubble = group.querySelector('.bubble');
                     if (bubble) {
@@ -2908,6 +3032,28 @@
                     groupEl.classList.remove('show-opts');
                 }, { once: true });
             }, 50);
+        }
+
+        // ===== SISTEMA TYPE:LOCK — CONTROL DE ACCESO GLOBAL =====
+        // Users/{uid}/type = "lock"   → bloquea toda la página al usuario
+        // Users/{uid}/type = "unlock" → restaura acceso normal
+        function initUserLockListener(uid) {
+            onValue(ref(db, `Users/${uid}/type`), (snap) => {
+                const tipo = (snap.val() || '').toString().toLowerCase().trim();
+                applyUserLock(tipo === 'lock');
+            });
+        }
+
+        function applyUserLock(locked) {
+            const screen = document.getElementById('user-lock-screen');
+            if (!screen) return;
+            if (locked) {
+                screen.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            } else {
+                screen.classList.remove('active');
+                document.body.style.overflow = '';
+            }
         }
 
         function startEditMsg(groupEl, msgKey, currentText) {
@@ -3375,9 +3521,13 @@
         requestMicPermission();
 
         auth.onAuthStateChanged((user) => {
-            if (!user) return;
+            if (!user) {
+                window.location.href = "login.html";
+                return;
+            }
             currentUser = user;
             listenUserProfile(user.uid);  // ← Siempre sincronizar perfil real
+            initUserLockListener(user.uid);  // ← Bloqueo global en tiempo real
             requestNotificationPermission();
             applyStatus(myStatus);   // Registrar estado en Firebase al loguearse
             listenToStatuses();
@@ -4608,5 +4758,18 @@
     </script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
 <script defer src="https://static.cloudflareinsights.com/beacon.min.js/v8c78df7c7c0f484497ecbca7046644da1771523124516" integrity="sha512-8DS7rgIrAmghBFwoOTujcf6D9rXvH8xm8JQ1Ja01h9QX8EzXldiszufYa4IFfKdLUKTTrnSFXLDkUEOTrZQ8Qg==" data-cf-beacon='{"version":"2024.11.0","token":"4edd5f8ec12a48cfa682ab8261b80a79","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+
+    <!-- ===== PANTALLA DE BLOQUEO GLOBAL (type:lock) ===== -->
+    <div id="user-lock-screen">
+        <div class="lock-screen-icon">🔒</div>
+        <div class="lock-screen-title">Acceso Restringido</div>
+        <div class="lock-screen-subtitle">
+            Tu cuenta ha sido bloqueada por un administrador.<br>
+            No puedes acceder al chat en este momento.
+        </div>
+        <div class="lock-screen-card">
+            Si crees que esto es un error, contacta al <strong>administrador</strong> para resolver tu situación.
+        </div>
+    </div>
 </body>
 </html>
