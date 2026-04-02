@@ -178,8 +178,23 @@
         }
         #btn-send-comment svg { width: 18px; height: 18px; fill: white; }
     </style>
+    <style id="auth-guard-style">
+        #auth-guard-overlay {
+            display: flex; position: fixed; inset: 0; z-index: 999999;
+            background: #000; align-items: center; justify-content: center;
+            flex-direction: column; gap: 16px; transition: opacity 0.35s;
+        }
+        #auth-guard-overlay.hide { opacity: 0; pointer-events: none; }
+        .auth-spinner { width: 42px; height: 42px; border: 3px solid rgba(255,255,255,0.08); border-top-color: #007AFF; border-radius: 50%; animation: authSpin 0.75s linear infinite; }
+        @keyframes authSpin { to { transform: rotate(360deg); } }
+        .auth-spinner-text { font-size: 13px; color: rgba(255,255,255,0.35); font-family: -apple-system, sans-serif; }
+    </style>
 </head>
 <body>
+    <div id="auth-guard-overlay">
+        <div class="auth-spinner"></div>
+        <div class="auth-spinner-text">Verificando sesión...</div>
+    </div>
 
     <header class="ios-header">
         <button class="btn-back" onclick="history.back()">
@@ -254,7 +269,13 @@
         }
 
         onAuthStateChanged(auth, (user) => {
-            if (!user) return;
+            if (user) {
+                const overlay = document.getElementById('auth-guard-overlay');
+                if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
+            } else {
+                window.location.replace('login.html');
+                return;
+            }
 
             if (postId) {
                 const commentsRef = query(ref(db, `Comments/${postId}`), limitToLast(50));
@@ -277,10 +298,11 @@
                     const newCommentRef = push(ref(db, `Comments/${postId}`));
                     await set(newCommentRef, {
                         uid: user.uid,
+                        authorId: user.uid,
                         nick: localStorage.getItem('nick') || "Usuario",
                         perfil: localStorage.getItem('perfil') || "",
                         text: val,
-                        time: Date.now().toString(),
+                        time: Date.now(),
                         multi: getPlatformName()
                     });
                     inputComment.value = "";
