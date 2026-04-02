@@ -2638,6 +2638,7 @@
                 const mediaUrl = file ? await uploadChatMediaFile(file, isVideo ? 'chat-videos' : 'chat-images') : item.dataUrl;
                 const msgData = {
                     uid: currentUser.uid,
+                    authorId: currentUser.uid,
                     nick: getMyNick(),
                     perfil: getMyPerfil(),
                     text: (i === finalSend.length - 1 && caption) ? caption : '',
@@ -2715,6 +2716,7 @@
 
             const msgData = {
                 uid: currentUser.uid,
+                authorId: currentUser.uid,
                 nick: getMyNick(),
                 perfil: getMyPerfil(),
                 text: `[GIF]`,
@@ -3446,6 +3448,7 @@
 
                     await push(ref(db, currentGroupRef), {
                         uid:          currentUser.uid,
+                        authorId:     currentUser.uid,
                         nick:         getMyNick(),
                         perfil:       getMyPerfil(),
                         text:         '',
@@ -3615,6 +3618,7 @@
                 const reply = getReplyData();
                 const msgData = {
                     uid: user.uid,
+                    authorId: user.uid,
                     nick: getMyNick(),
                     perfil: getMyPerfil(),
                     text: text,
@@ -4549,6 +4553,7 @@
             const tieneCheck = (userData.premium === 'verificado');
             const msgData = {
                 uid: currentUser.uid,
+                authorId: currentUser.uid,
                 nick: getMyNick(),
                 perfil: getMyPerfil(),
                 text: '[Sticker]',
