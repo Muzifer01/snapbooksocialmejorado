@@ -29,51 +29,37 @@
         #user-lock-screen {
             display: none;
             position: fixed;
-            inset: 0;
-            z-index: 99999;
-            background: #000;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100%; height: 100%;
+            z-index: 2147483647;
+            background: #000000;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             text-align: center;
             padding: 40px 30px;
+            pointer-events: all !important;
         }
-        #user-lock-screen.active { display: flex; }
-        #user-lock-screen::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(ellipse at 50% 40%, rgba(255,59,48,0.18) 0%, transparent 65%);
-            animation: lockAura 6s ease-in-out infinite alternate;
-            pointer-events: none;
-        }
-        @keyframes lockAura {
-            from { opacity: 0.6; } to { opacity: 1; }
-        }
+        #user-lock-screen.active { display: flex !important; }
         .lock-screen-icon {
-            font-size: 72px; margin-bottom: 24px; position: relative; z-index: 1;
+            font-size: 72px; margin-bottom: 24px;
             animation: lockIconBounce 2.8s ease-in-out infinite;
-            filter: drop-shadow(0 0 24px rgba(255,59,48,0.6));
+            filter: drop-shadow(0 0 24px rgba(255,59,48,0.7));
         }
         @keyframes lockIconBounce {
-            0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); }
+            0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); }
         }
-        .lock-screen-title {
-            font-size: 26px; font-weight: 900; color: #fff;
-            margin-bottom: 12px; position: relative; z-index: 1;
-        }
+        .lock-screen-title { font-size: 26px; font-weight: 900; color: #fff; margin-bottom: 12px; }
         .lock-screen-subtitle {
-            font-size: 15px; color: rgba(255,255,255,0.5);
-            line-height: 1.6; max-width: 300px;
-            position: relative; z-index: 1; margin-bottom: 36px;
+            font-size: 15px; color: rgba(255,255,255,0.55);
+            line-height: 1.6; max-width: 300px; margin-bottom: 36px;
         }
         .lock-screen-card {
-            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,59,48,0.3);
+            background: rgba(255,255,255,0.06); border: 1px solid rgba(255,59,48,0.4);
             border-radius: 20px; padding: 18px 28px; font-size: 13px;
-            color: rgba(255,255,255,0.4); position: relative; z-index: 1;
-            max-width: 300px; line-height: 1.5;
+            color: rgba(255,255,255,0.45); max-width: 300px; line-height: 1.5;
         }
-        .lock-screen-card strong { color: rgba(255,255,255,0.7); }
+        .lock-screen-card strong { color: rgba(255,255,255,0.75); }
 
         /* ===== SISTEMA TYPE:LOCK EN MENSAJES ===== */
         .bubble.lock-msg {
@@ -3050,17 +3036,28 @@
         }
 
         function applyUserLock(locked) {
-            const screen = document.getElementById('user-lock-screen');
-            if (!screen) return;
+            let screen = document.getElementById('user-lock-screen');
+            if (!screen) {
+                screen = document.createElement('div');
+                screen.id = 'user-lock-screen';
+                screen.innerHTML = `
+                    <div class="lock-screen-icon">🔒</div>
+                    <div class="lock-screen-title">Acceso Restringido</div>
+                    <div class="lock-screen-subtitle">
+                        Tu cuenta ha sido bloqueada por un administrador.<br>
+                        No puedes acceder al chat en este momento.
+                    </div>
+                    <div class="lock-screen-card">
+                        Si crees que esto es un error, contacta al <strong>administrador</strong>.
+                    </div>`;
+                document.body.appendChild(screen);
+            }
             if (locked) {
                 screen.classList.add('active');
                 document.body.style.overflow = 'hidden';
-                document.body.setAttribute('inert', '');
-                screen.removeAttribute('inert');
             } else {
                 screen.classList.remove('active');
                 document.body.style.overflow = '';
-                document.body.removeAttribute('inert');
             }
         }
 
