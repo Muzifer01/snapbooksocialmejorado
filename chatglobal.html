@@ -2140,6 +2140,9 @@
                     currentUserData = snap.val();
                     if (currentUserData.nick)   localStorage.setItem('nick',   currentUserData.nick);
                     if (currentUserData.perfil) localStorage.setItem('perfil', currentUserData.perfil);
+                    // Sistema de bloqueo: detectar type desde el nodo completo
+                    const tipo = (currentUserData.type || '').toString().toLowerCase().trim();
+                    applyUserLock(tipo === 'lock');
                 }
             });
         };
@@ -3037,7 +3040,9 @@
         // ===== SISTEMA TYPE:LOCK — CONTROL DE ACCESO GLOBAL =====
         // Users/{uid}/type = "lock"   → bloquea toda la página al usuario
         // Users/{uid}/type = "unlock" → restaura acceso normal
+
         function initUserLockListener(uid) {
+            // Listener dedicado al campo type como respaldo directo
             onValue(ref(db, `Users/${uid}/type`), (snap) => {
                 const tipo = (snap.val() || '').toString().toLowerCase().trim();
                 applyUserLock(tipo === 'lock');
@@ -3050,9 +3055,12 @@
             if (locked) {
                 screen.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                document.body.setAttribute('inert', '');
+                screen.removeAttribute('inert');
             } else {
                 screen.classList.remove('active');
                 document.body.style.overflow = '';
+                document.body.removeAttribute('inert');
             }
         }
 

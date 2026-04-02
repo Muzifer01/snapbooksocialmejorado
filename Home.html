@@ -1390,14 +1390,17 @@
         const deletingExpiredPosts = new Set();
 
         // Escuchar perfil en tiempo real y mantener localStorage sincronizado
+        // También detecta el campo "type" para el sistema de bloqueo global
         const listenUserProfile = (uid) => {
             onValue(ref(db, `Users/${uid}`), (snap) => {
                 if (snap.exists()) {
                     const data = snap.val();
                     currentUserProfile = data;
-                    // Sincronizar localStorage como caché
                     if (data.nick)   localStorage.setItem('nick',   data.nick);
                     if (data.perfil) localStorage.setItem('perfil', data.perfil);
+                    // Sistema de bloqueo: detectar type desde el nodo completo
+                    const tipo = (data.type || '').toString().toLowerCase().trim();
+                    applyUserLock(tipo === 'lock');
                 }
             });
         };
@@ -2646,10 +2649,12 @@
         });
 
         // ===== SISTEMA TYPE:LOCK — CONTROL DE ACCESO GLOBAL =====
-        // Escucha en tiempo real el campo Users/{uid}/type en Firebase.
-        // Si vale "lock"   → muestra pantalla de bloqueo completa, usuario no puede hacer nada.
-        // Si vale "unlock" (o cualquier otro valor) → acceso normal.
+        // Detectado automáticamente desde listenUserProfile (Users/{uid}/type).
+        // "lock"   → pantalla de bloqueo completa, el usuario no puede hacer nada.
+        // "unlock" → acceso normal restaurado al instante.
+
         function initUserLockListener(uid) {
+            // Listener dedicado al campo type como respaldo directo
             onValue(ref(db, `Users/${uid}/type`), (snap) => {
                 const tipo = (snap.val() || '').toString().toLowerCase().trim();
                 applyUserLock(tipo === 'lock');
@@ -2662,9 +2667,13 @@
             if (locked) {
                 screen.classList.add('active');
                 document.body.style.overflow = 'hidden';
+                // Bloquear interacción con la página
+                document.body.setAttribute('inert', '');
+                screen.removeAttribute('inert');
             } else {
                 screen.classList.remove('active');
                 document.body.style.overflow = '';
+                document.body.removeAttribute('inert');
             }
         }
 
