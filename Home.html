@@ -301,9 +301,9 @@
         .nsfw-overlay {
             position: absolute;
             inset: 0;
-            background: rgba(0,0,0,0.95);
-            backdrop-filter: blur(50px);
-            -webkit-backdrop-filter: blur(50px);
+            background: rgba(0,0,0,0.96);
+            backdrop-filter: blur(60px);
+            -webkit-backdrop-filter: blur(60px);
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -313,22 +313,87 @@
             color: white;
             text-align: center;
             padding: 20px;
-            border: 1px solid rgba(255, 75, 43, 0.3);
+            border: 1px solid rgba(255, 75, 43, 0.4);
         }
         .nsfw-overlay h4 { margin: 0 0 8px 0; color: #ff4b2b; font-size: 16px; font-weight: 800; }
-        .nsfw-overlay p { font-size: 11px; margin-bottom: 15px; opacity: 0.8; line-height: 1.4; }
+        .nsfw-overlay p { font-size: 11px; margin-bottom: 15px; opacity: 0.7; line-height: 1.4; }
         .nsfw-btn {
-            background: white;
-            color: black;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 50px;
-            font-size: 12px;
-            font-weight: 800;
-            cursor: pointer;
-            transition: 0.3s;
+            background: white; color: black; border: none;
+            padding: 10px 20px; border-radius: 50px;
+            font-size: 12px; font-weight: 800; cursor: pointer; transition: 0.3s;
         }
         .nsfw-btn:hover { transform: scale(1.05); background: #f0f0f0; }
+
+        /* ===== NSFW VIDEO OVERLAY — VideosViews ===== */
+        .video-nsfw-wall {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 28px 24px;
+            text-align: center;
+        }
+        .video-nsfw-icon {
+            font-size: 52px;
+            line-height: 1;
+            filter: drop-shadow(0 0 20px rgba(255,59,48,0.5));
+        }
+        .video-nsfw-title {
+            font-size: 18px;
+            font-weight: 800;
+            color: #fff;
+            margin: 4px 0 0;
+        }
+        .video-nsfw-sub {
+            font-size: 12px;
+            color: rgba(255,255,255,0.45);
+            line-height: 1.5;
+            max-width: 240px;
+        }
+        .video-nsfw-badge {
+            background: rgba(255,59,48,0.15);
+            border: 1px solid rgba(255,59,48,0.4);
+            color: #ff3b30;
+            font-size: 10px;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+        .video-nsfw-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            max-width: 200px;
+            margin-top: 8px;
+        }
+        .video-nsfw-confirm {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 14px;
+            padding: 11px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .video-nsfw-confirm:hover { background: rgba(255,255,255,0.18); }
+        .video-nsfw-skip {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.35);
+            font-size: 12px;
+            cursor: pointer;
+            padding: 6px;
+        }
 
         /* ===== SISTEMA TYPE:LOCK — BLOQUEO GLOBAL DE USUARIO ===== */
         #user-lock-screen {
@@ -1180,46 +1245,8 @@
             transition: width 0.1s linear;
         }
     </style>
-    <style id="auth-guard-style">
-        #auth-guard-overlay {
-            display: flex;
-            position: fixed;
-            inset: 0;
-            z-index: 999999;
-            background: #000;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            gap: 16px;
-            transition: opacity 0.35s;
-        }
-        #auth-guard-overlay.hide {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .auth-spinner {
-            width: 42px; height: 42px;
-            border: 3px solid rgba(255,255,255,0.08);
-            border-top-color: #007AFF;
-            border-radius: 50%;
-            animation: authSpin 0.75s linear infinite;
-        }
-        @keyframes authSpin { to { transform: rotate(360deg); } }
-        .auth-spinner-text {
-            font-size: 13px;
-            color: rgba(255,255,255,0.35);
-            font-family: -apple-system, sans-serif;
-            letter-spacing: 0.3px;
-        }
-    </style>
 </head>
 <body>
-    <div id="auth-guard-overlay">
-        <div class="auth-spinner"></div>
-        <div class="auth-spinner-text">Verificando sesión...</div>
-    </div>
-        <div class="auth-spinner-text">Verificando sesión...</div>
-    </div>
     <!-- CONTENEDOR DE PARTÍCULAS FLOTANTES -->
     <div class="particles-container" id="particles-container"></div>
 
@@ -1433,10 +1460,8 @@
         };
 
         onAuthStateChanged(auth, async (user) => {
+            console.log("Estado de autenticación cambiado:", user ? "Conectado" : "Desconectado");
             if (user) {
-            // Sesión verificada por Firebase Auth — mostrar página
-            const overlay = document.getElementById('auth-guard-overlay');
-            if (overlay) { overlay.classList.add('hide'); setTimeout(() => overlay.remove(), 380); }
                 currentUser = user;
                 currentUserProfile = null;
                 listenUserProfile(user.uid);
@@ -1444,7 +1469,7 @@
                 loadPosts();
                 loadVideos();
             } else {
-                window.location.replace('login.html');
+                window.location.href = "login.html";
             }
         });
 
@@ -1522,22 +1547,34 @@
             }
         };
 
-        // ── Sistema de detección y auto-eliminación de contenido 18+ ──
+        // ── Sistema de detección de contenido 18+ ──
         const NSFW_WORDS = [
             // Inglés
             'nude', 'naked', 'sex', 'sexy', 'porn', 'porno', 'pornography', 'xxx', 'hentai', 'gore',
             'nsfw', 'onlyfans', 'lewd', 'erotic', 'fetish', 'boobs', 'pussy', 'cock', 'dick',
             'ass', 'butt', 'nipple', 'orgasm', 'masturbat', 'horny', '18+', 'adult content',
+            'strip', 'stripper', 'escort', 'camgirl', 'topless', 'undress',
             // Español
             'desnudo', 'desnuda', 'sexo', 'sexual', 'puta', 'puto', 'putita', 'pene', 'vagina',
             'culo', 'tetas', 'porno', 'polla', 'coño', 'verga', 'cojiendo', 'cogiendo', 'culito',
             'masturbacion', 'masturbación', 'erótico', 'erotico', 'lenceria', 'lencería', 'follando',
-            'desnudos', 'adulto', 'contenido adulto', 'mayores de edad', '+18',
+            'desnudos', 'adulto', 'contenido adulto', 'mayores de edad', '+18', 'para adultos',
+            'putas', 'putas', 'zorras', 'caliente', 'tetona', 'culazo', 'nalgona',
         ];
 
         const checkNSFW = (post) => {
+            // 1. Campo nsfw explícito en Firebase
             if (post.nsfw === true) return true;
-            const content = ((post.text || '') + ' ' + (post.nick || '')).toLowerCase();
+            // 2. Campo type o category marcado como adulto
+            const tipo = (post.type || post.category || '').toLowerCase();
+            if (['adult', 'nsfw', '18+', 'adulto'].includes(tipo)) return true;
+            // 3. Detección por palabras clave en texto y nick
+            const content = (
+                (post.text || '') + ' ' +
+                (post.nick || '') + ' ' +
+                (post.tags || '') + ' ' +
+                (post.title || '')
+            ).toLowerCase();
             return NSFW_WORDS.some(word => content.includes(word));
         };
 
@@ -1877,6 +1914,9 @@
                     if (!vid) return;
 
                     if (entry.isIntersecting && entry.intersectionRatio >= 0.75) {
+                        // Si hay un wall NSFW activo, no cargar ni reproducir
+                        const nsfwWall = entry.target.querySelector('[id^="vnsfw-wall-"]');
+                        if (nsfwWall) return;
                         // Lazy load: cargar src solo al entrar en pantalla
                         if (!vid.src && vid.dataset.src) {
                             vid.src = vid.dataset.src;
@@ -1922,20 +1962,41 @@
                 const item = document.createElement('div');
                 item.className = 'video-feed-item';
                 const isNSFW = checkNSFW(post);
+
+                // Si es NSFW: el video NO carga hasta que el usuario confirme
                 item.innerHTML = `
                     ${isNSFW ? `
-                        <div class="nsfw-overlay" id="vnsfw-${postId}" style="border-radius:0; z-index:100;">
-                            <h4>Video Sensible</h4>
-                            <p>Este video ha sido marcado como inapropiado o 18+.</p>
-                            <button class="nsfw-btn" onclick="document.getElementById('vnsfw-${postId}').style.display='none'">Ver Video</button>
+                        <div class="video-nsfw-wall" id="vnsfw-wall-${postId}">
+                            <div class="video-nsfw-icon">🔞</div>
+                            <div class="video-nsfw-badge">Contenido +18</div>
+                            <div class="video-nsfw-title">Contenido para adultos</div>
+                            <div class="video-nsfw-sub">
+                                Este video contiene material sensible o para adultos.<br>
+                                No recomendado para menores de edad.
+                            </div>
+                            <div class="video-nsfw-actions">
+                                <button class="video-nsfw-confirm"
+                                    onclick="window.revealNSFWVideo('${postId}', '${post.video}')">
+                                    Tengo +18, ver video
+                                </button>
+                                <button class="video-nsfw-skip"
+                                    onclick="window.skipNSFWVideo('${postId}')">
+                                    Saltar este video
+                                </button>
+                            </div>
                         </div>
-                    ` : ''}
-                    <video
-                        data-src="${post.video}"
-                        playsinline loop preload="none"
-                        id="vid-${postId}"
-                        ${isNSFW ? 'style="filter: blur(50px);"' : ''}
-                    ></video>
+                        <video
+                            playsinline loop preload="none"
+                            id="vid-${postId}"
+                            style="filter: blur(30px); opacity: 0.2;"
+                        ></video>
+                    ` : `
+                        <video
+                            data-src="${post.video}"
+                            playsinline loop preload="none"
+                            id="vid-${postId}"
+                        ></video>
+                    `}
 
                     <div class="video-play-indicator" id="vpi-${postId}"></div>
 
@@ -2693,6 +2754,36 @@
                 }
             });
         }
+
+        // ===== NSFW VIDEO — Revelar o saltar =====
+        // El video NO carga hasta que el usuario confirme su edad.
+        window.revealNSFWVideo = (postId, videoSrc) => {
+            const wall = document.getElementById(`vnsfw-wall-${postId}`);
+            const vid  = document.getElementById(`vid-${postId}`);
+            if (!wall || !vid) return;
+
+            // Ahora sí cargar el video
+            vid.src = videoSrc;
+            vid.load();
+            vid.style.filter = '';
+            vid.style.opacity = '';
+            vid.muted = globalMuted;
+            vid.play().catch(() => { vid.muted = true; vid.play().catch(() => {}); });
+
+            // Quitar el wall con fade
+            wall.style.transition = 'opacity 0.4s';
+            wall.style.opacity = '0';
+            setTimeout(() => wall.remove(), 420);
+        };
+
+        window.skipNSFWVideo = (postId) => {
+            // Llevar al siguiente video
+            const items = [...document.querySelectorAll('.video-feed-item')];
+            const idx   = items.findIndex(el => el.querySelector(`#vid-${postId}`));
+            const next  = items[idx + 1];
+            if (next) next.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            else if (items[0]) items[0].scrollIntoView({ behavior: 'smooth', block: 'start' });
+        };
 
         window.showRandomPost = () => {
             const container = document.getElementById('post-feed');
