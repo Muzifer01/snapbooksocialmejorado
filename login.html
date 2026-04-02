@@ -435,13 +435,17 @@
 </div>
 
 <script type="module">
-import { auth } from './firebase-config.js';
+import { auth, db } from './firebase-config.js';
 import {
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
     sendEmailVerification,
     fetchSignInMethodsForEmail
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+// Si firebase-config no exporta db, inicializarlo aquí como fallback
+const _db = (typeof db !== 'undefined') ? db : getDatabase();
 
 // ============================================================
 // UTILIDADES UI
@@ -539,15 +543,28 @@ async function handleLogin() {
 
         // ── VERIFICACIÓN DE EMAIL ──────────────────────────────────────
         if (!user.emailVerified) {
-            // Mostrar banner de verificación pendiente
             document.getElementById('verify-banner').classList.add('show');
             showNotif('login-notif', 'warn',
                 '📧 Verifica tu correo para acceder. Revisa tu bandeja de entrada.');
-            
-            // Guardar temporalmente para el reenvío
             window._pendingVerifyUser = user;
+            await auth.signOut();
             setBtn('login-btn', false, 'Entrar');
             return;
+        }
+
+        // ── VERIFICAR SI LA CUENTA ESTÁ BLOQUEADA (type:lock) ─────────
+        try {
+            const userSnap = await get(ref(_db, `Users/${user.uid}/type`));
+            const tipo = (userSnap.val() || '').toString().toLowerCase().trim();
+            if (tipo === 'lock') {
+                await auth.signOut();
+                setBtn('login-btn', false, 'Entrar');
+                showNotif('login-notif', 'error',
+                    '🚫 Tu cuenta ha sido bloqueada. Contacta al administrador.');
+                return;
+            }
+        } catch (e) {
+            console.warn('[lock check]', e);
         }
 
         // ── GUARDAR SESIÓN CON DUAL UID ───────────────────────────────

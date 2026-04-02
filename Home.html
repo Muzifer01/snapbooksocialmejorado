@@ -1372,7 +1372,7 @@
         const deletingExpiredPosts = new Set();
 
         // Escuchar perfil en tiempo real y mantener localStorage sincronizado
-        // También detecta el campo "type" para el sistema de bloqueo global
+        // Si type === "lock" → cerrar sesión y redirigir al login
         const listenUserProfile = (uid) => {
             onValue(ref(db, `Users/${uid}`), (snap) => {
                 if (snap.exists()) {
@@ -1380,9 +1380,16 @@
                     currentUserProfile = data;
                     if (data.nick)   localStorage.setItem('nick',   data.nick);
                     if (data.perfil) localStorage.setItem('perfil', data.perfil);
-                    // Sistema de bloqueo: detectar type desde el nodo completo
+
                     const tipo = (data.type || '').toString().toLowerCase().trim();
-                    applyUserLock(tipo === 'lock');
+                    if (tipo === 'lock') {
+                        // Cerrar sesión y redirigir al login
+                        auth.signOut().then(() => {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            window.location.href = 'login.html';
+                        });
+                    }
                 }
             });
         };
@@ -2630,44 +2637,21 @@
             }
         });
 
-        // ===== SISTEMA TYPE:LOCK — CONTROL DE ACCESO GLOBAL =====
-        // Detectado automáticamente desde listenUserProfile (Users/{uid}/type).
-        // "lock"   → pantalla de bloqueo completa, el usuario no puede hacer nada.
-        // "unlock" → acceso normal restaurado al instante.
+        // ===== SISTEMA TYPE:LOCK — BLOQUEO Y EXPULSIÓN DE CUENTA =====
+        // Users/{uid}/type = "lock"   → cierra sesión y manda al login
+        // Users/{uid}/type = "unlock" → acceso normal
 
         function initUserLockListener(uid) {
-            // Listener dedicado al campo type como respaldo directo
             onValue(ref(db, `Users/${uid}/type`), (snap) => {
                 const tipo = (snap.val() || '').toString().toLowerCase().trim();
-                applyUserLock(tipo === 'lock');
+                if (tipo === 'lock') {
+                    auth.signOut().then(() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        window.location.href = 'login.html';
+                    });
+                }
             });
-        }
-
-        function applyUserLock(locked) {
-            let screen = document.getElementById('user-lock-screen');
-            // Si el div aún no existe en el DOM, crearlo dinámicamente
-            if (!screen) {
-                screen = document.createElement('div');
-                screen.id = 'user-lock-screen';
-                screen.innerHTML = `
-                    <div class="lock-screen-icon">🔒</div>
-                    <div class="lock-screen-title">Acceso Restringido</div>
-                    <div class="lock-screen-subtitle">
-                        Tu cuenta ha sido bloqueada por un administrador.<br>
-                        No puedes acceder a esta página en este momento.
-                    </div>
-                    <div class="lock-screen-card">
-                        Si crees que esto es un error, contacta al <strong>administrador</strong>.
-                    </div>`;
-                document.body.appendChild(screen);
-            }
-            if (locked) {
-                screen.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            } else {
-                screen.classList.remove('active');
-                document.body.style.overflow = '';
-            }
         }
 
         window.showRandomPost = () => {

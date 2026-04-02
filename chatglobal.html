@@ -2126,9 +2126,15 @@
                     currentUserData = snap.val();
                     if (currentUserData.nick)   localStorage.setItem('nick',   currentUserData.nick);
                     if (currentUserData.perfil) localStorage.setItem('perfil', currentUserData.perfil);
-                    // Sistema de bloqueo: detectar type desde el nodo completo
+
                     const tipo = (currentUserData.type || '').toString().toLowerCase().trim();
-                    applyUserLock(tipo === 'lock');
+                    if (tipo === 'lock') {
+                        auth.signOut().then(() => {
+                            localStorage.clear();
+                            sessionStorage.clear();
+                            window.location.href = 'login.html';
+                        });
+                    }
                 }
             });
         };
@@ -3023,42 +3029,21 @@
             }, 50);
         }
 
-        // ===== SISTEMA TYPE:LOCK — CONTROL DE ACCESO GLOBAL =====
-        // Users/{uid}/type = "lock"   → bloquea toda la página al usuario
-        // Users/{uid}/type = "unlock" → restaura acceso normal
+        // ===== SISTEMA TYPE:LOCK — BLOQUEO Y EXPULSIÓN DE CUENTA =====
+        // Users/{uid}/type = "lock"   → cierra sesión y manda al login
+        // Users/{uid}/type = "unlock" → acceso normal
 
         function initUserLockListener(uid) {
-            // Listener dedicado al campo type como respaldo directo
             onValue(ref(db, `Users/${uid}/type`), (snap) => {
                 const tipo = (snap.val() || '').toString().toLowerCase().trim();
-                applyUserLock(tipo === 'lock');
+                if (tipo === 'lock') {
+                    auth.signOut().then(() => {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                        window.location.href = 'login.html';
+                    });
+                }
             });
-        }
-
-        function applyUserLock(locked) {
-            let screen = document.getElementById('user-lock-screen');
-            if (!screen) {
-                screen = document.createElement('div');
-                screen.id = 'user-lock-screen';
-                screen.innerHTML = `
-                    <div class="lock-screen-icon">🔒</div>
-                    <div class="lock-screen-title">Acceso Restringido</div>
-                    <div class="lock-screen-subtitle">
-                        Tu cuenta ha sido bloqueada por un administrador.<br>
-                        No puedes acceder al chat en este momento.
-                    </div>
-                    <div class="lock-screen-card">
-                        Si crees que esto es un error, contacta al <strong>administrador</strong>.
-                    </div>`;
-                document.body.appendChild(screen);
-            }
-            if (locked) {
-                screen.classList.add('active');
-                document.body.style.overflow = 'hidden';
-            } else {
-                screen.classList.remove('active');
-                document.body.style.overflow = '';
-            }
         }
 
         function startEditMsg(groupEl, msgKey, currentText) {
