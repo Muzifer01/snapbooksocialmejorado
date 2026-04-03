@@ -1,4 +1,3 @@
-```markdown
 <div align="center">
   
   # 📸 SnapBookSocial
@@ -86,7 +85,6 @@ cd snapbooksocial
 # - Crea el archivo firebase-config.js en la raíz
 
 # 4. ¡Abre index.html y a disfrutar!
-```
 
 ### Configuración de Firebase (firebase-config.js)
 
