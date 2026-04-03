@@ -1,0 +1,224 @@
+:root {
+    --bg-black: #000000;
+    --card-dark: #1c1c1e;
+    --accent: #007AFF;
+    --text-muted: #888;
+    --line: rgba(255, 255, 255, 0.05);
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-black);
+    color: white;
+    font-family: -apple-system, system-ui, sans-serif;
+    height: 100vh;
+    overflow-x: hidden;
+}
+
+/* CABECERA */
+.header {
+    padding: 50px 25px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 32px;
+    font-weight: 800;
+}
+
+.header-icon {
+    font-size: 26px;
+    opacity: 0.8;
+}
+
+.content {
+    padding: 0 16px 150px;
+}
+
+/* SECCIÓN MI DISPOSITIVO */
+.device-info-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+.card-about {
+    flex: 1;
+    background: var(--card-dark);
+    border-radius: 25px;
+    padding: 25px 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.about-icon-circle {
+    width: 70px;
+    height: 70px;
+    background: #242426;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.about-icon-circle img {
+    width: 35px;
+    height: 35px;
+    object-fit: contain;
+}
+
+.card-about p {
+    margin: 0;
+    font-weight: 700;
+    font-size: 15px;
+}
+
+.card-about span {
+    color: var(--text-muted);
+    font-size: 11px;
+    margin-top: 4px;
+}
+
+.device-stack {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.card-stack-item {
+    background: var(--card-dark);
+    border-radius: 22px;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.card-stack-item p {
+    margin: 0 0 4px;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+.card-stack-item span {
+    color: var(--text-muted);
+    font-size: 11px;
+}
+
+/* LISTA DE OPCIONES */
+.option-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18px 8px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    text-decoration: none;
+    color: white;
+    transition: background 0.2s;
+}
+
+.option-item:active {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.option-left {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.icon-box {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+/* COLORES DE ICONOS */
+.icon-purple {
+    background: linear-gradient(135deg, #d4bfff, #9d6fff);
+}
+
+.icon-blue {
+    background: linear-gradient(135deg, #b3e5fc, #03a9f4);
+}
+
+.icon-green {
+    background: linear-gradient(135deg, #c2ffd8, #2ecc71);
+}
+
+.icon-red {
+    background: linear-gradient(135deg, #ff9f9f, #ff453a);
+}
+
+.arrow {
+    color: #444;
+    font-size: 18px;
+}
+
+/* NAV BAR */
+.nav-bar {
+    position: fixed;
+    bottom: 25px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 85%;
+    max-width: 400px;
+    background: rgba(25, 25, 25, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 35px;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 12px 0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 1000;
+}
+
+.nav-item {
+    color: #888;
+    font-size: 10px;
+    font-weight: bold;
+    text-align: center;
+    text-decoration: none;
+}
+
+.nav-item.active {
+    color: white;
+}
+
+.nav-item img {
+    width: 24px;
+    height: 24px;
+    display: block;
+    margin: 0 auto 4px;
+}
+
+.btn-add {
+    width: 55px;
+    height: 55px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: none;
+    color: white;
+    font-size: 30px;
+    cursor: pointer;
+    box-shadow: 0 5px 15px rgba(0, 122, 255, 0.4);
+    position: relative;
+    top: -5px;
+}

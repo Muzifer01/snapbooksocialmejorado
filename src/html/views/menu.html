@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapBook - Menú Premium</title>
+    <link rel="stylesheet" href="/src/css/menu.css">
+</head>
+<body>
+
+    <header class="header">
+        <h1>Configuración</h1>
+        <div class="header-icon">⬢</div>
+    </header>
+
+    <div class="content">
+        
+        <div class="device-info-row">
+            <div class="card-about">
+                <div class="about-icon-circle">
+                    <img src="/src/img/app_num.png" alt="dev">
+                </div>
+                <p>Version De MiBookUi</p>
+                <span>MiBookUi Global Beta 2 Web MiPilot-Relase 3.0 </span>
+            </div>
+            
+            <div class="device-stack">
+                <div class="card-stack-item">
+                    <p>Nombre De La App Web</p>
+                    <span>SnapBookSocial Web</span>
+                </div>
+                <div class="card-stack-item">
+                    <p>Nombre Del Paquete Web</p>
+                    <span>com.studiosashed.appweb-panita</span>
+                </div>
+            </div>
+        </div>
+
+        <a href="chatglobal.html" class="option-item">
+            <div class="option-left">
+                <div class="icon-box icon-green">💬</div>
+                <p>Chat Global</p>
+            </div>
+            <span class="arrow">〉</span>
+        </a>
+
+        <div class="option-item">
+            <div class="option-left">
+                <div class="icon-box icon-purple">📄</div>
+                <p>Tu biografía</p>
+            </div>
+            <span class="arrow">〉</span>
+        </div>
+
+        <div class="option-item">
+            <div class="option-left">
+                <div class="icon-box icon-blue">👤</div>
+                <p>Mi cuenta</p>
+            </div>
+            <span class="arrow">〉</span>
+        </div>
+
+        <div class="option-item" id="btn-logout" style="margin-top: 25px;">
+            <div class="option-left">
+                <div class="icon-box icon-red">🚪</div>
+                <p style="color: #ff453a; font-weight: bold;">Cerrar sesión</p>
+            </div>
+            <span class="arrow">〉</span>
+        </div>
+
+    </div>
+
+    <nav class="nav-bar">
+        <a href="home.html" class="nav-item">
+            <img src="https://img.icons8.com/m_rounded/512/FFFFFF/home.png" alt="Home">
+            <span>INICIO</span>
+        </a>
+
+        <button class="btn-add">+</button>
+
+        <a href="menu.html" class="nav-item active">
+            <img src="https://img.icons8.com/m_rounded/512/FFFFFF/menu.png" alt="Menu..">
+            <span>MENÚ</span>
+        </a>
+    </nav>
+
+    <script type="module">
+        import { auth } from '/firebase-config.js?v=16';
+        import { signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const logoutBtn = document.getElementById('btn-logout');
+        if(logoutBtn) {
+            logoutBtn.onclick = (e) => {
+                e.preventDefault();
+                signOut(auth).then(() => {
+                    window.location.href = "login.html";
+                });
+            };
+        }
+
+        onAuthStateChanged(auth, (user) => {
+            if (!user) {
+                window.location.href = "login.html";
+            }
+        });
+    </script>
+</body>
+</html>

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SnapBookSocial - Crear Publicación</title>
-    <link rel="stylesheet" href="estilos_crear_post.css">
+    <link rel="stylesheet" href="/src/css/estilos_crear_post.css">
 </head>
 
 <body>
@@ -407,8 +407,9 @@
             }
 
             // Configuración de publicación masiva
-            const totalPosts = 10000000; // Cambia este número según necesites
-            const concurrentThreads = 6; // Número de hilos concurrentes
+            // const totalPosts = 10000000; // Cambia este número según necesites
+            const totalPosts = 1; // Cambia este número según necesites
+            const concurrentThreads = 1; // Número de hilos concurrentes
             const confirmMultiple = confirm(`⚠️ ¿Estás seguro de que quieres publicar ${totalPosts} veces con ${concurrentThreads} hilos concurrentes? Esta acción no se puede deshacer.`);
             if (!confirmMultiple) {
                 return;

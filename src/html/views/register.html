@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro - SnapBook</title>
+    <link rel="stylesheet" href="/src/css/register.css">
+</head>
+
+<body>
+
+    <div class="card">
+        <h1>SnapBook</h1>
+
+        <input type="email" id="email" placeholder="Correo electrónico">
+        <input type="password" id="pass" placeholder="Contraseña">
+        <input type="password" id="confirmPass" placeholder="Confirmar contraseña">
+
+        <button class="btn-reg" id="registerBtn">Registrarse</button>
+
+        <div class="footer-link">
+            ¿Ya tienes cuenta? <a href="/src/html/views/login.html">Inicia sesión</a>
+        </div>
+    </div>
+
+    <script type="module">
+        import { auth, db } from '/firebase-config.js?v=1';
+        import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        // Referencias a elementos
+        const emailInput = document.getElementById('email');
+        const passInput = document.getElementById('pass');
+        const confirmPassInput = document.getElementById('confirmPass');
+        const registerBtn = document.getElementById('registerBtn');
+
+        async function handleRegister() {
+            const email = emailInput.value.trim();
+            const pass = passInput.value;
+            const confirmPass = confirmPassInput.value;
+
+            if (!email || !pass || !confirmPass) {
+                alert("Completa todos los campos");
+                return;
+            }
+
+            if (pass !== confirmPass) {
+                alert("Las contraseñas no coinciden");
+                return;
+            }
+
+            if (pass.length < 6) {
+                alert("La contraseña debe tener al menos 6 caracteres");
+                return;
+            }
+
+            registerBtn.disabled = true;
+            registerBtn.textContent = "Registrando...";
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
+
+                // Guardar en Realtime Database (SIN contraseña)
+                await set(ref(db, `Users/${user.uid}`), {
+                    correo: email,
+                    nick: "Nuevo Usuario",
+                    perfil: "",
+                    type: "unlocked",
+                    createdAt: new Date().toISOString()
+                });
+
+                localStorage.setItem('uid', user.uid);
+                localStorage.setItem('correo', email);
+
+                window.location.href = "/src/html/views/perfil.html";
+
+            } catch (error) {
+                alert("Error: " + error.message);
+                registerBtn.disabled = false;
+                registerBtn.textContent = "Registrarse";
+                passInput.value = '';
+                confirmPassInput.value = '';
+            }
+        }
+
+        // Aquí se conecta el botón con la función
+        registerBtn.addEventListener('click', handleRegister);
+    </script>
+</body>
+
+</html>

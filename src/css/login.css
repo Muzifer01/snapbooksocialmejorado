@@ -1,0 +1,81 @@
+:root {
+    --bg: #000;
+    --glass: rgba(28, 28, 30, 0.8);
+    --accent: #007AFF;
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: white;
+    font-family: -apple-system, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.bg-blur {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: var(--accent);
+    filter: blur(120px);
+    border-radius: 50%;
+    opacity: 0.3;
+}
+
+.container {
+    position: relative;
+    z-index: 1;
+    width: 85%;
+    max-width: 380px;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: center;
+}
+
+.logo {
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 30px;
+}
+
+input {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 15px;
+    color: white;
+    margin-bottom: 15px;
+    box-sizing: border-box;
+    outline: none;
+}
+
+.btn {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 15px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.link {
+    margin-top: 20px;
+    font-size: 13px;
+    color: #888;
+}
+
+.link a {
+    color: var(--accent);
+    text-decoration: none;
+}

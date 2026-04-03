@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapBook - Login</title>
+    <link rel="stylesheet" href="/src/css/login.css">
+</head>
+
+<body>
+    <div class="bg-blur"></div>
+    <div class="container">
+        <div class="logo">SnapBookSocial</div>
+
+        <input type="email" id="emailInput" placeholder="Correo">
+        <input type="password" id="passInput" placeholder="Contraseña">
+        <button class="btn" id="loginBtn">Entrar</button>
+
+        <div class="link">¿No tienes cuenta? <a href="register.html">Regístrate</a></div>
+    </div>
+
+    <script type="module" >
+        import { auth } from '/firebase-config.js?v=1';
+        import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        // Obtener referencias a los elementos del DOM
+        const emailInput = document.getElementById('emailInput');
+        const passInput = document.getElementById('passInput');
+        const loginBtn = document.getElementById('loginBtn');
+
+        // Función principal de login
+        async function handleLogin() {
+            const email = emailInput.value.trim();
+            const pass = passInput.value;
+
+            if (!email || !pass) {
+                alert("Por favor, completa todos los campos.");
+                return;
+            }
+
+            // Feedback visual
+            loginBtn.disabled = true;
+            loginBtn.style.opacity = "0.7";
+            loginBtn.textContent = "Verificando...";
+
+            try {
+                // 1. Autenticación con Firebase Auth
+                const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+                const user = userCredential.user;
+
+                // 2. Guardar datos básicos en LocalStorage
+                localStorage.setItem('uid', user.uid);
+                localStorage.setItem('correo', user.email);
+                localStorage.setItem('email', user.email); // Respaldo con nombre genérico
+
+                // 3. Redirección
+                window.location.href = "home.html";
+
+            } catch (error) {
+                console.error("Error de login:", error.code, error.message);
+                
+                // Restaurar botón
+                loginBtn.disabled = false;
+                loginBtn.style.opacity = "1";
+                loginBtn.textContent = "Entrar";
+
+                // Manejo de errores amigable
+                switch(error.code) {
+                    case 'auth/user-not-found':
+                    case 'auth/wrong-password':
+                    case 'auth/invalid-credential':
+                        alert("Correo o contraseña incorrectos.");
+                        break;
+                    case 'auth/too-many-requests':
+                        alert("Demasiados intentos. Intenta más tarde.");
+                        break;
+                    case 'auth/invalid-email':
+                        alert("Formato de correo electrónico inválido.");
+                        break;
+                    case 'auth/network-request-failed':
+                        alert("Error de conexión. Verifica tu internet.");
+                        break;
+                    default:
+                        alert("Error al intentar entrar. Código: " + error.code);
+                }
+                
+                // Limpiar contraseña por seguridad
+                passInput.value = '';
+                emailInput.focus();
+            }
+        }
+
+        // Asignar evento al botón
+        loginBtn.addEventListener('click', handleLogin);
+
+        // Permitir entrar al presionar "Enter"
+        const handleKeyPress = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleLogin();
+            }
+        };
+        
+        emailInput.addEventListener('keypress', handleKeyPress);
+        passInput.addEventListener('keypress', handleKeyPress);
+        
+        // Opcional: Limpiar feedback visual al empezar a escribir
+        const clearButtonFeedback = () => {
+            if (loginBtn.disabled) {
+                loginBtn.disabled = false;
+                loginBtn.style.opacity = "1";
+                loginBtn.textContent = "Entrar";
+            }
+        };
+        
+        emailInput.addEventListener('input', clearButtonFeedback);
+        passInput.addEventListener('input', clearButtonFeedback);
+    </script>
+</body>
+
+</html>

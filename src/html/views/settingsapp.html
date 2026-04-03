@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Configuración - SnapBook</title>
+    <link rel="stylesheet" href="/src/css/shettinsapp.css">
+</head>
+<body class="dark-mode"> <header class="header">
+        <button class="back-btn" id="btn-atras">‹ Atrás</button>
+        <h1>Ajustes</h1>
+        <div style="width: 45px;"></div>
+    </header>
+
+    <div class="profile-section">
+        <img src="" id="user-perfil" class="avatar" onerror="this.src='https://www.w3schools.com/howto/img_avatar.png'">
+        <h2 id="user-nick" class="nick">Cargando...</h2>
+    </div>
+
+    <div class="settings-container">
+        
+        <div>
+            <div class="section-title">Personalización</div>
+            <div class="menu-item">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 20px;">🌓</span>
+                    <span style="font-weight: 600;">Modo Oscuro</span>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="theme-toggle" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+
+        <div>
+            <div class="section-title">Seguridad</div>
+            <div class="menu-item" id="logout-trigger" style="cursor: pointer;">
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <span style="font-size: 20px;">🚪</span>
+                    <span class="danger-text">Cerrar Sesión</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module">
+        import { auth } from './firebase-config.js?v=22';
+
+        const toggle = document.getElementById('theme-toggle');
+        const nickDisplay = document.getElementById('user-nick');
+        const perfilDisplay = document.getElementById('user-perfil');
+
+        // 1. CARGAR DATOS DEL USUARIO
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                nickDisplay.innerText = localStorage.getItem('nick') || "Usuario";
+                perfilDisplay.src = localStorage.getItem('perfil') || "";
+            } else {
+                window.location.href = "login.html";
+            }
+        });
+
+        // 2. LÓGICA DE NAVEGACIÓN
+        document.getElementById('btn-atras').onclick = () => {
+            window.location.href = "home.html";
+        };
+
+        // 3. CONTROL DE TEMA (MODO OSCURO/CLARO)
+        // Revisar preferencia guardada
+        if (localStorage.getItem('theme') === 'light') {
+            document.body.classList.remove('dark-mode');
+            toggle.checked = false;
+        }
+
+        toggle.onchange = () => {
+            if (toggle.checked) {
+                document.body.classList.add('dark-mode');
+                localStorage.setItem('theme', 'dark');
+            } else {
+                document.body.classList.remove('dark-mode');
+                localStorage.setItem('theme', 'light');
+            }
+        };
+
+        // 4. CERRAR SESIÓN
+        document.getElementById('logout-trigger').onclick = () => {
+            auth.signOut().then(() => {
+                localStorage.clear();
+                window.location.href = "login.html";
+            });
+        };
+    </script>
+</body>
+</html>
